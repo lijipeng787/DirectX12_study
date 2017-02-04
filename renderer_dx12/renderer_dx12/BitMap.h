@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <DirectXMath.h>
-#include "../d3d12 common/Texture.h"
+#include "Texture.h"
 
 class Bitmap {
 private:

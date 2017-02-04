@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "textclass.h"
 
 bool Text::SetFps(int fps) {

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Fps.h"
 
 void Fps::Frame() {

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "AmbientLightingShaderLoader.h"
 
 bool AmbientLightingShaderLoader::Initialize(WCHAR * vs_shader_filename, WCHAR * ps_shader_filename){

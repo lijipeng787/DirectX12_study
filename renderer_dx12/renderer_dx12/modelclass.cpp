@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "modelclass.h"
 
 bool Model::Initialize(WCHAR* model_filename, WCHAR **texture_filename_arr) {

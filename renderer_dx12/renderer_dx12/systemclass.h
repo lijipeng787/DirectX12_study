@@ -4,7 +4,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
-#include "../d3d12 common/Input.h"
+#include "Input.h"
 #include "graphicsclass.h"
 
 class System{

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "systemclass.h"
 
 bool System::Initialize()

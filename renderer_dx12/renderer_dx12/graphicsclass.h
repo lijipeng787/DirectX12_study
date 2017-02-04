@@ -2,12 +2,12 @@
 #define HEADER_GRAPHICSCLASS_H
 
 #include <memory>
-#include "../d3d12 common/DirectX12Device.h"
-#include "../d3d12 common/Camera.h"
-#include "../d3d12 common/Input.h"
-#include "../d3d12 common/Fps.h"
-#include "../d3d12 common/Light.h"
-#include "../d3d12 common/Cpu.h"
+#include "DirectX12Device.h"
+#include "Camera.h"
+#include "Input.h"
+#include "Fps.h"
+#include "Light.h"
+#include "Cpu.h"
 
 #include "modelclass.h"
 #include "AmbientLightingShaderLoader.h"

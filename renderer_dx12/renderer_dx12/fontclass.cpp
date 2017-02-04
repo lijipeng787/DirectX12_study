@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "fontclass.h"
 
 bool Font::Initialize(WCHAR* font_filename, WCHAR **texture_filename){

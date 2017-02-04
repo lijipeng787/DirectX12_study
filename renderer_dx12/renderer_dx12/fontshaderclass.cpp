@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "fontshaderclass.h"
 
 bool FontShader::Initialize(WCHAR * vs_shader_filename, WCHAR * ps_shader_filename) {

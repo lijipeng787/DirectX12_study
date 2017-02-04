@@ -5,7 +5,7 @@
 #include <fstream>
 #include <memory>
 
-#include "../d3d12 common/Texture.h"
+#include "Texture.h"
 
 class Font{
 private:

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "graphicsclass.h"
 #include <new>
 

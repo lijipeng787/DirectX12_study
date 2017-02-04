@@ -3,7 +3,7 @@
 
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
-#include "../d3d12 common/DirectX12Device.h"
+#include "DirectX12Device.h"
 
 class FontShader{
 public:

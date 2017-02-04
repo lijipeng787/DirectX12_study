@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="shader">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -149,25 +145,5 @@
     <ClCompile Include="Timer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="font.ps">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="light.ps">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="texture.ps">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="font.vs">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="light.vs">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="texture.vs">
-      <Filter>shader</Filter>
-    </None>
   </ItemGroup>
 </Project>

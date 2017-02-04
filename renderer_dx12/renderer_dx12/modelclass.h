@@ -5,8 +5,8 @@
 #include <fstream>
 #include <memory>
 
-#include "../d3d12 common/DirectX12Device.h"
-#include "../d3d12 common/Texture.h"
+#include "DirectX12Device.h"
+#include "Texture.h"
 
 class Model {
 private:
