@@ -56,8 +56,6 @@ typedef Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GraphicsCommandListPtr
 		
 typedef Microsoft::WRL::ComPtr<ID3D12Fence> FencePtr;
 
-typedef Microsoft::WRL::ComPtr<ID3DBlob> BlobPtr;
-
 class DirectX12Device {
 public:
 	DirectX12Device() {}

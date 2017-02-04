@@ -147,7 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AmbientLightingShaderLoader.h" />
+    <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="BitMap.h" />
     <ClInclude Include="BitMapShaderLoader.h" />
     <ClInclude Include="Camera.h" />
@@ -173,7 +173,7 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AmbientLightingShaderLoader.cpp" />
+    <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="BitMap.cpp" />
     <ClCompile Include="BitMapShaderLoader.cpp" />
     <ClCompile Include="Camera.cpp" />

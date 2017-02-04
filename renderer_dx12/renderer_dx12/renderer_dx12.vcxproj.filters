@@ -17,9 +17,6 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="AmbientLightingShaderLoader.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="BitMap.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -83,12 +80,12 @@
     <ClInclude Include="Timer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderLoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="AmbientLightingShaderLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="BitMap.cpp">
@@ -143,6 +140,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
