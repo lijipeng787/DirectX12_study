@@ -78,7 +78,7 @@ bool Bitmap::UpdateConstantBuffer(
 	return true;
 }
 
-bool Bitmap::UpdateBitmapPos(int pos_x, int pos_y) {
+bool Bitmap::UpdateBitmapPosition(int pos_x, int pos_y) {
 
 	if (previous_pos_x_ == pos_x && previous_pos_y_ == pos_y) {
 		return true;

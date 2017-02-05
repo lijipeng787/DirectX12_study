@@ -147,18 +147,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Material.h" />
     <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="BitMap.h" />
-    <ClInclude Include="BitMapShaderLoader.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="CommonHeader.h" />
     <ClInclude Include="Cpu.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="dds.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DirectX12Device.h" />
     <ClInclude Include="fontclass.h" />
-    <ClInclude Include="fontshaderclass.h" />
     <ClInclude Include="Fps.h" />
     <ClInclude Include="graphicsclass.h" />
     <ClInclude Include="Input.h" />
@@ -171,17 +169,17 @@
     <ClInclude Include="textclass.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="TypeDefine.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="BitMap.cpp" />
-    <ClCompile Include="BitMapShaderLoader.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Cpu.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DirectX12Device.cpp" />
     <ClCompile Include="fontclass.cpp" />
-    <ClCompile Include="fontshaderclass.cpp" />
     <ClCompile Include="Fps.cpp" />
     <ClCompile Include="graphicsclass.cpp" />
     <ClCompile Include="Input.cpp" />

@@ -176,12 +176,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="font.ps" />
-    <None Include="font.vs" />
-    <None Include="light.ps" />
-    <None Include="light.vs" />
-    <None Include="texture.ps" />
-    <None Include="texture.vs" />
+    <None Include="fontPS.hlsl" />
+    <None Include="fontVS.hlsl" />
+    <None Include="lightPS.hlsl" />
+    <None Include="lightVS.hlsl" />
+    <None Include="texturePS.hlsl" />
+    <None Include="textureVS.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

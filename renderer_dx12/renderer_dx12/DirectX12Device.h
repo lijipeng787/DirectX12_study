@@ -1,60 +1,12 @@
 #ifndef D3D12CLASS_H
 #define D3D12CLASS_H
 
-#include <unordered_map>
-#include <vector>
-#include <memory>
-#include <new>
-
-#include <windows.h>
-#include <wrl.h>
-#include <dxgi1_4.h>
-#include <d3dcommon.h>
-#include <d3d12.h>
-#include <d3d12sdklayers.h>
 #include <DirectXMath.h>
 
+#include "TypeDefine.h"
 #include "dds.h"
 #include "DDSTextureLoader.h"
 #include "d3dx12.h"
-
-#define GRAPHICS_PSO_DESC D3D12_GRAPHICS_PIPELINE_STATE_DESC 
-
-#define ROOT_SIGNATURE_DESC D3D12_ROOT_SIGNATURE_DESC
-
-#define CHECK(return_value) ((return_value==false)?true:false)
-
-#define CBSIZE(constant_buffer) ((sizeof(constant_buffer) + 255) & ~255)
-
-typedef Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DescriptorHeapPtr;
-
-typedef std::vector<D3D12_VIEWPORT> ViewPortVector;
-
-typedef std::vector<D3D12_RECT> ScissorRectVector;
-
-typedef Microsoft::WRL::ComPtr<IDXGISwapChain3> SwapChainPtr;
-
-typedef Microsoft::WRL::ComPtr<ID3D12DebugDevice> D2d12DebugDevicePtr;
-
-typedef Microsoft::WRL::ComPtr<ID3D12DebugCommandQueue> D3d12DebugCommandQueuePtr;
-
-typedef Microsoft::WRL::ComPtr<ID3D12DebugCommandList> D3d12DebugCommandListPtr;
-
-typedef Microsoft::WRL::ComPtr<ID3D12Device> D3d12DevicePtr;
-		
-typedef Microsoft::WRL::ComPtr<ID3D12Resource> ResourceSharedPtr;
-		
-typedef Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CommandAllocatorPtr;
-
-typedef Microsoft::WRL::ComPtr<ID3D12CommandQueue> CommandQueuePtr;
-		
-typedef Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignaturePtr;
-		
-typedef Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineStateObjectPtr;
-
-typedef Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GraphicsCommandListPtr;
-		
-typedef Microsoft::WRL::ComPtr<ID3D12Fence> FencePtr;
 
 class DirectX12Device {
 public:
@@ -68,7 +20,7 @@ public:
 public:
 	static DirectX12Device* GetD3d12DeviceInstance();
 
-	inline D3d12DevicePtr& GetD3d12Device() { return d3d12device_; }
+	inline D3d12DevicePtr GetD3d12Device() { return d3d12device_; }
 public:
 	bool Initialize(
 		int screen_width, int screen_height,
@@ -84,9 +36,9 @@ public:
 
 	bool ResetCommandAllocator();
 
-	void SetGraphicsRootSignature(RootSignaturePtr& graphics_rootsignature);
+	void SetGraphicsRootSignature(const RootSignaturePtr& graphics_rootsignature);
 
-	void SetPipelineStateObject(PipelineStateObjectPtr pso);
+	void SetPipelineStateObject(const PipelineStateObjectPtr& pso);
 
 	void SetDescriptorHeaps(UINT num_descriptors, ID3D12DescriptorHeap** descriptor_arr);
 
@@ -94,9 +46,9 @@ public:
 
 	void SetGraphicsRootConstantBufferView(UINT RootParameterIndex, D3D12_GPU_VIRTUAL_ADDRESS BufferLocation);
 
-	void BindVertexBuffer(UINT start_slot, UINT num_views, const D3D12_VERTEX_BUFFER_VIEW* vertex_buffer);
+	void BindVertexBuffer(UINT start_slot, UINT num_views, const VertexBufferView* vertex_buffer);
 
-	void BindIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* index_buffer_view);
+	void BindIndexBuffer(const IndexBufferView* index_buffer_view);
 
 	void DirectX12Device::BeginDrawToOffScreen();
 
@@ -116,19 +68,19 @@ public:
 
 	bool WaitForPreviousFrame();
 
-	DescriptorHeapPtr& GetOffScreenTextureHeapView() { return off_screen_srv_; }
+	DescriptorHeapPtr GetOffScreenTextureHeapView() { return off_screen_srv_; }
+ 
+	GraphicsCommandListPtr GetDefaultGraphicsCommandList() { return default_graphics_command_list_; }
 
-	GraphicsCommandListPtr& GetDefaultGraphicsCommandList() { return default_graphics_command_list_; }
+	GraphicsCommandListPtr GetDefaultcopyCommandList() { return default_copy_command_list_; }
 
-	GraphicsCommandListPtr& GetDefaultcopyCommandList() { return default_copy_command_list_; }
+	CommandQueuePtr GetDefaultGraphicsCommandQueeue() { return default_graphics_command_queue_; }
 
-	CommandQueuePtr& GetDefaultGraphicsCommandQueeue() { return default_graphics_command_queue_; }
+	CommandQueuePtr GetDefaultCopyCommandQueeue() { return default_copy_command_queue_; }
 
-	CommandQueuePtr& GetDefaultCopyCommandQueeue() { return default_copy_command_queue_; }
+	CommandAllocatorPtr GetDefaultGraphicsCommandAllocator() { return default_graphics_command_allocator_; }
 
-	CommandAllocatorPtr& GetDefaultGraphicsCommandAllocator() { return default_graphics_command_allocator_; }
-
-	CommandAllocatorPtr& GetDefaultCopyCommandAllocator() { return default_copy_command_allocator_; }
+	CommandAllocatorPtr GetDefaultCopyCommandAllocator() { return default_copy_command_allocator_; }
 
 	void inline GetProjectionMatrix(DirectX::XMMATRIX& projection) { projection = projection_matrix_; }
 

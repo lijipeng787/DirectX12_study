@@ -2,7 +2,6 @@
 #define _TEXTCLASS_H_
 
 #include "fontclass.h"
-#include "fontshaderclass.h"
 
 class Text {
 private:

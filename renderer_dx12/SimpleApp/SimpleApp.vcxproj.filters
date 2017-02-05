@@ -94,22 +94,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="texture.vs">
+    <None Include="textureVS.hlsl">
       <Filter>Shader</Filter>
     </None>
-    <None Include="font.ps">
+    <None Include="texturePS.hlsl">
       <Filter>Shader</Filter>
     </None>
-    <None Include="light.ps">
+    <None Include="lightVS.hlsl">
       <Filter>Shader</Filter>
     </None>
-    <None Include="texture.ps">
+    <None Include="fontVS.hlsl">
       <Filter>Shader</Filter>
     </None>
-    <None Include="font.vs">
+    <None Include="fontPS.hlsl">
       <Filter>Shader</Filter>
     </None>
-    <None Include="light.vs">
+    <None Include="lightPS.hlsl">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

@@ -332,7 +332,7 @@ bool Graphics::Render() {
 		d3d12_device_->SetPipelineStateObject(off_screen_pso);
 
 		bitmap_->UpdateConstantBuffer(font_world, view, orthogonality);
-		bitmap_->UpdateBitmapPos(100, 100);
+		bitmap_->UpdateBitmapPosition(100, 100);
 
 		auto off_screen_heap = d3d12_device_->GetOffScreenTextureHeapView();
 		ID3D12DescriptorHeap *off_screen_descriptor_heap[] = { off_screen_heap.Get() };

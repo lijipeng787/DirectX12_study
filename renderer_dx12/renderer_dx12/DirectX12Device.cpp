@@ -2,6 +2,8 @@
 
 #include "DirectX12Device.h"
 
+#include <d3d12sdklayers.h>
+
 DirectX12Device* DirectX12Device::d3d12device_instance_ = nullptr;
 
 DirectX12Device* DirectX12Device::GetD3d12DeviceInstance(){
@@ -365,11 +367,11 @@ bool DirectX12Device::ResetCommandAllocator() {
 	return true;
 }
 
-void DirectX12Device::SetGraphicsRootSignature(RootSignaturePtr& graphics_rootsignature) {
+void DirectX12Device::SetGraphicsRootSignature(const RootSignaturePtr& graphics_rootsignature) {
 	default_graphics_command_list_->SetGraphicsRootSignature(graphics_rootsignature.Get());
 }
 
-void DirectX12Device::SetPipelineStateObject(PipelineStateObjectPtr pso) {
+void DirectX12Device::SetPipelineStateObject(const PipelineStateObjectPtr& pso) {
 	default_graphics_command_list_->SetPipelineState(pso.Get());
 }
 
@@ -385,11 +387,11 @@ void DirectX12Device::SetGraphicsRootConstantBufferView(UINT RootParameterIndex,
 	default_graphics_command_list_->SetGraphicsRootConstantBufferView(RootParameterIndex, BufferLocation);
 }
 
-void DirectX12Device::BindVertexBuffer(UINT start_slot, UINT num_views, const D3D12_VERTEX_BUFFER_VIEW* vertex_buffer) {
+void DirectX12Device::BindVertexBuffer(UINT start_slot, UINT num_views, const VertexBufferView* vertex_buffer) {
 	default_graphics_command_list_->IASetVertexBuffers(start_slot, num_views, vertex_buffer);
 }
 
-void DirectX12Device::BindIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* index_buffer_view) {
+void DirectX12Device::BindIndexBuffer(const IndexBufferView* index_buffer_view) {
 	default_graphics_command_list_->IASetIndexBuffer(index_buffer_view);
 }
 

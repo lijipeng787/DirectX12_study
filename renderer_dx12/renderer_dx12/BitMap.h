@@ -3,9 +3,12 @@
 
 #include <memory>
 #include <DirectXMath.h>
-#include "Texture.h"
 
-class Bitmap {
+#include "TypeDefine.h"
+#include "Texture.h"
+#include "Material.h"
+
+class Bitmap :public Effect::Material{
 private:
 	struct VertexType {
 		DirectX::XMFLOAT3 position_;
@@ -13,10 +16,9 @@ private:
 	};
 
 	struct MatrixBufferType {
-		DirectX::XMMATRIX world_;
-		DirectX::XMMATRIX view_;
-		DirectX::XMMATRIX orthogonality_;
-		DirectX::XMMATRIX padding_;
+		DirectX::XMFLOAT4X4 world_;
+		DirectX::XMFLOAT4X4 view_;
+		DirectX::XMFLOAT4X4 orthogonality_;
 	};
 public:
 	Bitmap() {}
@@ -25,36 +27,32 @@ public:
 
 	Bitmap& operator=(const Bitmap& rhs) = delete;
 
-	~Bitmap() {}
+	virtual ~Bitmap() {}
 public:
 	bool Initialize(
 		UINT screen_width, UINT screen_height,
 		UINT bitmap_width, UINT bitmap_height
 	);
 
-	void SetVertexShader(const D3D12_SHADER_BYTECODE verte_shader_bitecode);
+	void SetVertexShader(const VertexShaderByteCode& verte_shader_bitecode);
 
-	void SetPixelShader(const D3D12_SHADER_BYTECODE pixel_shader_bitcode);
+	void SetPixelShader(const PixelShaderByteCode& pixel_shader_bitcode);
 
-	const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView()const;
+	VertexBufferView GetVertexBufferView()const;
 
-	const D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView()const;
+	VertexBufferView GetIndexBufferView()const;
 
-	const RootSignaturePtr& GetRootSignature()const;
+	RootSignaturePtr GetRootSignature()const;
 
-	const PipelineStateObjectPtr& GetPipelineStateObject()const;
+	PipelineStateObjectPtr GetPipelineStateObject()const;
 
-	const ResourceSharedPtr& GetConstantBuffer()const;
+	ResourceSharedPtr GetConstantBuffer()const;
 
-	bool UpdateConstantBuffer(
-		DirectX::XMMATRIX& world,
-		DirectX::XMMATRIX& view,
-		DirectX::XMMATRIX& orthogonality
-	);
+	bool UpdateConstantBuffer(DirectX::XMMATRIX& world, DirectX::XMMATRIX& view, DirectX::XMMATRIX& orthogonality);
 
-	bool UpdateBitmapPos(int pos_x, int pos_y);
+	bool UpdateBitmapPosition(int pos_x, int pos_y);
 
-	int GetIndexCount();
+	const int GetIndexCount();
 private:
 	bool InitializeBuffers();
 
@@ -62,43 +60,25 @@ private:
 
 	bool InitializeRootSignature();
 private:
-	D3D12_SHADER_BYTECODE vertex_shader_bitecode_ = {};
-
-	D3D12_SHADER_BYTECODE pixel_shader_bitcode_ = {};
-
-	RootSignaturePtr root_signature_ = nullptr;
-
-	PipelineStateObjectPtr pso_ = nullptr;
-
-	PipelineStateObjectPtr pso_depth_disabled_ = nullptr;
-
 	ResourceSharedPtr vertex_buffer_ = nullptr;
 
-	D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_;
+	VertexBufferView vertex_buffer_view_;
 
 	ResourceSharedPtr index_buffer_ = nullptr;
 
-	D3D12_INDEX_BUFFER_VIEW index_buffer_view_;
+	IndexBufferView index_buffer_view_;
 
 	ResourceSharedPtr constant_buffer_ = nullptr;
 
 	MatrixBufferType matrix_constant_data_ = {};
 
-	UINT index_count_ = 0;
+	UINT index_count_ = 0, vertex_count_ = 0;
 
-	UINT vertex_count_ = 0;
+	UINT screen_width_ = 0, screen_height_ = 0;
 
-	UINT screen_width_ = 0;
+	UINT bitmap_height_ = 0, bitmap_width_ = 0;
 
-	UINT screen_height_ = 0;
-
-	UINT bitmap_height_ = 0;
-
-	UINT bitmap_width_ = 0;
-
-	int previous_pos_x_ = -1;
-
-	int previous_pos_y_ = -1;
+	int previous_pos_x_ = -1, previous_pos_y_ = -1;
 };
 
 #endif // !_BITMAP_H_

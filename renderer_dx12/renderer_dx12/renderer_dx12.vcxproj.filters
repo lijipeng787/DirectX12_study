@@ -20,13 +20,7 @@
     <ClInclude Include="BitMap.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="BitMapShaderLoader.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CommonHeader.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Cpu.h">
@@ -45,9 +39,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="fontclass.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="fontshaderclass.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Fps.h">
@@ -83,15 +74,18 @@
     <ClInclude Include="ShaderLoader.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TypeDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="BitMap.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="BitMapShaderLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
@@ -107,9 +101,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="fontclass.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="fontshaderclass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Fps.cpp">
@@ -143,6 +134,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ShaderLoader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
