@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "graphicsclass.h"
-#include <new>
+
+using namespace ResourceLoader;
 
 bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 
 	d3d12_device_ = DirectX12Device::GetD3d12DeviceInstance();
-	if (!d3d12_device_)
-	{
+	if (!d3d12_device_){
 		return false;
 	}
 	
@@ -17,7 +17,6 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 
 	cpu_ = std::make_shared<Cpu>();
 	if (!cpu_) {
-		MessageBox(hwnd, L"Could not initialize cpu status detector.", L"Error", MB_OK);
 		return false;
 	}
 
@@ -25,7 +24,6 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 
 	fps_ = std::make_shared<Fps>();
 	if (!fps_) {
-		MessageBox(hwnd, L"Could not initialize fps detector.", L"Error", MB_OK);
 		return false;
 	}
 
@@ -43,86 +41,83 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 	light_->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
 	light_->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	light_->SetDirection(0.0f, 0.0f, 1.0f);
+	
+	{
+		shader_loader_ = std::make_shared<ShaderLoader>();
+		if (!shader_loader_) {
+			return false;
+		}
 
-	bitmap_shader_ = std::make_shared<BitMapShaderLoader>();
-	if (!bitmap_shader_) {
-		return false;
-	}
-	if (CHECK(bitmap_shader_->Initialize(L"../../tut22/texture.vs", L"../../tut22/texture.ps"))) {
-		MessageBox(hwnd, L"Could not initialize Light Shader.", L"Error", MB_OK);
-		return false;
-	}
+		shader_loader_->SetVSEntryPoint("TextureVertexShader");
+		shader_loader_->SetPSEntryPoint("TexturePixelShader");
+		if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"textureVS.hlsl", L"texturePS.hlsl"))) {
+			MessageBox(hwnd, L"Could not initialize Texture Shader.", L"Error", MB_OK);
+			return false;
+		}
 
-	bitmap_ = std::make_shared<Bitmap>();
-	if (!bitmap_) {
-		return false;
-	}
+		shader_loader_->SetVSEntryPoint("LightVertexShader");
+		shader_loader_->SetPSEntryPoint("LightPixelShader");
+		if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"lightVS.hlsl", L"lightPS.hlsl"))) {
+			MessageBox(hwnd, L"Could not initialize Light Shader.", L"Error", MB_OK);
+			return false;
+		}
 
-	bitmap_->SetVertexShader(CD3DX12_SHADER_BYTECODE(bitmap_shader_->GetVertexShaderBlob().Get()));
-	bitmap_->SetPixelShader(CD3DX12_SHADER_BYTECODE(bitmap_shader_->GetPixelSHaderBlob().Get()));
-	if (CHECK(bitmap_->Initialize(screenWidth, screenHeight, 255, 255))) {
-		MessageBox(hwnd, L"Could not initialize Bitmap.", L"Error", MB_OK);
-		return false;
-	}
-
-	ambient_light_shader_ = std::make_shared<AmbientLightingShaderLoader>();
-	if (!ambient_light_shader_) {
-		return false;
-	}
-	if (CHECK(ambient_light_shader_->Initialize(L"../../tut22/light.vs", L"../../tut22/light.ps"))) {
-		MessageBox(hwnd, L"Could not initialize Light Shader.", L"Error", MB_OK);
-		return false;
+		shader_loader_->SetVSEntryPoint("FontVertexShader");
+		shader_loader_->SetPSEntryPoint("FontPixelShader");
+		if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"fontVS.hlsl", L"fontPS.hlsl"))) {
+			MessageBox(hwnd, L"Could not initialize Font Shader.", L"Error", MB_OK);
+			return false;
+		}
 	}
 
-	font_shader_ = std::make_shared<FontShader>();
-	if (!font_shader_) {
-		return false;
-	}
-	if (CHECK(font_shader_->Initialize(L"../../tut22/font.vs", L"../../tut22/font.ps"))) {
-		MessageBox(hwnd, L"Could not initialize Font Shader.", L"Error", MB_OK);
-		return false;
-	}
-
-	model_ = std::make_shared<Model>();
-	if (!model_) {
-		return false;
-	}
-
-	model_->SetVertexShader(CD3DX12_SHADER_BYTECODE(ambient_light_shader_->GetVertexShaderBlob().Get()));
-	model_->SetPixelShader(CD3DX12_SHADER_BYTECODE(ambient_light_shader_->GetPixelSHaderBlob().Get()));
-
-	WCHAR* texture_filename_arr[3] = { L"../../tut22/data/stone01.dds", L"../../tut22/data/dirt01.dds", L"../../tut22/data/alpha01.dds" };
-
-	if (CHECK(model_->Initialize(L"../../tut22/data/cube.txt", texture_filename_arr))) {
-		MessageBox(hwnd, L"Could not initialize Model.", L"Error", MB_OK);
-		return false;
+	{
+		bitmap_ = std::make_shared<Bitmap>();
+		if (!bitmap_) {
+			return false;
+		}
+		bitmap_->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"textureVS.hlsl").Get()));
+		bitmap_->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"texturePS.hlsl").Get()));
+		if (CHECK(bitmap_->Initialize(screenWidth, screenHeight, 255, 255))) {
+			MessageBox(hwnd, L"Could not initialize Bitmap.", L"Error", MB_OK);
+			return false;
+		}
 	}
 
-	text_ = std::make_shared<Text>();
-	if (!text_) {
-		MessageBox(hwnd, L"Could not initialize Text object.", L"Error", MB_OK);
-		return false;
+	{
+		model_ = std::make_shared<Model>();
+		if (!model_) {
+			return false;
+		}
+		model_->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"lightVS.hlsl").Get()));
+		model_->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"lightPS.hlsl").Get()));
+
+		WCHAR* texture_filename_arr[3] = { L"data/stone01.dds", L"data/dirt01.dds", L"data/alpha01.dds" };
+		if (CHECK(model_->Initialize(L"data/cube.txt", texture_filename_arr))) {
+			MessageBox(hwnd, L"Could not initialize Model.", L"Error", MB_OK);
+			return false;
+		}
 	}
 
-	WCHAR *font_texture[1] = { L"../../tut22/data/font.dds" };
+	{
+		text_ = std::make_shared<Text>();
+		if (!text_) {
+			return false;
+		}
+		text_->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"fontVS.hlsl").Get()));
+		text_->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"fontPS.hlsl").Get()));
 
-	if (CHECK(text_->LoadFont(L"../../tut22/data/fontdata.txt", font_texture))) {
-		MessageBox(hwnd, L"Could not initialize Font data.", L"Error", MB_OK);
-		return false;
+		WCHAR *font_texture[1] = { L"data/font.dds" };
+		if (CHECK(text_->LoadFont(L"data/fontdata.txt", font_texture))) {
+			MessageBox(hwnd, L"Could not initialize Font data.", L"Error", MB_OK);
+			return false;
+		}
+
+		DirectX::XMMATRIX base_matrix = {};
+		camera_->GetViewMatrix(base_matrix);
+		if (CHECK(text_->Initialize(screenWidth, screenHeight, base_matrix))) {
+			return false;
+		}
 	}
-
-	DirectX::XMMATRIX base_matrix = {};
-	camera_->GetViewMatrix(base_matrix);
-	if (CHECK(text_->Initialize(screenWidth, screenHeight, base_matrix))) {
-		return false;
-	}
-
-	text_->SetVertexShader(CD3DX12_SHADER_BYTECODE(font_shader_->GetVertexShaderBlob().Get()));
-	text_->SetPixelShader(CD3DX12_SHADER_BYTECODE(font_shader_->GetPixelSHaderBlob().Get()));
-
-	text_->InitializeRootSignature();
-	text_->InitializeGraphicsPipelineState();
-	text_->InitializeConstantBuffer();
 
 	return true;
 }
@@ -208,15 +203,15 @@ bool Graphics::Render() {
 	}
 
 	auto off_screen_root_signature = bitmap_->GetRootSignature();
-	auto off_screen_pso = bitmap_->GetPipelineStateObject();
+	auto off_screen_pso = bitmap_->GetPSO();
 
 	auto font_root_signature = text_->GetRootSignature();
-	auto blend_enabled_pso = text_->GetBlendEnabledPso();
+	auto blend_enabled_pso = text_->GetThirdPSO();
 	auto font_matrix_constant = text_->GetMatrixConstantBuffer();
 	auto font_pixel_constant = text_->GetPixelConstantBuffer();
 
 	auto light_root_signature = model_->GetRootSignature();
-	auto pso = model_->GetPipelineStateObject();
+	auto pso = model_->GetPSO();
 	auto light_matrix_constant = model_->GetMatrixConstantBuffer();
 	auto light_constant = model_->GetLightConstantBuffer();
 	auto fog_constant = model_->GetFogConstantBuffer();

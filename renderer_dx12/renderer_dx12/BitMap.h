@@ -9,6 +9,14 @@
 #include "Material.h"
 
 class Bitmap :public Effect::Material{
+public:
+	Bitmap() {}
+
+	Bitmap(const Bitmap& rhs) = delete;
+
+	Bitmap& operator=(const Bitmap& rhs) = delete;
+
+	virtual ~Bitmap() {}
 private:
 	struct VertexType {
 		DirectX::XMFLOAT3 position_;
@@ -21,34 +29,21 @@ private:
 		DirectX::XMFLOAT4X4 orthogonality_;
 	};
 public:
-	Bitmap() {}
-
-	Bitmap(const Bitmap& rhs) = delete;
-
-	Bitmap& operator=(const Bitmap& rhs) = delete;
-
-	virtual ~Bitmap() {}
-public:
 	bool Initialize(
 		UINT screen_width, UINT screen_height,
 		UINT bitmap_width, UINT bitmap_height
 	);
 
-	void SetVertexShader(const VertexShaderByteCode& verte_shader_bitecode);
-
-	void SetPixelShader(const PixelShaderByteCode& pixel_shader_bitcode);
-
 	VertexBufferView GetVertexBufferView()const;
 
-	VertexBufferView GetIndexBufferView()const;
-
-	RootSignaturePtr GetRootSignature()const;
-
-	PipelineStateObjectPtr GetPipelineStateObject()const;
+	IndexBufferView GetIndexBufferView()const;
 
 	ResourceSharedPtr GetConstantBuffer()const;
 
-	bool UpdateConstantBuffer(DirectX::XMMATRIX& world, DirectX::XMMATRIX& view, DirectX::XMMATRIX& orthogonality);
+	bool UpdateConstantBuffer(const DirectX::XMMATRIX& world,
+		const DirectX::XMMATRIX& view,
+		const DirectX::XMMATRIX& orthogonality
+	);
 
 	bool UpdateBitmapPosition(int pos_x, int pos_y);
 

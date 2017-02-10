@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "BitMap.h"
 
+using namespace std;
+using namespace DirectX;
+
 bool Bitmap::Initialize(
 	UINT screen_width, UINT screen_height,
 	UINT bitmap_width, UINT bitmap_height
@@ -27,40 +30,20 @@ bool Bitmap::Initialize(
 	return true;
 }
 
-void Bitmap::SetVertexShader(const D3D12_SHADER_BYTECODE verte_shader_bitecode){
-	vertex_shader_bitecode_ = verte_shader_bitecode;
-}
-
-void Bitmap::SetPixelShader(const D3D12_SHADER_BYTECODE pixel_shader_bitcode){
-	pixel_shader_bitcode_ = pixel_shader_bitcode;
-}
-
-const D3D12_VERTEX_BUFFER_VIEW& Bitmap::GetVertexBufferView() const{
+VertexBufferView Bitmap::GetVertexBufferView() const{
 	return vertex_buffer_view_;
 }
 
-const D3D12_INDEX_BUFFER_VIEW& Bitmap::GetIndexBufferView() const{
+IndexBufferView Bitmap::GetIndexBufferView() const{
 	return index_buffer_view_;
 }
 
-const RootSignaturePtr& Bitmap::GetRootSignature() const{
-	return root_signature_;
-}
-
-const PipelineStateObjectPtr& Bitmap::GetPipelineStateObject() const{
-	return pso_depth_disabled_;
-}
-
-const ResourceSharedPtr& Bitmap::GetConstantBuffer() const{
+ResourceSharedPtr Bitmap::GetConstantBuffer() const{
 	return constant_buffer_;
 }
 
-bool Bitmap::UpdateConstantBuffer(
-	DirectX::XMMATRIX& world, 
-	DirectX::XMMATRIX& view , 
-	DirectX::XMMATRIX& orthogonality
-	){
-	
+bool Bitmap::UpdateConstantBuffer(const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& orthogonality) {
+
 	D3D12_RANGE range;
 	range.Begin = 0;
 	range.End = 0;
@@ -69,9 +52,9 @@ bool Bitmap::UpdateConstantBuffer(
 		return false;
 	}
 	else {
-		matrix_constant_data_.world_ = world;
-		matrix_constant_data_.view_ = view;
-		matrix_constant_data_.orthogonality_ = orthogonality;
+		XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+		XMStoreFloat4x4(&matrix_constant_data_.view_, view);
+		XMStoreFloat4x4(&matrix_constant_data_.orthogonality_, orthogonality);
 		memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
 		constant_buffer_->Unmap(0, nullptr);
 	}
@@ -140,7 +123,7 @@ bool Bitmap::UpdateBitmapPosition(int pos_x, int pos_y) {
 	return true;
 }
 
-int Bitmap::GetIndexCount(){
+const int Bitmap::GetIndexCount(){
 	return index_count_;
 }
 
@@ -350,9 +333,9 @@ bool Bitmap::InitializeGraphicsPipelineState() {
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
 	pso_desc.InputLayout = { input_element_descs, _countof(input_element_descs) };
-	pso_desc.pRootSignature = root_signature_.Get();
-	pso_desc.VS = vertex_shader_bitecode_;
-	pso_desc.PS = pixel_shader_bitcode_;
+	pso_desc.pRootSignature = GetRootSignature().Get();
+	pso_desc.VS = GetVSByteCode();
+	pso_desc.PS = GetPSByteCode();
 	pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -365,14 +348,18 @@ bool Bitmap::InitializeGraphicsPipelineState() {
 
 	auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
 
-	if (FAILED(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso_)))) {
+	PipelineStateObjectPtr pso = {};
+	if (FAILED(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso)))) {
 		return false;
 	}
+	SetPSO(pso);
 
+	PipelineStateObjectPtr pso2 = {};
 	pso_desc.DepthStencilState.DepthEnable = false;
-	if (FAILED(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso_depth_disabled_)))) {
+	if (FAILED(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso2)))) {
 		return false;
 	}
+	SetSecondPSO(pso);
 
 	return true;
 }
@@ -423,14 +410,16 @@ bool Bitmap::InitializeRootSignature() {
 		return false;
 	}
 
+	RootSignaturePtr root_signature = {};
 	if (FAILED(DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device()->CreateRootSignature(
 		0,
 		signature_blob->GetBufferPointer(),
 		signature_blob->GetBufferSize(),
-		IID_PPV_ARGS(&root_signature_)
+		IID_PPV_ARGS(&root_signature)
 		))) {
 		return false;
 	}
+	SetRootSignature(root_signature);
 
 	return true;
 }

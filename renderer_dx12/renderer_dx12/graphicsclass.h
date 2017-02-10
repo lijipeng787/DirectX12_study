@@ -8,21 +8,21 @@
 #include "Fps.h"
 #include "Light.h"
 #include "Cpu.h"
+#include "ShaderLoader.h"
 
 #include "modelclass.h"
-#include "AmbientLightingShaderLoader.h"
-#include "fontshaderclass.h"
 #include "textclass.h"
 #include "BitMap.h"
-#include "BitMapShaderLoader.h"
 
-const bool FULL_SCREEN = false;
-const bool VSYNC_ENABLED = true;
-const float SCREEN_DEPTH = 1000.0f;
-const float SCREEN_NEAR = 0.1f;
+constexpr bool FULL_SCREEN = false;
+
+constexpr bool VSYNC_ENABLED = true;
+
+constexpr float SCREEN_DEPTH = 1000.0f;
+
+constexpr float SCREEN_NEAR = 0.1f;
 
 class Graphics{
-
 public:
 	Graphics() {}
 
@@ -31,7 +31,6 @@ public:
 	Graphics operator=(const Graphics& rhs) = delete;
 
 	~Graphics() {}
-
 public:
 	bool Initialize(int, int, HWND);
 	
@@ -41,7 +40,6 @@ public:
 
 private:
 	bool Render();
-
 private:
 	DirectX12Device* d3d12_device_ = nullptr;
 
@@ -51,11 +49,7 @@ private:
 
 	std::shared_ptr<Input> input_ = nullptr;
 
-	std::shared_ptr<AmbientLightingShaderLoader> ambient_light_shader_ = nullptr;
-
-	std::shared_ptr<FontShader> font_shader_ = nullptr;
-
-	std::shared_ptr<BitMapShaderLoader> bitmap_shader_ = nullptr;
+	std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader_ = nullptr;
 
 	std::shared_ptr<Bitmap> bitmap_ = nullptr;
 

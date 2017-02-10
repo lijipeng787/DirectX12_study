@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "modelclass.h"
 
+using namespace std;
+using namespace DirectX;
+
 bool Model::Initialize(WCHAR* model_filename, WCHAR **texture_filename_arr) {
 
 	if (CHECK(LoadModel(model_filename))) {
@@ -221,14 +224,16 @@ bool Model::InitializeRootSignature() {
 		return false;
 	}
 
+	RootSignaturePtr root_signature = {};
 	if (FAILED(DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device()->CreateRootSignature(
 		0,
 		signature_blob->GetBufferPointer(),
 		signature_blob->GetBufferSize(),
-		IID_PPV_ARGS(&root_signature_)
+		IID_PPV_ARGS(&root_signature)
 		))) {
 		return false;
 	}
+	SetRootSignature(root_signature);
 
 	return true;
 }
@@ -244,9 +249,9 @@ bool Model::InitializeGraphicsPipelineState() {
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
 	pso_desc.InputLayout = { input_element_descs, _countof(input_element_descs) };
-	pso_desc.pRootSignature = root_signature_.Get();
-	pso_desc.VS = vertex_shader_bitecode_;
-	pso_desc.PS = pixel_shader_bitecode_;
+	pso_desc.pRootSignature = GetRootSignature().Get();
+	pso_desc.VS = GetVSByteCode();
+	pso_desc.PS = GetPSByteCode();
 	pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -257,21 +262,19 @@ bool Model::InitializeGraphicsPipelineState() {
 	pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	pso_desc.SampleDesc.Count = 1;
 
+	PipelineStateObjectPtr pso = {};
 	if (FAILED(DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device()->CreateGraphicsPipelineState(
 		&pso_desc,
-		IID_PPV_ARGS(&pipeline_state_object_)
+		IID_PPV_ARGS(&pso)
 		))) {
 		return false;
 	}
+	SetPSO(pso);
 
 	return true;
 }
 
-bool Model::UpdateMatrixConstant(
-	DirectX::XMMATRIX & world,
-	DirectX::XMMATRIX & view,
-	DirectX::XMMATRIX & projection
-	) {
+bool Model::UpdateMatrixConstant(const XMMATRIX & world, const XMMATRIX & view, const XMMATRIX & projection) {
 
 	D3D12_RANGE range;
 	range.Begin = 0;
@@ -281,9 +284,9 @@ bool Model::UpdateMatrixConstant(
 		return false;
 	}
 	else {
-		matrix_constant_data_.world_ = world;
-		matrix_constant_data_.view_ = view;
-		matrix_constant_data_.projection_ = projection;
+		XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+		XMStoreFloat4x4(&matrix_constant_data_.view_, view);
+		XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
 		memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
 		matrix_constant_buffer_->Unmap(0, nullptr);
 	}
@@ -291,11 +294,7 @@ bool Model::UpdateMatrixConstant(
 	return true;
 }
 
-bool Model::UpdateLightConstant(
-	DirectX::XMFLOAT4& ambient_color,
-	DirectX::XMFLOAT4& diffuse_color,
-	DirectX::XMFLOAT3& direction
-	) {
+bool Model::UpdateLightConstant(const XMFLOAT4& ambient_color, const XMFLOAT4& diffuse_color, const XMFLOAT3& direction) {
 
 	D3D12_RANGE range;
 	range.Begin = 0;

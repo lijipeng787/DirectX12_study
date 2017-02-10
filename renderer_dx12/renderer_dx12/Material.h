@@ -19,23 +19,23 @@ namespace Effect {
 
 		virtual ~Material();
 	public:
-		virtual bool Initialize() = 0;
+		//virtual bool Initialize() = 0;
 
-		virtual bool Update() = 0;
+		//virtual bool Update() = 0;
 
-		virtual bool PreRender() = 0;
+		//virtual bool PreRender() = 0;
 
-		virtual void Render() = 0;
+		//virtual void Render() = 0;
 
-		virtual bool PostRender() = 0;
+		//virtual bool PostRender() = 0;
 	public:
 		VertexShaderByteCode GetVSByteCode()const;
 
 		PixelShaderByteCode GetPSByteCode()const;
 
-		void SetVSByteCode();
+		void SetVSByteCode(const VertexShaderByteCode& bytecode);
 
-		void SetPSByteCode();
+		void SetPSByteCode(const PixelShaderByteCode& bytecode);
 
 		RootSignaturePtr GetRootSignature()const;
 
@@ -44,6 +44,14 @@ namespace Effect {
 		PipelineStateObjectPtr GetPSO()const;
 
 		void SetPSO(const PipelineStateObjectPtr& pso);
+
+		PipelineStateObjectPtr GetSecondPSO()const;
+
+		void SetSecondPSO(const PipelineStateObjectPtr& pso);
+
+		PipelineStateObjectPtr GetThirdPSO()const;
+
+		void SetThirdPSO(const PipelineStateObjectPtr& pso);
 	private:
 		VertexShaderByteCode vertex_shader_bitecode_ = {};
 
@@ -54,6 +62,8 @@ namespace Effect {
 		PipelineStateObjectPtr pso_ = nullptr;
 
 		PipelineStateObjectPtr pso_depth_disabled_ = nullptr;
+
+		PipelineStateObjectPtr pso_blend_enable_ = nullptr;
 	};
 
 }

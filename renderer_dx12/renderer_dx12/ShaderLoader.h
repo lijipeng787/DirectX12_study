@@ -43,17 +43,17 @@ namespace ResourceLoader {
 
 			void SetPSTargetVersion(LPCSTR target_version);
 
-			const BlobPtr& GetVertexShaderBlobByIndex(int index) const;
+			BlobPtr GetVertexShaderBlobByIndex(int index) const;
 
-			const BlobPtr& GetPixelShaderBlobByIndex(int index) const;
+			BlobPtr GetPixelShaderBlobByIndex(int index) const;
 
-			const BlobPtr& GetVertexShaderBlobByFileName(WCHAR* filename) const;
+			BlobPtr GetVertexShaderBlobByFileName(WCHAR* filename) const;
 
-			const BlobPtr& GetPixelShaderBlobByFileName(WCHAR* filename) const;
+			BlobPtr GetPixelShaderBlobByFileName(WCHAR* filename) const;
 
-			const BlobPtr& GetVertexShaderBlobByEntryName(WCHAR* entry_name) const;
+			BlobPtr GetVertexShaderBlobByEntryName(WCHAR* entry_name) const;
 
-			const BlobPtr& GetPixelShaderBlobByEntryName(WCHAR* entry_name) const;
+			BlobPtr GetPixelShaderBlobByEntryName(WCHAR* entry_name) const;
 		private:
 			VSIndexContainer vs_index_container_ = {};
 
@@ -65,13 +65,13 @@ namespace ResourceLoader {
 
 			BlobPtr last_compile_error_ = nullptr;
 
-			LPCSTR vs_entry_point = {};
+			LPCSTR vs_entry_point_ = {};
 
-			LPCSTR ps_entry_point = {};
+			LPCSTR ps_entry_point_ = {};
 
-			LPCSTR vs_target_version = {};
+			LPCSTR vs_target_version_ = "vs_5_0";
 
-			LPCSTR ps_target_version = {};
+			LPCSTR ps_target_version_ = "ps_5_0";
 	};
 
 }

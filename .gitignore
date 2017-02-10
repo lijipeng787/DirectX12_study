@@ -245,3 +245,9 @@ ModelManifest.xml
 .fake/
 *.dds
 *.txt
+/renderer_dx12/renderer_dx12/fontPS.hlsl
+/renderer_dx12/renderer_dx12/fontVS.hlsl
+/renderer_dx12/renderer_dx12/texturePS.hlsl
+/renderer_dx12/renderer_dx12/textureVS.hlsl
+/renderer_dx12/renderer_dx12/lightPS.hlsl
+/renderer_dx12/renderer_dx12/lightVS.hlsl

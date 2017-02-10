@@ -1,7 +1,11 @@
 #include "stdafx.h"
 #include "textclass.h"
 
+using namespace std;
+using namespace DirectX;
+
 bool Text::SetFps(int fps) {
+
 	WCHAR tempString[16] = {};
 	WCHAR fpsString[16] = {};
 
@@ -39,6 +43,7 @@ bool Text::SetFps(int fps) {
 }
 
 bool Text::SetCpu(int cpu_percentage_value) {
+
 	WCHAR tempString[16] = {};
 	WCHAR cpuString[16] = {};
 	
@@ -57,20 +62,16 @@ bool Text::SetCpu(int cpu_percentage_value) {
 
 bool Text::Initialize(int screen_width, int screen_height, const DirectX::XMMATRIX& base_view_matrix) {
 
-	// Store the screen width and height.
 	screen_width_ = screen_width;
 	screen_height_ = screen_height;
 
-	// Store the base view matrix.
 	base_view_matrix_ = base_view_matrix;
 
 	SentenceType *sentence1 = nullptr;
-	// Initialize the first sentence.
 	if (CHECK(InitializeSentence(&sentence1, 16))) {
 		return false;
 	}
 
-	// Now update the sentence vertex buffer with the new string information.
 	if (CHECK(UpdateSentenceVertexBuffer(sentence1, L"Hello", 100, 100, 1.0f, 1.0f, 1.0f))) {
 		return false;
 	}
@@ -78,17 +79,27 @@ bool Text::Initialize(int screen_width, int screen_height, const DirectX::XMMATR
 	sentence_vector_.push_back(sentence1);
 
 	SentenceType *sentence2 = nullptr;
-	// Initialize the first sentence.
 	if (CHECK(InitializeSentence(&sentence2, 16))) {
 		return false;
 	}
 
-	// Now update the sentence vertex buffer with the new string information.
 	if (CHECK(UpdateSentenceVertexBuffer(sentence2, L"World", 100, 200, 1.0f, 1.0f, 0.0f))) {
 		return false;
 	}
 	
 	sentence_vector_.push_back(sentence2);
+
+	if (CHECK(InitializeRootSignature())) {
+		return false;
+	}
+
+	if (CHECK(InitializeGraphicsPipelineState())) {
+		return false;
+	}
+	
+	if (CHECK(InitializeConstantBuffer())) {
+		return false;
+	}
 	
 	return true;
 }
@@ -153,14 +164,16 @@ bool Text::InitializeRootSignature(){
 		return false;
 	}
 
+	RootSignaturePtr root_signature = {};
 	if (FAILED(DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device()->CreateRootSignature(
 		0,
 		signature_blob->GetBufferPointer(),
 		signature_blob->GetBufferSize(),
-		IID_PPV_ARGS(&root_signature_)
+		IID_PPV_ARGS(&root_signature)
 		))) {
 		return false;
 	}
+	SetRootSignature(root_signature);
 
 	return true;
 }
@@ -175,9 +188,9 @@ bool Text::InitializeGraphicsPipelineState(){
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
 	pso_desc.InputLayout = { input_element_descs, _countof(input_element_descs) };
-	pso_desc.pRootSignature = root_signature_.Get();
-	pso_desc.VS = vertex_shader_bitecode_;
-	pso_desc.PS = pixel_shader_bitecode_;
+	pso_desc.pRootSignature = GetRootSignature().Get();
+	pso_desc.VS = GetVSByteCode();
+	pso_desc.PS = GetPSByteCode();
 	pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
@@ -188,12 +201,14 @@ bool Text::InitializeGraphicsPipelineState(){
 	pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	pso_desc.SampleDesc.Count = 1;
 
+	PipelineStateObjectPtr pso = {};
 	if (FAILED(DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device()->CreateGraphicsPipelineState(
 		&pso_desc,
-		IID_PPV_ARGS(&pipeline_state_object_)
+		IID_PPV_ARGS(&pso)
 		))) {
 		return false;
 	}
+	SetPSO(pso);
 
 	D3D12_BLEND_DESC blend_desc = {};
 	blend_desc.AlphaToCoverageEnable = false;
@@ -206,15 +221,17 @@ bool Text::InitializeGraphicsPipelineState(){
 	blend_desc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
 	blend_desc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	blend_desc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
-
+	
 	pso_desc.BlendState = blend_desc;
 
+	pso.Reset();
 	if (FAILED(DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device()->CreateGraphicsPipelineState(
 		&pso_desc,
-		IID_PPV_ARGS(&blend_enabled_pso_)
+		IID_PPV_ARGS(&pso)
 		))) {
 		return false;
 	}
+	SetThirdPSO(pso);
 
 	return true;
 }
@@ -246,28 +263,20 @@ bool Text::InitializeConstantBuffer(){
 
 bool Text::InitializeSentence(SentenceType** sentence, int max_length){
 
-	// Create a new sentence object.
 	*sentence = new SentenceType;
 	if(!*sentence){
 		return false;
 	}
 
-	// Set the maximum length of the sentence.
 	(*sentence)->max_length_ = max_length;
-
-	// Set the number of vertices in the vertex array.
 	(*sentence)->vertex_count_ = 6 * max_length;
-
-	// Set the number of indexes in the index array.
 	(*sentence)->index_count_ = (*sentence)->vertex_count_;
 
-	// Create the index array.
 	auto indices = new uint16_t[(*sentence)->index_count_];
 	if(!indices){
 		return false;
 	}
 
-	// Initialize the index array.
 	for(auto i=0; i<(*sentence)->index_count_; ++i){
 		indices[i] = i;
 	}
@@ -412,7 +421,6 @@ bool Text::InitializeSentence(SentenceType** sentence, int max_length){
 	(*sentence)->index_buffer_view_.SizeInBytes = sizeof(uint16_t) * (*sentence)->index_count_;
 	(*sentence)->index_buffer_view_.Format = DXGI_FORMAT_R16_UINT;
 
-	// Release the index array as it is no longer needed.
 	delete[] indices;
 	indices = nullptr;
 
@@ -420,39 +428,30 @@ bool Text::InitializeSentence(SentenceType** sentence, int max_length){
 }
 
 bool Text::UpdateSentenceVertexBuffer(
-	SentenceType* sentence,
-	WCHAR *text,
+	SentenceType* sentence,WCHAR *text,
 	int positionX, int positionY,
 	float red, float green, float blue
 	) {
 
-	// Store the color of the sentence.
 	sentence->red_ = red;
 	sentence->green_ = green;
 	sentence->blue_ = blue;
 
-	// Get the number of letters in the sentence.
 	auto numLetters = (int)wcslen(text);
-
-	// Check for possible buffer overflow.
 	if (numLetters > sentence->max_length_) {
 		return false;
 	}
 
-	// Create the vertex array.
 	auto vertices = new VertexType[sentence->vertex_count_];
 	if (!vertices) {
 		return false;
 	}
 
-	// Initialize vertex array to zeros at first.
 	memset(vertices, 0, (sizeof(VertexType) * sentence->vertex_count_));
 
-	// Calculate the X and Y pixel position on the screen to start drawing to.
 	auto drawX = static_cast<float>(((screen_width_ / 2) * -1) + positionX);
 	auto drawY = static_cast<float>((screen_height_ / 2) - positionY);
 
-	// Use the font class to build the vertex array from the sentence text and sentence draw location.
 	font_->BuildVertexArray((void*)vertices, text, drawX, drawY);
 
     auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
@@ -531,17 +530,13 @@ bool Text::UpdateSentenceVertexBuffer(
 	fence->Release();
 	CloseHandle(fence_event);
 
-	// Release the vertex array as it is no longer needed.
 	delete[] vertices;
 	vertices = nullptr;
 
 	return true;
 }
 
-bool Text::UpdateMatrixConstant(
-	DirectX::XMMATRIX & world, 
-	DirectX::XMMATRIX & base_view, 
-	DirectX::XMMATRIX & orthonality){
+bool Text::UpdateMatrixConstant(const XMMATRIX & world, const XMMATRIX & base_view, const XMMATRIX & orthonality){
 
 	D3D12_RANGE range;
 	range.Begin = 0;
@@ -551,9 +546,9 @@ bool Text::UpdateMatrixConstant(
 		return false;
 	}
 	else {
-		matrix_constant_data_.world_ = world;
-		matrix_constant_data_.base_view_ = base_view;
-		matrix_constant_data_.orthonality_ = orthonality;
+		XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+		XMStoreFloat4x4(&matrix_constant_data_.base_view_, base_view);
+		XMStoreFloat4x4(&matrix_constant_data_.orthonality_, orthonality);
 		memcpy(data_begin, &matrix_constant_data_, sizeof(ConstantBufferType));
 		matrix_constant_buffer_->Unmap(0, nullptr);
 	}
@@ -561,7 +556,7 @@ bool Text::UpdateMatrixConstant(
 	return true;
 }
 
-bool Text::UpdateLightConstant(DirectX::XMFLOAT4 & pixel_color){
+bool Text::UpdateLightConstant(const XMFLOAT4 & pixel_color){
 
 	D3D12_RANGE range;
 	range.Begin = 0;
