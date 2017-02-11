@@ -12,12 +12,6 @@ bool Model::Initialize(WCHAR* model_filename, WCHAR **texture_filename_arr) {
 	if (CHECK(InitializeBuffers())) {
 		return false;
 	}
-	if (CHECK(InitializeRootSignature())) {
-		return false;
-	}
-	if (CHECK(InitializeGraphicsPipelineState())) {
-		return false;
-	}
 
 	texture_ = std::make_shared<Texture>();
 	texture_->set_texture_array_capacity(3);
@@ -64,7 +58,6 @@ bool Model::LoadModel(WCHAR* filename) {
 	}
 
 	fin.close();
-
 	return true;
 }
 
@@ -88,6 +81,7 @@ bool Model::InitializeBuffers() {
 	}
 
 	auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+
 	if (FAILED(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
@@ -143,6 +137,19 @@ bool Model::InitializeBuffers() {
 	delete[] tem_model_;
 	tem_model_ = nullptr;
 
+	return true;
+}
+
+ModelMaterial::ModelMaterial(){
+}
+
+ModelMaterial::~ModelMaterial(){
+}
+
+bool ModelMaterial::Initialize(){
+
+	auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+
 	if (FAILED(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
@@ -173,10 +180,32 @@ bool Model::InitializeBuffers() {
 		return false;
 	}
 
+	if (CHECK(InitializeRootSignature())) {
+		return false;
+	}
+	if (CHECK(InitializeGraphicsPipelineState())) {
+		return false;
+	}
+
 	return true;
 }
 
-bool Model::InitializeRootSignature() {
+DescriptorHeapPtr ModelMaterial::GetShaderRescourceView() const{
+}
+
+ResourceSharedPtr ModelMaterial::GetMatrixConstantBuffer() const{
+	return matrix_constant_buffer_;
+}
+
+ResourceSharedPtr ModelMaterial::GetLightConstantBuffer() const{
+	return light_constant_buffer_;
+}
+
+ResourceSharedPtr ModelMaterial::GetFogConstantBuffer() const{
+	return fog_constant_buffer_;
+}
+
+bool ModelMaterial::InitializeRootSignature() {
 
 	CD3DX12_DESCRIPTOR_RANGE descriptor_ranges_srv[1];
 	descriptor_ranges_srv[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0);
@@ -211,7 +240,7 @@ bool Model::InitializeRootSignature() {
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS
-		);
+	);
 
 	ID3DBlob* signature_blob = nullptr;
 	ID3DBlob *signature_error = nullptr;
@@ -220,7 +249,7 @@ bool Model::InitializeRootSignature() {
 		D3D_ROOT_SIGNATURE_VERSION_1,
 		&signature_blob,
 		&signature_error
-		))) {
+	))) {
 		return false;
 	}
 
@@ -230,7 +259,7 @@ bool Model::InitializeRootSignature() {
 		signature_blob->GetBufferPointer(),
 		signature_blob->GetBufferSize(),
 		IID_PPV_ARGS(&root_signature)
-		))) {
+	))) {
 		return false;
 	}
 	SetRootSignature(root_signature);
@@ -238,7 +267,7 @@ bool Model::InitializeRootSignature() {
 	return true;
 }
 
-bool Model::InitializeGraphicsPipelineState() {
+bool ModelMaterial::InitializeGraphicsPipelineState() {
 
 	D3D12_INPUT_ELEMENT_DESC input_element_descs[] =
 	{
@@ -266,21 +295,18 @@ bool Model::InitializeGraphicsPipelineState() {
 	if (FAILED(DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device()->CreateGraphicsPipelineState(
 		&pso_desc,
 		IID_PPV_ARGS(&pso)
-		))) {
+	))) {
 		return false;
 	}
-	SetPSOByName("model_normal",pso);
+	SetPSOByName("model_normal", pso);
 
 	return true;
 }
 
-bool Model::UpdateMatrixConstant(const XMMATRIX & world, const XMMATRIX & view, const XMMATRIX & projection) {
+bool ModelMaterial::UpdateMatrixConstant(const XMMATRIX & world, const XMMATRIX & view, const XMMATRIX & projection) {
 
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = 0;
 	UINT8 *data_begin = 0;
-	if (FAILED(matrix_constant_buffer_->Map(0, &range, reinterpret_cast<void**>(&data_begin)))) {
+	if (FAILED(matrix_constant_buffer_->Map(0, nullptr, reinterpret_cast<void**>(&data_begin)))) {
 		return false;
 	}
 	else {
@@ -294,13 +320,10 @@ bool Model::UpdateMatrixConstant(const XMMATRIX & world, const XMMATRIX & view, 
 	return true;
 }
 
-bool Model::UpdateLightConstant(const XMFLOAT4& ambient_color, const XMFLOAT4& diffuse_color, const XMFLOAT3& direction) {
+bool ModelMaterial::UpdateLightConstant(const XMFLOAT4& ambient_color, const XMFLOAT4& diffuse_color, const XMFLOAT3& direction) {
 
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = 0;
 	UINT8 *data_begin = 0;
-	if (FAILED(light_constant_buffer_->Map(0, &range, reinterpret_cast<void**>(&data_begin)))) {
+	if (FAILED(light_constant_buffer_->Map(0, nullptr, reinterpret_cast<void**>(&data_begin)))) {
 		return false;
 	}
 	else {
@@ -315,13 +338,10 @@ bool Model::UpdateLightConstant(const XMFLOAT4& ambient_color, const XMFLOAT4& d
 	return true;
 }
 
-bool Model::UpdateFogConstant(float fog_begin, float fog_end){
-	
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = 0;
+bool ModelMaterial::UpdateFogConstant(float fog_begin, float fog_end) {
+
 	UINT8 *data_begin = 0;
-	if (FAILED(fog_constant_buffer_->Map(0, &range, reinterpret_cast<void**>(&data_begin)))) {
+	if (FAILED(fog_constant_buffer_->Map(0, nullptr, reinterpret_cast<void**>(&data_begin)))) {
 		return false;
 	}
 	else {
@@ -330,6 +350,6 @@ bool Model::UpdateFogConstant(float fog_begin, float fog_end){
 		memcpy(data_begin, &fog_constant_data_, sizeof(FogBufferType));
 		fog_constant_buffer_->Unmap(0, nullptr);
 	}
-	
+
 	return true;
 }

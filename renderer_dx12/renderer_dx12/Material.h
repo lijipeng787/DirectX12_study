@@ -24,7 +24,7 @@ namespace Effect {
 
 		virtual ~Material();
 	public:
-		//virtual bool Initialize() = 0;
+		virtual bool Initialize() = 0;
 
 		//virtual bool Update() = 0;
 

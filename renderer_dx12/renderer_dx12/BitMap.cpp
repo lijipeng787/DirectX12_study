@@ -19,14 +19,6 @@ bool Bitmap::Initialize(
 		return false;
 	}
 
-	if (CHECK(InitializeRootSignature())) {
-		return false;
-	}
-
-	if (CHECK(InitializeGraphicsPipelineState())) {
-		return false;
-	}
-
 	return true;
 }
 
@@ -36,29 +28,6 @@ const VertexBufferView& Bitmap::GetVertexBufferView() const{
 
 const IndexBufferView& Bitmap::GetIndexBufferView() const{
 	return index_buffer_view_;
-}
-
-ResourceSharedPtr Bitmap::GetConstantBuffer() const{
-	return constant_buffer_;
-}
-
-bool Bitmap::UpdateConstantBuffer(const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& orthogonality) {
-
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = 0;
-	UINT8 *data_begin = 0;
-	if (FAILED(constant_buffer_->Map(0, &range, reinterpret_cast<void**>(&data_begin)))) {
-		return false;
-	}
-	else {
-		XMStoreFloat4x4(&matrix_constant_data_.world_, world);
-		XMStoreFloat4x4(&matrix_constant_data_.view_, view);
-		XMStoreFloat4x4(&matrix_constant_data_.orthogonality_, orthogonality);
-		memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
-		constant_buffer_->Unmap(0, nullptr);
-	}
-	return true;
 }
 
 bool Bitmap::UpdateBitmapPosition(int pos_x, int pos_y) {
@@ -303,11 +272,44 @@ bool Bitmap::InitializeBuffers()
 	delete[] indices;
 	indices = nullptr;
 
+	return true;
+}
+
+BitmapMaterial::BitmapMaterial(){
+}
+
+BitmapMaterial::~BitmapMaterial(){
+}
+
+
+ResourceSharedPtr BitmapMaterial::GetConstantBuffer() const {
+	return constant_buffer_;
+}
+
+bool BitmapMaterial::UpdateConstantBuffer(const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& orthogonality) {
+
+	UINT8 *data_begin = 0;
+	if (FAILED(constant_buffer_->Map(0, nullptr, reinterpret_cast<void**>(&data_begin)))) {
+		return false;
+	}
+	else {
+		XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+		XMStoreFloat4x4(&matrix_constant_data_.view_, view);
+		XMStoreFloat4x4(&matrix_constant_data_.orthogonality_, orthogonality);
+		memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
+		constant_buffer_->Unmap(0, nullptr);
+	}
+	return true;
+}
+
+bool BitmapMaterial::Initialize(){
+
 	D3D12_DESCRIPTOR_HEAP_DESC cbv_heap_desc = {};
 	cbv_heap_desc.NumDescriptors = 1;
 	cbv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
+	auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
 	if (FAILED(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
@@ -320,10 +322,17 @@ bool Bitmap::InitializeBuffers()
 
 	ZeroMemory(&matrix_constant_data_, sizeof(MatrixBufferType));
 
+	if (CHECK(InitializeRootSignature())) {
+		return false;
+	}
+
+	if (CHECK(InitializeGraphicsPipelineState())) {
+		return false;
+	}
 	return true;
 }
 
-bool Bitmap::InitializeGraphicsPipelineState() {
+bool BitmapMaterial::InitializeGraphicsPipelineState() {
 
 	D3D12_INPUT_ELEMENT_DESC input_element_descs[] =
 	{
@@ -364,7 +373,7 @@ bool Bitmap::InitializeGraphicsPipelineState() {
 	return true;
 }
 
-bool Bitmap::InitializeRootSignature() {
+bool BitmapMaterial::InitializeRootSignature() {
 
 	CD3DX12_DESCRIPTOR_RANGE descriptor_ranges_srv[1];
 	descriptor_ranges_srv[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
@@ -389,15 +398,15 @@ bool Bitmap::InitializeRootSignature() {
 	sampler_desc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootsignature_Layout(
-		ARRAYSIZE(root_parameters), 
-		root_parameters, 
-		1, 
+		ARRAYSIZE(root_parameters),
+		root_parameters,
+		1,
 		&sampler_desc,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS
-		);
+	);
 
 	ID3DBlob* signature_blob = nullptr;
 	ID3DBlob *signature_error = nullptr;
@@ -406,7 +415,7 @@ bool Bitmap::InitializeRootSignature() {
 		D3D_ROOT_SIGNATURE_VERSION_1,
 		&signature_blob,
 		&signature_error
-		))) {
+	))) {
 		return false;
 	}
 
@@ -416,7 +425,7 @@ bool Bitmap::InitializeRootSignature() {
 		signature_blob->GetBufferPointer(),
 		signature_blob->GetBufferSize(),
 		IID_PPV_ARGS(&root_signature)
-		))) {
+	))) {
 		return false;
 	}
 	SetRootSignature(root_signature);

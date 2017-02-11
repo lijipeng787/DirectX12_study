@@ -8,7 +8,41 @@
 #include "Texture.h"
 #include "Material.h"
 
-class Bitmap :public Effect::Material{
+class BitmapMaterial :Effect::Material {
+public:
+	BitmapMaterial();
+	
+	BitmapMaterial(const BitmapMaterial &rhs) = delete;
+
+	BitmapMaterial& operator=(const BitmapMaterial &rhs) = delete;
+
+	virtual ~BitmapMaterial();
+private:
+	struct MatrixBufferType {
+		DirectX::XMFLOAT4X4 world_;
+		DirectX::XMFLOAT4X4 view_;
+		DirectX::XMFLOAT4X4 orthogonality_;
+	};
+public:
+	virtual bool Initialize()override;
+
+	bool UpdateConstantBuffer(const DirectX::XMMATRIX& world,
+		const DirectX::XMMATRIX& view,
+		const DirectX::XMMATRIX& orthogonality
+	);
+
+	ResourceSharedPtr GetConstantBuffer()const;
+private:
+	bool InitializeGraphicsPipelineState();
+
+	bool InitializeRootSignature();
+private:
+	ResourceSharedPtr constant_buffer_ = nullptr;
+
+	MatrixBufferType matrix_constant_data_ = {};
+};
+
+class Bitmap {
 public:
 	Bitmap() {}
 
@@ -16,17 +50,11 @@ public:
 
 	Bitmap& operator=(const Bitmap& rhs) = delete;
 
-	virtual ~Bitmap() {}
+	~Bitmap() {}
 private:
 	struct VertexType {
 		DirectX::XMFLOAT3 position_;
 		DirectX::XMFLOAT2 texture_;
-	};
-
-	struct MatrixBufferType {
-		DirectX::XMFLOAT4X4 world_;
-		DirectX::XMFLOAT4X4 view_;
-		DirectX::XMFLOAT4X4 orthogonality_;
 	};
 public:
 	bool Initialize(
@@ -38,23 +66,14 @@ public:
 
 	const IndexBufferView& GetIndexBufferView()const;
 
-	ResourceSharedPtr GetConstantBuffer()const;
-
-	bool UpdateConstantBuffer(const DirectX::XMMATRIX& world,
-		const DirectX::XMMATRIX& view,
-		const DirectX::XMMATRIX& orthogonality
-	);
-
 	bool UpdateBitmapPosition(int pos_x, int pos_y);
 
 	const int GetIndexCount();
 private:
 	bool InitializeBuffers();
-
-	bool InitializeGraphicsPipelineState();
-
-	bool InitializeRootSignature();
 private:
+	BitmapMaterial material_ = {};
+
 	ResourceSharedPtr vertex_buffer_ = nullptr;
 
 	VertexBufferView vertex_buffer_view_;
@@ -62,10 +81,6 @@ private:
 	ResourceSharedPtr index_buffer_ = nullptr;
 
 	IndexBufferView index_buffer_view_;
-
-	ResourceSharedPtr constant_buffer_ = nullptr;
-
-	MatrixBufferType matrix_constant_data_ = {};
 
 	UINT index_count_ = 0, vertex_count_ = 0;
 
