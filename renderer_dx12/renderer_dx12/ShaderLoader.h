@@ -13,9 +13,9 @@ typedef std::vector<BlobPtr> VSBlobVector;
 
 typedef std::vector<BlobPtr> PSBlobVector;
 
-typedef std::unordered_map<std::string, int> VSIndexContainer;
+typedef std::unordered_map<std::string, unsigned int> VSIndexContainer;
 
-typedef std::unordered_map<std::string, int> PSIndexContainer;
+typedef std::unordered_map<std::string, unsigned int> PSIndexContainer;
 
 namespace ResourceLoader {
 
@@ -43,9 +43,9 @@ namespace ResourceLoader {
 
 			void SetPSTargetVersion(LPCSTR target_version);
 
-			BlobPtr GetVertexShaderBlobByIndex(int index) const;
+			BlobPtr GetVertexShaderBlobByIndex(unsigned int index) const;
 
-			BlobPtr GetPixelShaderBlobByIndex(int index) const;
+			BlobPtr GetPixelShaderBlobByIndex(unsigned int index) const;
 
 			BlobPtr GetVertexShaderBlobByFileName(WCHAR* filename) const;
 

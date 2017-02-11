@@ -352,14 +352,14 @@ bool Bitmap::InitializeGraphicsPipelineState() {
 	if (FAILED(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso)))) {
 		return false;
 	}
-	SetPSO(pso);
+	SetPSOByName("bitmap_normal", pso);
 
 	PipelineStateObjectPtr pso2 = {};
 	pso_desc.DepthStencilState.DepthEnable = false;
 	if (FAILED(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso2)))) {
 		return false;
 	}
-	SetSecondPSO(pso);
+	SetPSOByName("bitmap_depth_disable", pso2);
 
 	return true;
 }

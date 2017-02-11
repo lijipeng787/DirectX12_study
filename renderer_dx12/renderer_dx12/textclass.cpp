@@ -208,7 +208,7 @@ bool Text::InitializeGraphicsPipelineState(){
 		))) {
 		return false;
 	}
-	SetPSO(pso);
+	SetPSOByName("text_normal",pso);
 
 	D3D12_BLEND_DESC blend_desc = {};
 	blend_desc.AlphaToCoverageEnable = false;
@@ -231,7 +231,7 @@ bool Text::InitializeGraphicsPipelineState(){
 		))) {
 		return false;
 	}
-	SetThirdPSO(pso);
+	SetPSOByName("text_blend_enable",pso);
 
 	return true;
 }

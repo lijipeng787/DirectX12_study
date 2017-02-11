@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Material.h"
 
+using namespace std;
+
 VertexShaderByteCode Effect::Material::GetVSByteCode() const{
 	return vertex_shader_bitecode_;
 }
@@ -25,28 +27,23 @@ void Effect::Material::SetRootSignature(const RootSignaturePtr & root_signature)
 	root_signature_.Swap(root_signature.Get());
 }
 
-PipelineStateObjectPtr Effect::Material::GetPSO() const{
-	return pso_;
+PipelineStateObjectPtr Effect::Material::GetPSOByIndex(unsigned int index) const{
+	return pso_cotainer_.at(index);
 }
 
-void Effect::Material::SetPSO(const PipelineStateObjectPtr & pso){
-	pso_.Swap(pso.Get());
+PipelineStateObjectPtr Effect::Material::GetPSOByName(std::string name) const{
+	unsigned int index = pso_index_cotainer_.find(name)->second;
+	return GetPSOByIndex(index);
 }
 
-PipelineStateObjectPtr Effect::Material::GetSecondPSO() const{
-	return pso_depth_disabled_;
-}
+void Effect::Material::SetPSOByName(std::string name, const PipelineStateObjectPtr & pso){
 
-void Effect::Material::SetSecondPSO(const PipelineStateObjectPtr & pso){
-	pso_depth_disabled_.Swap(pso.Get());
-}
-
-PipelineStateObjectPtr Effect::Material::GetThirdPSO() const{
-	return pso_blend_enable_;
-}
-
-void Effect::Material::SetThirdPSO(const PipelineStateObjectPtr & pso){
-	pso_blend_enable_.Swap(pso.Get());
+	if (pso_index_cotainer_.find(name) != pso_index_cotainer_.end()) {
+		return;
+	}
+	pso_cotainer_.push_back(pso);
+	unsigned int index = pso_cotainer_.size() - 1;
+	pso_index_cotainer_.insert(make_pair(name, index));
 }
 
 Effect::Material::Material(){

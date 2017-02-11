@@ -3,11 +3,16 @@
 #ifndef _MATERIAL_H_
 #define _MATERIAL_H_
 
+#include <unordered_map>
 #include <d3d12.h>
 
 #include "TypeDefine.h"
 
 namespace Effect {
+
+	typedef std::vector<PipelineStateObjectPtr> PSOContainer;
+
+	typedef std::unordered_map<std::string, unsigned int> PSOIndexCotainer;
 
 	class Material {
 	public:
@@ -41,17 +46,11 @@ namespace Effect {
 
 		void SetRootSignature(const RootSignaturePtr& root_signature);
 
-		PipelineStateObjectPtr GetPSO()const;
+		PipelineStateObjectPtr GetPSOByIndex(unsigned int index)const;
 
-		void SetPSO(const PipelineStateObjectPtr& pso);
+		PipelineStateObjectPtr GetPSOByName(std::string name)const;
 
-		PipelineStateObjectPtr GetSecondPSO()const;
-
-		void SetSecondPSO(const PipelineStateObjectPtr& pso);
-
-		PipelineStateObjectPtr GetThirdPSO()const;
-
-		void SetThirdPSO(const PipelineStateObjectPtr& pso);
+		void SetPSOByName(std::string name,const PipelineStateObjectPtr& pso);
 	private:
 		VertexShaderByteCode vertex_shader_bitecode_ = {};
 
@@ -59,11 +58,9 @@ namespace Effect {
 
 		RootSignaturePtr root_signature_ = nullptr;
 
-		PipelineStateObjectPtr pso_ = nullptr;
+		PSOContainer pso_cotainer_ = {};
 
-		PipelineStateObjectPtr pso_depth_disabled_ = nullptr;
-
-		PipelineStateObjectPtr pso_blend_enable_ = nullptr;
+		PSOIndexCotainer pso_index_cotainer_ = {};
 	};
 
 }

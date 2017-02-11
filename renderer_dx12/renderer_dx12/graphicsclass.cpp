@@ -203,15 +203,15 @@ bool Graphics::Render() {
 	}
 
 	auto off_screen_root_signature = bitmap_->GetRootSignature();
-	auto off_screen_pso = bitmap_->GetPSO();
+	auto off_screen_pso = bitmap_->GetPSOByName("bitmap_normal");
 
 	auto font_root_signature = text_->GetRootSignature();
-	auto blend_enabled_pso = text_->GetThirdPSO();
+	auto blend_enabled_pso = text_->GetPSOByName("text_blend_enable");
 	auto font_matrix_constant = text_->GetMatrixConstantBuffer();
 	auto font_pixel_constant = text_->GetPixelConstantBuffer();
 
 	auto light_root_signature = model_->GetRootSignature();
-	auto pso = model_->GetPSO();
+	auto pso = model_->GetPSOByName("model_normal");
 	auto light_matrix_constant = model_->GetMatrixConstantBuffer();
 	auto light_constant = model_->GetLightConstantBuffer();
 	auto fog_constant = model_->GetFogConstantBuffer();

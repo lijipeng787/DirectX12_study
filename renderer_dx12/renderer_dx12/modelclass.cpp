@@ -269,7 +269,7 @@ bool Model::InitializeGraphicsPipelineState() {
 		))) {
 		return false;
 	}
-	SetPSO(pso);
+	SetPSOByName("model_normal",pso);
 
 	return true;
 }

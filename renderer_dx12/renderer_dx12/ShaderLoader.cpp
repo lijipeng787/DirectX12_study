@@ -45,6 +45,12 @@ bool ShaderLoader::CreateVSFromFile(WCHAR * vs_filename){
 	UINT compile_flags = 0;
 #endif
 
+	string vs_string = {};
+	WCHARToString(vs_filename, vs_string);
+	if (vs_index_container_.find(vs_string) != vs_index_container_.end()) {
+		return true;
+	}
+
 	BlobPtr vertex_shader_blob = {};
 	if (FAILED(D3DCompileFromFile(vs_filename, nullptr, nullptr, vs_entry_point_, vs_target_version_,
 		compile_flags, 0, &vertex_shader_blob, &last_compile_error_
@@ -58,10 +64,8 @@ bool ShaderLoader::CreateVSFromFile(WCHAR * vs_filename){
 	}
 
 	vertex_shader_container.push_back(vertex_shader_blob);
-	int index = vertex_shader_container.size() - 1;
+	unsigned int index = vertex_shader_container.size() - 1;
 
-	string vs_string = {};
-	WCHARToString(vs_filename, vs_string);
 	vs_index_container_.insert(make_pair(vs_string, index));
 
 	return true;
@@ -74,6 +78,12 @@ bool ShaderLoader::CreatePSFromFile(WCHAR * ps_filename){
 #else
 	UINT compile_flags = 0;
 #endif
+
+	string ps_string = {};
+	WCHARToString(ps_filename, ps_string);
+	if (ps_index_container_.find(ps_string) != ps_index_container_.end()) {
+		return true;
+	}
 
 	BlobPtr pixel_shader_blob = {};
 	if (FAILED(D3DCompileFromFile(ps_filename, nullptr, nullptr, ps_entry_point_, ps_target_version_,
@@ -88,10 +98,8 @@ bool ShaderLoader::CreatePSFromFile(WCHAR * ps_filename){
 	}
 
 	pixel_shader_container.push_back(pixel_shader_blob);
-	int index = pixel_shader_container.size() - 1;
+	unsigned int index = pixel_shader_container.size() - 1;
 
-	string ps_string = {};
-	WCHARToString(ps_filename, ps_string);
 	ps_index_container_.insert(make_pair(ps_string, index));
 
 	return true;
@@ -113,25 +121,25 @@ void ShaderLoader::SetPSTargetVersion(LPCSTR target_version) {
 	ps_target_version_ = target_version;
 }
 
-BlobPtr ShaderLoader::GetVertexShaderBlobByIndex(int index) const {
+BlobPtr ShaderLoader::GetVertexShaderBlobByIndex(unsigned int index) const {
 	return vertex_shader_container.at(index);
 }
 			 
-BlobPtr ShaderLoader::GetPixelShaderBlobByIndex(int index) const {
+BlobPtr ShaderLoader::GetPixelShaderBlobByIndex(unsigned int index) const {
 	return pixel_shader_container.at(index);
 }
 			  
 BlobPtr ShaderLoader::GetVertexShaderBlobByFileName(WCHAR* filename) const {
 	string s;
 	WCHARToString(filename, s);
-	auto index = vs_index_container_.find(s)->second;
+	unsigned int index = vs_index_container_.find(s)->second;
 	return GetVertexShaderBlobByIndex(index);
 }
 			  
 BlobPtr ShaderLoader::GetPixelShaderBlobByFileName(WCHAR* filename) const {
 	string s;
 	WCHARToString(filename, s);
-	auto index = ps_index_container_.find(s)->second;
+	unsigned int index = ps_index_container_.find(s)->second;
 	return GetPixelShaderBlobByIndex(index);
 }
 // TODO: finish these functions
