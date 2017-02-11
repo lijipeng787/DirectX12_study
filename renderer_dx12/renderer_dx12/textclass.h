@@ -62,11 +62,11 @@ public:
 		return sentence_vector_.at(index)->index_count_;
 	}
 
-	D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView(int index)const {
+	const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView(int index)const {
 		return sentence_vector_.at(index)->vertex_buffer_view_;
 	}
 
-	D3D12_INDEX_BUFFER_VIEW GetIndexBufferView(int index)const {
+	const D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView(int index)const {
 		return sentence_vector_.at(index)->index_buffer_view_;
 	}
 

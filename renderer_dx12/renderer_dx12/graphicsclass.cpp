@@ -143,6 +143,7 @@ bool Graphics::Frame(){
 		return false;
 	}
 
+	camera_->Update();
 	if (FAILED(Render())) {
 		return false;
 	}
@@ -158,8 +159,6 @@ bool Graphics::Render() {
 	if (rotation > 360.0f) {
 		rotation -= 360.0f;
 	}
-
-	camera_->Update();
 
 	DirectX::XMMATRIX rotate_world = {};
 	d3d12_device_->GetWorldMatrix(rotate_world);
@@ -197,6 +196,7 @@ bool Graphics::Render() {
 	if (CHECK(text_->UpdateMatrixConstant(font_world, view, orthogonality))) {
 		return false;
 	}
+
 	DirectX::XMFLOAT4 pixel_color(1.0f, 0.0f, 0.0f, 0.0f);
 	if (CHECK(text_->UpdateLightConstant(pixel_color))) {
 		return false;

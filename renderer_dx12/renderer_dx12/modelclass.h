@@ -58,9 +58,9 @@ public:
 
 	UINT Model::GetIndexCount() const { return index_count_; }
 
-	D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const { return vertex_buffer_view_; }
+	const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const { return vertex_buffer_view_; }
 
-	D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const { return index_buffer_view_; }
+	const D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView() const { return index_buffer_view_; }
 
 	DescriptorHeapPtr GetShaderRescourceView() const { return texture_->get_textures_descriptor_heap(); }
 

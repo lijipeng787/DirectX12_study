@@ -538,11 +538,8 @@ bool Text::UpdateSentenceVertexBuffer(
 
 bool Text::UpdateMatrixConstant(const XMMATRIX & world, const XMMATRIX & base_view, const XMMATRIX & orthonality){
 
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = 0;
 	UINT8 *data_begin = 0;
-	if (FAILED(matrix_constant_buffer_->Map(0, &range, reinterpret_cast<void**>(&data_begin)))) {
+	if (FAILED(matrix_constant_buffer_->Map(0, nullptr, reinterpret_cast<void**>(&data_begin)))) {
 		return false;
 	}
 	else {
@@ -558,11 +555,8 @@ bool Text::UpdateMatrixConstant(const XMMATRIX & world, const XMMATRIX & base_vi
 
 bool Text::UpdateLightConstant(const XMFLOAT4 & pixel_color){
 
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = 0;
 	UINT8 *data_begin = 0;
-	if (FAILED(pixel_color_constant_buffer_->Map(0, &range, reinterpret_cast<void**>(&data_begin)))) {
+	if (FAILED(pixel_color_constant_buffer_->Map(0, nullptr, reinterpret_cast<void**>(&data_begin)))) {
 		return false;
 	}
 	else {

@@ -34,9 +34,9 @@ public:
 		UINT bitmap_width, UINT bitmap_height
 	);
 
-	VertexBufferView GetVertexBufferView()const;
+	const VertexBufferView& GetVertexBufferView()const;
 
-	IndexBufferView GetIndexBufferView()const;
+	const IndexBufferView& GetIndexBufferView()const;
 
 	ResourceSharedPtr GetConstantBuffer()const;
 

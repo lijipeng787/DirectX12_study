@@ -30,11 +30,11 @@ bool Bitmap::Initialize(
 	return true;
 }
 
-VertexBufferView Bitmap::GetVertexBufferView() const{
+const VertexBufferView& Bitmap::GetVertexBufferView() const{
 	return vertex_buffer_view_;
 }
 
-IndexBufferView Bitmap::GetIndexBufferView() const{
+const IndexBufferView& Bitmap::GetIndexBufferView() const{
 	return index_buffer_view_;
 }
 

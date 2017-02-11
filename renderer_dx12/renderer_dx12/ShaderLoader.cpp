@@ -7,7 +7,7 @@ using namespace std;
 
 using namespace ResourceLoader;
 
-void WCHARToString(WCHAR* wchar, string s) {
+void WCHARToString(WCHAR* wchar, string& s) {
 
 	wchar_t * wText = wchar;
 	DWORD length_of_wchar = WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, NULL, 0, NULL, FALSE);
