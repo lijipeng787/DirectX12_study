@@ -4,14 +4,12 @@
 #include <memory>
 #include <DirectXMath.h>
 
-#include "TypeDefine.h"
-#include "Texture.h"
 #include "Material.h"
 
-class BitmapMaterial :Effect::Material {
+class BitmapMaterial :public Effect::Material {
 public:
 	BitmapMaterial();
-	
+
 	BitmapMaterial(const BitmapMaterial &rhs) = delete;
 
 	BitmapMaterial& operator=(const BitmapMaterial &rhs) = delete;
@@ -54,7 +52,7 @@ public:
 private:
 	struct VertexType {
 		DirectX::XMFLOAT3 position_;
-		DirectX::XMFLOAT2 texture_;
+		DirectX::XMFLOAT2 texture_position_;
 	};
 public:
 	bool Initialize(
@@ -65,6 +63,8 @@ public:
 	const VertexBufferView& GetVertexBufferView()const;
 
 	const IndexBufferView& GetIndexBufferView()const;
+
+	BitmapMaterial* GetMaterial();
 
 	bool UpdateBitmapPosition(int pos_x, int pos_y);
 

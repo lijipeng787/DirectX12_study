@@ -1,7 +1,16 @@
 #include "stdafx.h"
 #include "graphicsclass.h"
 
-using namespace ResourceLoader;
+#include "DirectX12Device.h"
+#include "Camera.h"
+#include "Input.h"
+#include "Fps.h"
+#include "Light.h"
+#include "Cpu.h"
+
+#include "modelclass.h"
+#include "textclass.h"
+#include "BitMap.h"
 
 bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 
@@ -19,7 +28,6 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 	if (!cpu_) {
 		return false;
 	}
-
 	cpu_->Initialize();
 
 	fps_ = std::make_shared<Fps>();
@@ -37,13 +45,12 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 	if (!light_) {
 		return false;
 	}
-
 	light_->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
 	light_->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	light_->SetDirection(0.0f, 0.0f, 1.0f);
 	
 	{
-		shader_loader_ = std::make_shared<ShaderLoader>();
+		shader_loader_ = std::make_shared<ResourceLoader::ShaderLoader>();
 		if (!shader_loader_) {
 			return false;
 		}
@@ -75,8 +82,9 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 		if (!bitmap_) {
 			return false;
 		}
-		bitmap_->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"textureVS.hlsl").Get()));
-		bitmap_->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"texturePS.hlsl").Get()));
+		BitmapMaterial *bitmap_material = bitmap_->GetMaterial();
+		bitmap_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"textureVS.hlsl").Get()));
+		bitmap_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"texturePS.hlsl").Get()));
 		if (CHECK(bitmap_->Initialize(screenWidth, screenHeight, 255, 255))) {
 			MessageBox(hwnd, L"Could not initialize Bitmap.", L"Error", MB_OK);
 			return false;
@@ -88,8 +96,9 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 		if (!model_) {
 			return false;
 		}
-		model_->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"lightVS.hlsl").Get()));
-		model_->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"lightPS.hlsl").Get()));
+		ModelMaterial *model_material = model_->GetMaterial();
+		model_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"lightVS.hlsl").Get()));
+		model_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"lightPS.hlsl").Get()));
 
 		WCHAR* texture_filename_arr[3] = { L"data/stone01.dds", L"data/dirt01.dds", L"data/alpha01.dds" };
 		if (CHECK(model_->Initialize(L"data/cube.txt", texture_filename_arr))) {
@@ -103,8 +112,9 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd){
 		if (!text_) {
 			return false;
 		}
-		text_->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"fontVS.hlsl").Get()));
-		text_->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"fontPS.hlsl").Get()));
+		TextMaterial *text_material = text_->GetMaterial();
+		text_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetVertexShaderBlobByFileName(L"fontVS.hlsl").Get()));
+		text_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(shader_loader_->GetPixelShaderBlobByFileName(L"fontPS.hlsl").Get()));
 
 		WCHAR *font_texture[1] = { L"data/font.dds" };
 		if (CHECK(text_->LoadFont(L"data/fontdata.txt", font_texture))) {
@@ -181,40 +191,40 @@ bool Graphics::Render() {
 	d3d12_device_->GetOrthoMatrix(orthogonality);
 	orthogonality = DirectX::XMMatrixTranspose(orthogonality);
 
-	if (CHECK(model_->UpdateMatrixConstant(rotate_world, view, projection))) {
+	if (CHECK(model_->GetMaterial()->UpdateMatrixConstant(rotate_world, view, projection))) {
 		return false;
 	}
 
-	if (CHECK(model_->UpdateLightConstant(light_->GetAmbientColor(), light_->GetDiffuseColor(), light_->GetDirection()))) {
+	if (CHECK(model_->GetMaterial()->UpdateLightConstant(light_->GetAmbientColor(), light_->GetDiffuseColor(), light_->GetDirection()))) {
 		return false;
 	}
 
-	if (CHECK(model_->UpdateFogConstant(-0.5f, 10.0f))) {
+	if (CHECK(model_->GetMaterial()->UpdateFogConstant(-0.5f, 10.0f))) {
 		return false;
 	}
 
-	if (CHECK(text_->UpdateMatrixConstant(font_world, view, orthogonality))) {
+	if (CHECK(text_->GetMaterial()->UpdateMatrixConstant(font_world, view, orthogonality))) {
 		return false;
 	}
 
 	DirectX::XMFLOAT4 pixel_color(1.0f, 0.0f, 0.0f, 0.0f);
-	if (CHECK(text_->UpdateLightConstant(pixel_color))) {
+	if (CHECK(text_->GetMaterial()->UpdateLightConstant(pixel_color))) {
 		return false;
 	}
 
-	auto off_screen_root_signature = bitmap_->GetRootSignature();
-	auto off_screen_pso = bitmap_->GetPSOByName("bitmap_normal");
+	auto off_screen_root_signature = bitmap_->GetMaterial()->GetRootSignature();
+	auto off_screen_pso = bitmap_->GetMaterial()->GetPSOByName("bitmap_normal");
 
-	auto font_root_signature = text_->GetRootSignature();
-	auto blend_enabled_pso = text_->GetPSOByName("text_blend_enable");
-	auto font_matrix_constant = text_->GetMatrixConstantBuffer();
-	auto font_pixel_constant = text_->GetPixelConstantBuffer();
+	auto font_root_signature = text_->GetMaterial()->GetRootSignature();
+	auto blend_enabled_pso = text_->GetMaterial()->GetPSOByName("text_blend_enable");
+	auto font_matrix_constant = text_->GetMaterial()->GetMatrixConstantBuffer();
+	auto font_pixel_constant = text_->GetMaterial()->GetPixelConstantBuffer();
 
-	auto light_root_signature = model_->GetRootSignature();
-	auto pso = model_->GetPSOByName("model_normal");
-	auto light_matrix_constant = model_->GetMatrixConstantBuffer();
-	auto light_constant = model_->GetLightConstantBuffer();
-	auto fog_constant = model_->GetFogConstantBuffer();
+	auto light_root_signature = model_->GetMaterial()->GetRootSignature();
+	auto pso = model_->GetMaterial()->GetPSOByName("model_normal");
+	auto light_matrix_constant = model_->GetMaterial()->GetMatrixConstantBuffer();
+	auto light_constant = model_->GetMaterial()->GetLightConstantBuffer();
+	auto fog_constant = model_->GetMaterial()->GetFogConstantBuffer();
 
 	if (CHECK(d3d12_device_->ResetCommandAllocator())) {
 		return false;
@@ -326,14 +336,14 @@ bool Graphics::Render() {
 		d3d12_device_->SetGraphicsRootSignature(off_screen_root_signature);
 		d3d12_device_->SetPipelineStateObject(off_screen_pso);
 
-		bitmap_->UpdateConstantBuffer(font_world, view, orthogonality);
+		bitmap_->GetMaterial()->UpdateConstantBuffer(font_world, view, orthogonality);
 		bitmap_->UpdateBitmapPosition(100, 100);
 
 		auto off_screen_heap = d3d12_device_->GetOffScreenTextureHeapView();
 		ID3D12DescriptorHeap *off_screen_descriptor_heap[] = { off_screen_heap.Get() };
 		d3d12_device_->SetDescriptorHeaps(1, off_screen_descriptor_heap);
 		d3d12_device_->SetGraphicsRootDescriptorTable(0, off_screen_descriptor_heap[0]->GetGPUDescriptorHandleForHeapStart());
-		d3d12_device_->SetGraphicsRootConstantBufferView(1, bitmap_->GetConstantBuffer()->GetGPUVirtualAddress());
+		d3d12_device_->SetGraphicsRootConstantBufferView(1, bitmap_->GetMaterial()->GetConstantBuffer()->GetGPUVirtualAddress());
 
 		d3d12_device_->Draw(bitmap_->GetIndexCount());
 

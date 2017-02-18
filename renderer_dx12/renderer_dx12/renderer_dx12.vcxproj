@@ -156,7 +156,7 @@
     <ClInclude Include="dds.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DirectX12Device.h" />
-    <ClInclude Include="fontclass.h" />
+    <ClInclude Include="Font.h" />
     <ClInclude Include="Fps.h" />
     <ClInclude Include="graphicsclass.h" />
     <ClInclude Include="Input.h" />
@@ -167,7 +167,7 @@
     <ClInclude Include="systemclass.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="textclass.h" />
-    <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="TypeDefine.h" />
   </ItemGroup>
@@ -179,7 +179,7 @@
     <ClCompile Include="Cpu.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DirectX12Device.cpp" />
-    <ClCompile Include="fontclass.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="Fps.cpp" />
     <ClCompile Include="graphicsclass.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -194,7 +194,7 @@
     </ClCompile>
     <ClCompile Include="systemclass.cpp" />
     <ClCompile Include="textclass.cpp" />
-    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>

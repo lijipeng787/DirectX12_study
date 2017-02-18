@@ -1,12 +1,11 @@
 #ifndef _MODELCLASS_H_
 #define _MODELCLASS_H_
 
-#include <fstream>
 #include <memory>
+#include <DirectXMath.h>
 
-#include "DirectX12Device.h"
-#include "Texture.h"
 #include "Material.h"
+#include "TextureLoader.h"
 
 class ModelMaterial :public Effect::Material {
 public:
@@ -39,8 +38,6 @@ private:
 	};
 public:
 	virtual bool Initialize()override;
-
-	DescriptorHeapPtr GetShaderRescourceView() const;
 
 	ResourceSharedPtr GetMatrixConstantBuffer() const;
 
@@ -91,7 +88,7 @@ public:
 private:
 	struct VertexType {
 		DirectX::XMFLOAT3 position_;
-		DirectX::XMFLOAT2 texture_;
+		DirectX::XMFLOAT2 texture_position_;
 		DirectX::XMFLOAT3 normal_;
 	};
 
@@ -103,11 +100,11 @@ private:
 public:
 	bool Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr);
 
-	bool Model::LoadTexture(WCHAR **texture_filename_arr) { 
-		return texture_->set_texture(texture_filename_arr); 
-	}
-
 	UINT GetIndexCount() const { return index_count_; }
+
+	ModelMaterial* GetMaterial();
+
+	DescriptorHeapPtr GetShaderRescourceView() const;
 
 	const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const { return vertex_buffer_view_; }
 
@@ -116,7 +113,11 @@ private:
 	bool LoadModel(WCHAR *filename);
 
 	bool InitializeBuffers();
+
+	bool LoadTexture(WCHAR **texture_filename_arr);
 private:
+	ModelMaterial material_ = {};
+
 	ResourceSharedPtr vertex_buffer_ = nullptr;
 
 	D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
@@ -131,7 +132,7 @@ private:
 
 	ModelType *tem_model_ = nullptr;
 
-	std::shared_ptr<Texture> texture_ = nullptr;
+	std::shared_ptr<ResourceLoader::TextureLoader> texture_container_ = nullptr;
 };
 
 #endif // !_MODELCLASS_H_

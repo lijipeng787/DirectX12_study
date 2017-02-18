@@ -7,6 +7,8 @@
 #include <wrl.h>
 #include <d3dcompiler.h>
 
+#include "TypeDefine.h"
+
 typedef Microsoft::WRL::ComPtr<ID3DBlob> BlobPtr;
 
 typedef std::vector<BlobPtr> VSBlobVector;

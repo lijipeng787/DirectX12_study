@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "BitMap.h"
 
+#include "DirectX12Device.h"
+
 using namespace std;
 using namespace DirectX;
 
@@ -18,6 +20,9 @@ bool Bitmap::Initialize(
 	if(CHECK(InitializeBuffers())){
 		return false;
 	}
+	if (CHECK(material_.Initialize())) {
+		return false;
+	}
 
 	return true;
 }
@@ -28,6 +33,10 @@ const VertexBufferView& Bitmap::GetVertexBufferView() const{
 
 const IndexBufferView& Bitmap::GetIndexBufferView() const{
 	return index_buffer_view_;
+}
+
+BitmapMaterial* Bitmap::GetMaterial(){
+	return &material_;
 }
 
 bool Bitmap::UpdateBitmapPosition(int pos_x, int pos_y) {
@@ -55,24 +64,24 @@ bool Bitmap::UpdateBitmapPosition(int pos_x, int pos_y) {
 	// First triangle.
 	// Top left.
 	vertices[0].position_ = DirectX::XMFLOAT3(left, top, 0.0f);  
-	vertices[0].texture_ = DirectX::XMFLOAT2(0.0f, 0.0f);
+	vertices[0].texture_position_ = DirectX::XMFLOAT2(0.0f, 0.0f);
 	// Bottom right.
 	vertices[1].position_ = DirectX::XMFLOAT3(right, bottom, 0.0f);
-	vertices[1].texture_ = DirectX::XMFLOAT2(1.0f, 1.0f);
+	vertices[1].texture_position_ = DirectX::XMFLOAT2(1.0f, 1.0f);
 	// Bottom left.
 	vertices[2].position_ = DirectX::XMFLOAT3(left, bottom, 0.0f);
-	vertices[2].texture_ = DirectX::XMFLOAT2(0.0f, 1.0f);
+	vertices[2].texture_position_ = DirectX::XMFLOAT2(0.0f, 1.0f);
 
 	// Second triangle.
 	// Top left.
 	vertices[3].position_ = DirectX::XMFLOAT3(left, top, 0.0f);
-	vertices[3].texture_ = DirectX::XMFLOAT2(0.0f, 0.0f);
+	vertices[3].texture_position_ = DirectX::XMFLOAT2(0.0f, 0.0f);
 	// Top right.
 	vertices[4].position_ = DirectX::XMFLOAT3(right, top, 0.0f);
-	vertices[4].texture_ = DirectX::XMFLOAT2(1.0f, 0.0f);
+	vertices[4].texture_position_ = DirectX::XMFLOAT2(1.0f, 0.0f);
 	// Bottom right.
 	vertices[5].position_ = DirectX::XMFLOAT3(right, bottom, 0.0f);
-	vertices[5].texture_ = DirectX::XMFLOAT2(1.0f, 1.0f);
+	vertices[5].texture_position_ = DirectX::XMFLOAT2(1.0f, 1.0f);
 
 	D3D12_RANGE range;
 	range.Begin = 0;

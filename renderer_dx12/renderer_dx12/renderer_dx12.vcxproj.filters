@@ -41,9 +41,6 @@
     <ClInclude Include="DirectX12Device.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="fontclass.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Fps.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -68,9 +65,6 @@
     <ClInclude Include="textclass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -81,6 +75,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TypeDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -101,9 +101,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DirectX12Device.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="fontclass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Fps.cpp">
@@ -130,9 +127,6 @@
     <ClCompile Include="textclass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -140,6 +134,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureLoader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Font.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

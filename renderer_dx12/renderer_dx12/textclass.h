@@ -1,8 +1,13 @@
 #ifndef _TEXTCLASS_H_
 #define _TEXTCLASS_H_
 
+#include <memory>
+#include <DirectXMath.h>
+
 #include "Material.h"
-#include "fontclass.h"
+#include "TextureLoader.h"
+
+class Font;
 
 class TextMaterial : public Effect::Material {
 public:
@@ -24,7 +29,7 @@ private:
 		DirectX::XMFLOAT4 pixel_color_;
 	};
 public:
-	DescriptorHeapPtr GetShaderRescourceView()const { return font_->GetTexture(); }
+	virtual bool Initialize()override;
 
 	ResourceSharedPtr GetMatrixConstantBuffer()const { return matrix_constant_buffer_; }
 
@@ -38,6 +43,8 @@ public:
 
 	bool UpdateLightConstant(const DirectX::XMFLOAT4& pixel_color);
 private:
+	bool InitializeConstantBuffer();
+
 	bool InitializeRootSignature();
 
 	bool InitializeGraphicsPipelineState();
@@ -59,7 +66,7 @@ public:
 
 	Text& operator=(const Text& rhs) = delete;
 
-	virtual ~Text() {/* todo deallocate sentence vector memory */ }
+	virtual ~Text() {/* TODO: deallocate sentence vector memory */ }
 private:
 	struct SentenceType {
 		ResourceSharedPtr vertex_buffer_ = nullptr;
@@ -76,7 +83,7 @@ private:
 
 	struct VertexType {
 		DirectX::XMFLOAT3 position_;
-		DirectX::XMFLOAT2 texture_;
+		DirectX::XMFLOAT2 texture_position_;
 	};
 public:
 	bool SetFps(int fps);
@@ -87,9 +94,9 @@ public:
 
 	bool LoadFont(WCHAR *font_data, WCHAR **font_texture);
 
-	bool InitializeConstantBuffer();
+	TextMaterial* GetMaterial();
 
-	bool InitializeSentence(SentenceType** sentence, int max_length);
+	DescriptorHeapPtr GetShaderRescourceView()const;
 
 	UINT GetIndexCount(int index)const {
 		return sentence_vector_.at(index)->index_count_;
@@ -103,7 +110,7 @@ public:
 		return sentence_vector_.at(index)->index_buffer_view_;
 	}
 
-	int GetSentenceCount()const { return static_cast<int>(sentence_vector_.size()); }
+	unsigned int GetSentenceCount()const { return static_cast<unsigned int>(sentence_vector_.size()); }
 
 	bool UpdateSentenceVertexBuffer(
 		SentenceType* sentence, WCHAR* text,
@@ -111,13 +118,21 @@ public:
 		float red, float green, float blue
 	);
 private:
+	bool InitializeSentence(SentenceType** sentence, int max_length);
+
+	bool LoadTexture(WCHAR **filename_arr);
+private:
+	TextMaterial material_ = {};
+
 	std::shared_ptr<Font> font_ = nullptr;
 
 	int screen_width_ = 0, screen_height_ = 0;
 
 	DirectX::XMMATRIX base_view_matrix_ = {};
 
-	std::vector<SentenceType*> sentence_vector_;
+	std::shared_ptr<ResourceLoader::TextureLoader> texture_container_ = nullptr;
+
+	std::vector<SentenceType*> sentence_vector_ = {};
 };
 
 #endif

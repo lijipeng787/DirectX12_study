@@ -2,25 +2,24 @@
 #define HEADER_GRAPHICSCLASS_H
 
 #include <memory>
-#include "DirectX12Device.h"
-#include "Camera.h"
-#include "Input.h"
-#include "Fps.h"
-#include "Light.h"
-#include "Cpu.h"
+#include <Windows.h>
+
 #include "ShaderLoader.h"
 
-#include "modelclass.h"
-#include "textclass.h"
-#include "BitMap.h"
-
 constexpr bool FULL_SCREEN = false;
-
 constexpr bool VSYNC_ENABLED = true;
-
 constexpr float SCREEN_DEPTH = 1000.0f;
-
 constexpr float SCREEN_NEAR = 0.1f;
+
+class DirectX12Device;
+class Light;
+class Camera;
+class Input;
+class Bitmap;
+class Text;
+class Model;
+class Fps;
+class Cpu;
 
 class Graphics{
 public:
@@ -37,7 +36,6 @@ public:
 	void Shutdown();
 	
 	bool Frame();
-
 private:
 	bool Render();
 private:

@@ -1,8 +1,13 @@
 #include "stdafx.h"
 #include "modelclass.h"
 
+#include <fstream>
+
+#include "DirectX12Device.h"
+
 using namespace std;
 using namespace DirectX;
+using namespace ResourceLoader;
 
 bool Model::Initialize(WCHAR* model_filename, WCHAR **texture_filename_arr) {
 
@@ -12,14 +17,24 @@ bool Model::Initialize(WCHAR* model_filename, WCHAR **texture_filename_arr) {
 	if (CHECK(InitializeBuffers())) {
 		return false;
 	}
-
-	texture_ = std::make_shared<Texture>();
-	texture_->set_texture_array_capacity(3);
 	if (CHECK(LoadTexture(texture_filename_arr))) {
+		return false;
+	}
+	if (CHECK(material_.Initialize())) {
 		return false;
 	}
 
 	return true;
+}
+
+ModelMaterial* Model::GetMaterial(){
+	return &material_;
+}
+
+bool Model::LoadTexture(WCHAR **texture_filename_arr) {
+
+	texture_container_ = std::make_shared<TextureLoader>();
+	return texture_container_->LoadTexturesByNameArray(3, texture_filename_arr);
 }
 
 bool Model::LoadModel(WCHAR* filename) {
@@ -61,6 +76,10 @@ bool Model::LoadModel(WCHAR* filename) {
 	return true;
 }
 
+DescriptorHeapPtr Model::GetShaderRescourceView() const {
+	return texture_container_->GetTexturesDescriptorHeap();
+}
+
 bool Model::InitializeBuffers() {
 	
 	auto vertices = new VertexType[vertex_count_];
@@ -75,7 +94,7 @@ bool Model::InitializeBuffers() {
 
 	for (UINT i = 0; i < vertex_count_; ++i) {
 		vertices[i].position_ = DirectX::XMFLOAT3(tem_model_[i].x_, tem_model_[i].y_, tem_model_[i].z_);
-		vertices[i].texture_ = DirectX::XMFLOAT2(tem_model_[i].tu_, tem_model_[i].tv_);
+		vertices[i].texture_position_ = DirectX::XMFLOAT2(tem_model_[i].tu_, tem_model_[i].tv_);
 		vertices[i].normal_ = DirectX::XMFLOAT3(tem_model_[i].nx_, tem_model_[i].ny_, tem_model_[i].nz_);
 		indices[i] = i;
 	}
@@ -188,9 +207,6 @@ bool ModelMaterial::Initialize(){
 	}
 
 	return true;
-}
-
-DescriptorHeapPtr ModelMaterial::GetShaderRescourceView() const{
 }
 
 ResourceSharedPtr ModelMaterial::GetMatrixConstantBuffer() const{
