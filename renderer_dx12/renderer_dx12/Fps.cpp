@@ -1,6 +1,13 @@
 #include "stdafx.h"
 #include "Fps.h"
 
+#include <windows.h>
+#include <mmsystem.h>
+
+Fps::Fps() {
+	start_time_ = timeGetTime();
+}
+
 void Fps::Frame() {
 
 	count_++;

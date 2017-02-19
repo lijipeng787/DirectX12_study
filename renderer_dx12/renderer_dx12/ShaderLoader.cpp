@@ -3,6 +3,8 @@
 
 #include "ShaderLoader.h"
 
+#include <d3dcompiler.h>
+
 using namespace std;
 
 namespace ResourceLoader {

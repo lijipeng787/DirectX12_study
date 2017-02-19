@@ -1,13 +1,10 @@
 #ifndef _LIGHTSHADERCLASS_H_
 #define _LIGHTSHADERCLASS_H_
 
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <wrl.h>
-#include <d3dcompiler.h>
-
 #include "TypeDefine.h"
+
+#include <unordered_map>
+#include <wrl.h>
 
 typedef Microsoft::WRL::ComPtr<ID3DBlob> BlobPtr;
 

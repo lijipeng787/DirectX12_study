@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "systemclass.h"
 
+#include "graphicsclass.h"
+#include "Input.h"
+
 bool System::Initialize()
 {
 	int screenWidth, screenHeight;

@@ -3,7 +3,6 @@
 
 #include <Windows.h>
 #include <DirectXMath.h>
-#include <memory>
 
 class Font {
 public:

@@ -2,6 +2,8 @@
 
 #include "Position.h"
 
+#include <cmath>
+
 void Position::MoveForward(bool key_down) {
 	if (key_down) {
 		forward_speed_ = (forward_speed_ < frame_time_*1.0f) ? (forward_speed_ += frame_time_*0.001f) : frame_time_*1.0f;

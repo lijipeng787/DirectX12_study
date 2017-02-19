@@ -4,8 +4,6 @@
 #include <DirectXMath.h>
 
 #include "TypeDefine.h"
-#include "dds.h"
-#include "DDSTextureLoader.h"
 #include "d3dx12.h"
 
 class DirectX12Device {

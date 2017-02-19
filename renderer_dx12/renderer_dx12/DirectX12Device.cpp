@@ -2,8 +2,6 @@
 
 #include "DirectX12Device.h"
 
-#include <d3d12sdklayers.h>
-
 DirectX12Device* DirectX12Device::d3d12device_instance_ = nullptr;
 
 DirectX12Device* DirectX12Device::GetD3d12DeviceInstance(){

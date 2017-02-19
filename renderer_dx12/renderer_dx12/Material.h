@@ -4,7 +4,6 @@
 #define _MATERIAL_H_
 
 #include <unordered_map>
-#include <d3d12.h>
 
 #include "TypeDefine.h"
 

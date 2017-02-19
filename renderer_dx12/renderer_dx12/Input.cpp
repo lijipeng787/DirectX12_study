@@ -147,3 +147,21 @@ void Input::ProcessInput() {
 	if (mouse_x_ > screen_width_) { mouse_x_ = screen_width_; }
 	if (mouse_y_ > screen_height_) { mouse_y_ = screen_height_; }
 }
+
+bool Input::IsEscapePressed() { if (keyboard_state_[DIK_ESCAPE] & 0x80) return true; return false; }
+	 
+bool Input::IsLeftPressed() { if (keyboard_state_[DIK_LEFT] & 0x80) return true; return false; }
+	 
+bool Input::IsRightPressed() { if (keyboard_state_[DIK_RIGHT] & 0x80) return true; return false; }
+	 
+bool Input::IsUpPressed() { if (keyboard_state_[DIK_UP] & 0x80) return true; return false; }
+
+bool Input::IsDownPressed() { if (keyboard_state_[DIK_DOWN] & 0x80) return true; return false; }
+	
+bool Input::IsAPressed() { if (keyboard_state_[DIK_A] & 0x80) return true; return false; }
+	 
+bool Input::IsZPressed() { if (keyboard_state_[DIK_Z] & 0x80) return true; return false; }
+	
+bool Input::IsPageUpPressed() { if (keyboard_state_[DIK_PGUP] & 0x80) return true; return false; }
+
+bool Input::IsPageDownPressed() { if (keyboard_state_[DIK_PGDN] & 0x80) return true; return false; }

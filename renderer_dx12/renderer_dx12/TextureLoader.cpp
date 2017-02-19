@@ -2,6 +2,7 @@
 
 #include "TextureLoader.h"
 #include "DirectX12Device.h"
+#include "DDSTextureLoader.h"
 
 using namespace std;
 

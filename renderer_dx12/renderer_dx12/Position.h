@@ -4,8 +4,6 @@
 
 #define APPLICATION_HEADER_POSITION_H
 
-#include <cmath>
-
 class Position {
 public:
 	Position() {}

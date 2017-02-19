@@ -1,12 +1,9 @@
 #ifndef _FPSCLASS_H_
 #define _FPSCLASS_H_
 
-#include <windows.h>
-#include <mmsystem.h>
-
 class Fps{
 public:
-	Fps() { start_time_=timeGetTime(); }
+	Fps();
 
 	Fps(const Fps& rhs) = delete;
 	

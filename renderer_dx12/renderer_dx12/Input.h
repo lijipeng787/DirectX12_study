@@ -26,23 +26,23 @@ public:
 
 	void GetMouseLocation(int& mouse_x, int& mouse_y) { mouse_x = mouse_x_; mouse_y = mouse_y_; }
 
-	bool IsEscapePressed() { if (keyboard_state_[DIK_ESCAPE] & 0x80) return true; return false; }
+	bool IsEscapePressed();
 
-	bool IsLeftPressed() { if (keyboard_state_[DIK_LEFT] & 0x80) return true; return false; }
+	bool IsLeftPressed();
 
-	bool IsRightPressed() { if (keyboard_state_[DIK_RIGHT] & 0x80) return true; return false; }
+	bool IsRightPressed(); 
 
-	bool IsUpPressed() { if (keyboard_state_[DIK_UP] & 0x80) return true; return false; }
+	bool IsUpPressed();
 
-	bool IsDownPressed() { if (keyboard_state_[DIK_DOWN] & 0x80) return true; return false; }
+	bool IsDownPressed();
 
-	bool IsAPressed() { if (keyboard_state_[DIK_A] & 0x80) return true; return false; }
+	bool IsAPressed();
 
-	bool IsZPressed() { if (keyboard_state_[DIK_Z] & 0x80) return true; return false; }
+	bool IsZPressed();
 
-	bool IsPageUpPressed() { if (keyboard_state_[DIK_PGUP] & 0x80) return true; return false; }
+	bool IsPageUpPressed();
 
-	bool IsPageDownPressed() { if (keyboard_state_[DIK_PGDN] & 0x80) return true; return false; }
+	bool IsPageDownPressed();
 private:
 	void ProcessInput();
 
