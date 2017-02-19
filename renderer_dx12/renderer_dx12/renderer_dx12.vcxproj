@@ -196,6 +196,7 @@
     <ClCompile Include="textclass.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="TypeDefine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fontPS.hlsl">
