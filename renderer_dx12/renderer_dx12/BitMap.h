@@ -9,7 +9,7 @@
 class BitmapMaterial :public Effect::Material {
 public:
 	BitmapMaterial();
-
+	
 	BitmapMaterial(const BitmapMaterial &rhs) = delete;
 
 	BitmapMaterial& operator=(const BitmapMaterial &rhs) = delete;

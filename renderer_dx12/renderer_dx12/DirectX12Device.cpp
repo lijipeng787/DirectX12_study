@@ -466,18 +466,11 @@ void DirectX12Device::EndPopulateGraphicsCommandList() {
 	);
 }
 
- void DirectX12Device::Draw(
-	UINT IndexCountPerInstance,
-	UINT InstanceCount,
-	UINT StartIndexLocation,
-	INT BaseVertexLocation,
-	UINT StartInstanceLocation) {
-	default_graphics_command_list_->DrawIndexedInstanced(
-		IndexCountPerInstance,
-		InstanceCount,
-		StartIndexLocation,
-		BaseVertexLocation,
-		StartInstanceLocation);
+void DirectX12Device::Draw(UINT IndexCountPerInstance, UINT InstanceCount,
+	UINT StartIndexLocation, INT BaseVertexLocation, UINT StartInstanceLocation) {
+
+	default_graphics_command_list_->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount,
+		StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
 bool DirectX12Device::WaitForPreviousFrame() {
