@@ -7,7 +7,7 @@
 #include "Material.h"
 #include "TextureLoader.h"
 
-class Font;
+class BitmapFont;
 
 class TextMaterial : public Effect::Material {
 public:
@@ -136,7 +136,7 @@ private:
 private:
   TextMaterial material_ = {};
 
-  std::shared_ptr<Font> font_ = nullptr;
+  std::shared_ptr<BitmapFont> font_ = nullptr;
 
   int screen_width_ = 0, screen_height_ = 0;
 

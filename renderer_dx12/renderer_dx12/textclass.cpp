@@ -105,7 +105,7 @@ bool Text::Initialize(int screen_width, int screen_height,
 
 bool Text::LoadFont(WCHAR *font_data, WCHAR **font_texture) {
 
-  font_ = std::make_shared<Font>();
+  font_ = std::make_shared<BitmapFont>();
   if (!font_) {
     return false;
   }

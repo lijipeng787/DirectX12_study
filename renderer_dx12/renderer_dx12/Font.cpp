@@ -7,7 +7,7 @@
 
 using namespace std;
 
-bool Font::Initialize(WCHAR *font_filename) {
+bool BitmapFont::Initialize(WCHAR *font_filename) {
 
   if (CHECK(LoadFontData(font_filename))) {
     return false;
@@ -16,9 +16,11 @@ bool Font::Initialize(WCHAR *font_filename) {
   return true;
 }
 
-bool Font::LoadFontData(WCHAR *filename) {
+static constexpr auto PrintableAsciiCount = 95;
 
-  font_ = new FontType[95];
+bool BitmapFont::LoadFontData(WCHAR *filename) {
+
+  font_ = new FontType[PrintableAsciiCount];
   if (!font_) {
     return false;
   }
@@ -31,7 +33,7 @@ bool Font::LoadFontData(WCHAR *filename) {
 
   TCHAR temp = ' ';
 
-  for (auto i = 0; i < 95; i++) {
+  for (auto i = 0; i < PrintableAsciiCount; i++) {
     fin.get(temp);
     while (temp != ' ') {
       fin.get(temp);
@@ -43,7 +45,7 @@ bool Font::LoadFontData(WCHAR *filename) {
 
     fin >> font_[i].left_;
     fin >> font_[i].right_;
-    fin >> font_[i].size_;
+    fin >> font_[i].width_;
   }
 
   fin.close();
@@ -51,7 +53,7 @@ bool Font::LoadFontData(WCHAR *filename) {
   return true;
 }
 
-void Font::BuildVertexArray(void *vertices, WCHAR *sentence, float drawX,
+void BitmapFont::BuildVertexArray(void *vertices, WCHAR *sentence, float drawX,
                             float drawY) {
 
   VertexType *vertexPtr = (VertexType *)vertices;
@@ -76,7 +78,7 @@ void Font::BuildVertexArray(void *vertices, WCHAR *sentence, float drawX,
 
       // Bottom right.
       vertexPtr[index].position_ =
-          DirectX::XMFLOAT3((drawX + font_[letter].size_), (drawY - 16), 0.0f);
+          DirectX::XMFLOAT3((drawX + font_[letter].width_), (drawY - 16), 0.0f);
       vertexPtr[index].texture_position_ =
           DirectX::XMFLOAT2(font_[letter].right_, 1.0f);
       ++index;
@@ -96,21 +98,21 @@ void Font::BuildVertexArray(void *vertices, WCHAR *sentence, float drawX,
 
       // Top right.
       vertexPtr[index].position_ =
-          DirectX::XMFLOAT3(drawX + font_[letter].size_, drawY, 0.0f);
+          DirectX::XMFLOAT3(drawX + font_[letter].width_, drawY, 0.0f);
       vertexPtr[index].texture_position_ =
           DirectX::XMFLOAT2(font_[letter].right_, 0.0f);
       ++index;
 
       // Bottom right.
       vertexPtr[index].position_ =
-          DirectX::XMFLOAT3((drawX + font_[letter].size_), (drawY - 16), 0.0f);
+          DirectX::XMFLOAT3((drawX + font_[letter].width_), (drawY - 16), 0.0f);
       vertexPtr[index].texture_position_ =
           DirectX::XMFLOAT2(font_[letter].right_, 1.0f);
       ++index;
 
       // Update the x location for drawing by the size of the letter and one
       // pixel.
-      drawX = drawX + font_[letter].size_ + 1.0f;
+      drawX = drawX + font_[letter].width_ + 1.0f;
     }
   }
 }

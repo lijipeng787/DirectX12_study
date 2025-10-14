@@ -1,28 +1,26 @@
-#ifndef _FONTCLASS_H_
-#define _FONTCLASS_H_
+#pragma once
 
 #include <DirectXMath.h>
 #include <Windows.h>
 
-class Font {
+class BitmapFont {
 public:
-  Font() {}
+  BitmapFont() {}
 
-  Font(const Font &rhs) = delete;
+  BitmapFont(const BitmapFont &rhs) = delete;
 
-  Font &operator==(const Font &rhs) = delete;
+  BitmapFont &operator=(const BitmapFont &rhs) = delete;
 
-  ~Font() {
+  ~BitmapFont() {
     if (nullptr != font_) {
-      delete font_;
+      delete[] font_;
     }
   }
 
 private:
   struct FontType {
     float left_, right_;
-
-    int size_;
+    int width_;
   };
 
   struct VertexType {
@@ -42,5 +40,3 @@ private:
 private:
   FontType *font_ = nullptr;
 };
-
-#endif
