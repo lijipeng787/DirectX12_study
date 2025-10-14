@@ -1,24 +1,23 @@
-#ifndef _CPUCLASS_H_
-#define _CPUCLASS_H_
+#pragma once
 
 #include <pdh.h>
 
-class Cpu {
+class CPUUsageTracker {
 public:
-  Cpu() {}
+  CPUUsageTracker() {}
 
-  Cpu(const Cpu &rhs) = delete;
+  CPUUsageTracker(const CPUUsageTracker &rhs) = delete;
 
-  Cpu &operator=(const Cpu &rhs) = delete;
+  CPUUsageTracker &operator=(const CPUUsageTracker &rhs) = delete;
 
-  ~Cpu() {}
+  ~CPUUsageTracker() {}
 
 public:
   void Initialize();
 
   void Shutdown();
 
-  void Frame();
+  void Update();
 
   int GetCpuPercentage();
 
@@ -33,5 +32,3 @@ private:
 
   long m_cpuUsage;
 };
-
-#endif

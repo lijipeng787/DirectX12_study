@@ -3,7 +3,7 @@
 #include "graphicsclass.h"
 
 #include "Camera.h"
-#include "Cpu.h"
+#include "CPUUsageTracker.h"
 #include "DirectX12Device.h"
 #include "Fps.h"
 #include "Input.h"
@@ -27,11 +27,11 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     return false;
   }
 
-  cpu_ = std::make_shared<Cpu>();
-  if (!cpu_) {
+  cpu_usage_tracker_ = std::make_shared<CPUUsageTracker>();
+  if (!cpu_usage_tracker_) {
     return false;
   }
-  cpu_->Initialize();
+  cpu_usage_tracker_->Initialize();
 
   fps_ = std::make_shared<Fps>();
   if (!fps_) {
@@ -43,6 +43,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     return false;
   }
   camera_->SetPosition(0.0f, 0.0f, -5.0f);
+  camera_->Update();
 
   light_ = std::make_shared<Light>();
   if (!light_) {
@@ -153,12 +154,14 @@ void Graphics::Shutdown() {
     delete d3d12_device_;
     d3d12_device_ = nullptr;
   }
+
+  cpu_usage_tracker_->Shutdown();
 }
 
 bool Graphics::Frame() {
 
-  cpu_->Frame();
-  if (CHECK(text_->SetCpu(cpu_->GetCpuPercentage()))) {
+  cpu_usage_tracker_->Update();
+  if (CHECK(text_->SetCpu(cpu_usage_tracker_->GetCpuPercentage()))) {
     return false;
   }
 

@@ -93,5 +93,5 @@ void Camera::Construct2DViewMatrix() {
   lookAt = position + lookAt;
 
   // Finally create the view matrix from the three updated vectors.
-  _2D_view_matrix_ = XMMatrixLookAtLH(position, lookAt, up);
+  view_matrix_2d_ = XMMatrixLookAtLH(position, lookAt, up);
 }

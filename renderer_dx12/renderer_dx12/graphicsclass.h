@@ -19,7 +19,7 @@ class ScreenQuad;
 class Text;
 class Model;
 class Fps;
-class Cpu;
+class CPUUsageTracker;
 
 class Graphics {
 public:
@@ -60,7 +60,7 @@ private:
 
   std::shared_ptr<Fps> fps_ = nullptr;
 
-  std::shared_ptr<Cpu> cpu_ = nullptr;
+  std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
 };
 
 #endif //! HEADER_GRAPHICSCLASS_H

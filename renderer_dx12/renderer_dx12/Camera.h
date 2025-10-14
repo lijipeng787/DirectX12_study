@@ -1,5 +1,4 @@
-#ifndef _CAMERACLASS_H_
-#define _CAMERACLASS_H_
+#pragma once
 
 #include <DirectXMath.h>
 
@@ -26,11 +25,11 @@ public:
     rotation_z_ = z;
   }
 
-  const DirectX::XMFLOAT3 GetPosition() const {
+  DirectX::XMFLOAT3 GetPosition() const {
     return DirectX::XMFLOAT3(position_x_, position_y_, position_z_);
   }
 
-  const DirectX::XMFLOAT3 GetRotation() const {
+  DirectX::XMFLOAT3 GetRotation() const {
     return DirectX::XMFLOAT3(rotation_x_, rotation_y_, rotation_z_);
   }
 
@@ -41,7 +40,7 @@ public:
   void GetViewMatrix(DirectX::XMMATRIX &view) const { view = view_matrix_; }
 
   void Get2DViewMatrix(DirectX::XMMATRIX &view) const {
-    view = _2D_view_matrix_;
+    view = view_matrix_2d_;
   }
 
 private:
@@ -49,9 +48,7 @@ private:
 
   float rotation_x_ = 0.0f, rotation_y_ = 0.0f, rotation_z_ = 0.0f;
 
-  DirectX::XMMATRIX view_matrix_ = {};
+  DirectX::XMMATRIX view_matrix_ = DirectX::XMMatrixIdentity();
 
-  DirectX::XMMATRIX _2D_view_matrix_ = {};
+  DirectX::XMMATRIX view_matrix_2d_ = DirectX::XMMatrixIdentity();
 };
-
-#endif

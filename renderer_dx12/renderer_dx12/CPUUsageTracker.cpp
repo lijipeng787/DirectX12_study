@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Cpu.h"
+#include "CPUUsageTracker.h"
 
-void Cpu::Initialize() {
+void CPUUsageTracker::Initialize() {
   PDH_STATUS status;
 
   // Initialize the flag indicating whether this object can read the system cpu
@@ -28,13 +28,13 @@ void Cpu::Initialize() {
   m_cpuUsage = 0;
 }
 
-void Cpu::Shutdown() {
+void CPUUsageTracker::Shutdown() {
   if (m_canReadCpu) {
     PdhCloseQuery(m_queryHandle);
   }
 }
 
-void Cpu::Frame() {
+void CPUUsageTracker::Update() {
 
   PDH_FMT_COUNTERVALUE value;
 
@@ -51,7 +51,7 @@ void Cpu::Frame() {
   }
 }
 
-int Cpu::GetCpuPercentage() {
+int CPUUsageTracker::GetCpuPercentage() {
   int usage;
 
   if (m_canReadCpu) {

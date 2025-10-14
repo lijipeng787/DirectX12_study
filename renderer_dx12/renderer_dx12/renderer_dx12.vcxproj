@@ -151,7 +151,7 @@
     <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="ScreenQuad.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="Cpu.h" />
+    <ClInclude Include="CPUUsageTracker.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="dds.h" />
     <ClInclude Include="DDSTextureLoader.h" />
@@ -176,7 +176,7 @@
     <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="ScreenQuad.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Cpu.cpp" />
+    <ClCompile Include="CPUUsageTracker.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DirectX12Device.cpp" />
     <ClCompile Include="Font.cpp" />
