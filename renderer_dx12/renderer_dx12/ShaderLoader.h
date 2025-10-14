@@ -18,60 +18,63 @@ typedef std::unordered_map<std::string, unsigned int> PSIndexContainer;
 
 namespace ResourceLoader {
 
-		class ShaderLoader {
-		public:
-			ShaderLoader() {}
+class ShaderLoader {
+public:
+  ShaderLoader() {}
 
-			ShaderLoader(const ShaderLoader& rhs) = delete;
+  ShaderLoader(const ShaderLoader &rhs) = delete;
 
-			ShaderLoader& operator==(const ShaderLoader& rhs) = delete;
+  ShaderLoader &operator==(const ShaderLoader &rhs) = delete;
 
-			~ShaderLoader() {}
-		public:
-			bool CreateVSAndPSFromFile(WCHAR *vs_shader_filename, WCHAR *ps_shader_filename);
+  ~ShaderLoader() {}
 
-			bool CreateVSFromFile(WCHAR *vs_shader_filename);
+public:
+  bool CreateVSAndPSFromFile(WCHAR *vs_shader_filename,
+                             WCHAR *ps_shader_filename);
 
-			bool CreatePSFromFile(WCHAR *ps_shader_filename);
+  bool CreateVSFromFile(WCHAR *vs_shader_filename);
 
-			void SetVSEntryPoint(LPCSTR entry_point);
+  bool CreatePSFromFile(WCHAR *ps_shader_filename);
 
-			void SetPSEntryPoint(LPCSTR entry_point);
+  void SetVSEntryPoint(LPCSTR entry_point);
 
-			void SetVSTargetVersion(LPCSTR target_version);
+  void SetPSEntryPoint(LPCSTR entry_point);
 
-			void SetPSTargetVersion(LPCSTR target_version);
+  void SetVSTargetVersion(LPCSTR target_version);
 
-			BlobPtr GetVertexShaderBlobByIndex(unsigned int index) const;
+  void SetPSTargetVersion(LPCSTR target_version);
 
-			BlobPtr GetPixelShaderBlobByIndex(unsigned int index) const;
+  BlobPtr GetVertexShaderBlobByIndex(unsigned int index) const;
 
-			BlobPtr GetVertexShaderBlobByFileName(WCHAR* filename) const;
+  BlobPtr GetPixelShaderBlobByIndex(unsigned int index) const;
 
-			BlobPtr GetPixelShaderBlobByFileName(WCHAR* filename) const;
+  BlobPtr GetVertexShaderBlobByFileName(WCHAR *filename) const;
 
-			BlobPtr GetVertexShaderBlobByEntryName(WCHAR* entry_name) const;
+  BlobPtr GetPixelShaderBlobByFileName(WCHAR *filename) const;
 
-			BlobPtr GetPixelShaderBlobByEntryName(WCHAR* entry_name) const;
-		private:
-			VSIndexContainer vs_index_container_ = {};
+  BlobPtr GetVertexShaderBlobByEntryName(WCHAR *entry_name) const;
 
-			PSIndexContainer ps_index_container_ = {};
-			
-			VSBlobVector vertex_shader_container = {};
+  BlobPtr GetPixelShaderBlobByEntryName(WCHAR *entry_name) const;
 
-			PSBlobVector pixel_shader_container = {};
+private:
+  VSIndexContainer vs_index_container_ = {};
 
-			BlobPtr last_compile_error_ = nullptr;
+  PSIndexContainer ps_index_container_ = {};
 
-			LPCSTR vs_entry_point_ = {};
+  VSBlobVector vertex_shader_container = {};
 
-			LPCSTR ps_entry_point_ = {};
+  PSBlobVector pixel_shader_container = {};
 
-			LPCSTR vs_target_version_ = "vs_5_0";
+  BlobPtr last_compile_error_ = nullptr;
 
-			LPCSTR ps_target_version_ = "ps_5_0";
-	};
+  LPCSTR vs_entry_point_ = {};
 
-}
+  LPCSTR ps_entry_point_ = {};
+
+  LPCSTR vs_target_version_ = "vs_5_0";
+
+  LPCSTR ps_target_version_ = "ps_5_0";
+};
+
+} // namespace ResourceLoader
 #endif

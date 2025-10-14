@@ -5,27 +5,29 @@
 
 class TimerClass {
 public:
-	TimerClass() {}
+  TimerClass() {}
 
-	TimerClass(const TimerClass& rhs) = delete;
+  TimerClass(const TimerClass &rhs) = delete;
 
-	TimerClass& operator=(const TimerClass& rhs) = delete;
+  TimerClass &operator=(const TimerClass &rhs) = delete;
 
-	~TimerClass() {}
+  ~TimerClass() {}
+
 public:
-	bool Initialize();
+  bool Initialize();
 
-	void Update();
+  void Update();
 
-	const float GetTime()const { return frame_time_; }
+  const float GetTime() const { return frame_time_; }
+
 private:
-	INT64 frequency_ = 0;
+  INT64 frequency_ = 0;
 
-	float ticks_per_ms_ = 0.0f;
+  float ticks_per_ms_ = 0.0f;
 
-	INT64 start_time_ = 0;
+  INT64 start_time_ = 0;
 
-	float frame_time_ = 0.0f;
+  float frame_time_ = 0.0f;
 };
 
 #endif

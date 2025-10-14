@@ -9,58 +9,60 @@
 
 namespace Effect {
 
-	typedef std::vector<PipelineStateObjectPtr> PSOContainer;
+typedef std::vector<PipelineStateObjectPtr> PSOContainer;
 
-	typedef std::unordered_map<std::string, unsigned int> PSOIndexCotainer;
+typedef std::unordered_map<std::string, unsigned int> PSOIndexCotainer;
 
-	class Material {
-	public:
-		Material();
+class Material {
+public:
+  Material();
 
-		Material(const Material& rhs) = delete;
+  Material(const Material &rhs) = delete;
 
-		Material& operator=(const Material& rhs) = delete;
+  Material &operator=(const Material &rhs) = delete;
 
-		virtual ~Material();
-	public:
-		virtual bool Initialize() = 0;
+  virtual ~Material();
 
-		//virtual bool Update() = 0;
+public:
+  virtual bool Initialize() = 0;
 
-		//virtual bool PreRender() = 0;
+  // virtual bool Update() = 0;
 
-		//virtual void Render() = 0;
+  // virtual bool PreRender() = 0;
 
-		//virtual bool PostRender() = 0;
-	public:
-		VertexShaderByteCode GetVSByteCode()const;
+  // virtual void Render() = 0;
 
-		PixelShaderByteCode GetPSByteCode()const;
+  // virtual bool PostRender() = 0;
+public:
+  VertexShaderByteCode GetVSByteCode() const;
 
-		void SetVSByteCode(const VertexShaderByteCode& bytecode);
+  PixelShaderByteCode GetPSByteCode() const;
 
-		void SetPSByteCode(const PixelShaderByteCode& bytecode);
+  void SetVSByteCode(const VertexShaderByteCode &bytecode);
 
-		RootSignaturePtr GetRootSignature()const;
+  void SetPSByteCode(const PixelShaderByteCode &bytecode);
 
-		void SetRootSignature(const RootSignaturePtr& root_signature);
+  RootSignaturePtr GetRootSignature() const;
 
-		PipelineStateObjectPtr GetPSOByIndex(unsigned int index)const;
+  void SetRootSignature(const RootSignaturePtr &root_signature);
 
-		PipelineStateObjectPtr GetPSOByName(std::string name)const;
+  PipelineStateObjectPtr GetPSOByIndex(unsigned int index) const;
 
-		void SetPSOByName(std::string name,const PipelineStateObjectPtr& pso);
-	private:
-		VertexShaderByteCode vertex_shader_bitecode_ = {};
+  PipelineStateObjectPtr GetPSOByName(std::string name) const;
 
-		PixelShaderByteCode pixel_shader_bitcode_ = {};
+  void SetPSOByName(std::string name, const PipelineStateObjectPtr &pso);
 
-		RootSignaturePtr root_signature_ = nullptr;
+private:
+  VertexShaderByteCode vertex_shader_bitecode_ = {};
 
-		PSOContainer pso_cotainer_ = {};
+  PixelShaderByteCode pixel_shader_bitcode_ = {};
 
-		PSOIndexCotainer pso_index_cotainer_ = {};
-	};
+  RootSignaturePtr root_signature_ = nullptr;
 
-}
+  PSOContainer pso_cotainer_ = {};
+
+  PSOIndexCotainer pso_index_cotainer_ = {};
+};
+
+} // namespace Effect
 #endif // !_MATERIAL_H_

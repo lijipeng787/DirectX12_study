@@ -8,47 +8,47 @@
 class Input;
 class Graphics;
 
-class System{
+class System {
 
 public:
-	System() {}
+  System() {}
 
-	System(const System& rhs)=delete;
+  System(const System &rhs) = delete;
 
-	System& operator==(const System& rhs)=delete;
-	
-	~System() {}
+  System &operator==(const System &rhs) = delete;
+
+  ~System() {}
 
 public:
-	bool Initialize();
-	
-	void Shutdown();
-	
-	void Run();
+  bool Initialize();
 
-	LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
+  void Shutdown();
 
-private:
-	bool Frame();
-	
-	void InitializeWindows(int screen_width, int screen_height);
-	
-	void ShutdownWindows();
+  void Run();
+
+  LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
 
 private:
-	LPCWSTR application_name_;
+  bool Frame();
 
-	HINSTANCE hinstance_;
-	
-	HWND hwnd_;
+  void InitializeWindows(int screen_width, int screen_height);
 
-	Input* input_ = nullptr;
+  void ShutdownWindows();
 
-	Graphics* graphics_ = nullptr;
+private:
+  LPCWSTR application_name_;
+
+  HINSTANCE hinstance_;
+
+  HWND hwnd_;
+
+  Input *input_ = nullptr;
+
+  Graphics *graphics_ = nullptr;
 };
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-static System* g_system_instance = 0;
+static System *g_system_instance = 0;
 
-#endif //!HEADER_SYSTEMCLASS_H
+#endif //! HEADER_SYSTEMCLASS_H

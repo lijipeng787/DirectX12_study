@@ -7,34 +7,39 @@
 
 namespace ResourceLoader {
 
-	typedef std::vector<ResourceSharedPtr> TextureContainer;
+typedef std::vector<ResourceSharedPtr> TextureContainer;
 
-	typedef std::unordered_map<std::string, unsigned int> TextureIndexContainer;
+typedef std::unordered_map<std::string, unsigned int> TextureIndexContainer;
 
-	class TextureLoader {
-	public:
-		TextureLoader() {}
+class TextureLoader {
+public:
+  TextureLoader() {}
 
-		TextureLoader(const TextureLoader& rhs) = delete;
+  TextureLoader(const TextureLoader &rhs) = delete;
 
-		TextureLoader& operator=(const TextureLoader& rhs) = delete;
+  TextureLoader &operator=(const TextureLoader &rhs) = delete;
 
-		~TextureLoader() {}
-	public:
-		DescriptorHeapPtr GetTexturesDescriptorHeap()const { return shader_resource_view_heap_; }
+  ~TextureLoader() {}
 
-		bool LoadTextureByName(WCHAR **texture_filename);
+public:
+  DescriptorHeapPtr GetTexturesDescriptorHeap() const {
+    return shader_resource_view_heap_;
+  }
 
-		bool LoadTexturesByNameArray(unsigned int num_textures, WCHAR **texture_filename_arr);
-	private:
-		unsigned int num_textures_ = 0;
+  bool LoadTextureByName(WCHAR **texture_filename);
 
-		TextureContainer texture_container_ = {};
+  bool LoadTexturesByNameArray(unsigned int num_textures,
+                               WCHAR **texture_filename_arr);
 
-		TextureIndexContainer index_container_ = {};
+private:
+  unsigned int num_textures_ = 0;
 
-		DescriptorHeapPtr shader_resource_view_heap_ = nullptr;
-	};
-}
+  TextureContainer texture_container_ = {};
+
+  TextureIndexContainer index_container_ = {};
+
+  DescriptorHeapPtr shader_resource_view_heap_ = nullptr;
+};
+} // namespace ResourceLoader
 
 #endif // !HEADER_TEXTURECLASS_H

@@ -3,23 +3,23 @@
 #ifndef _TYPEDEFINE_H_
 #define _TYPEDEFINE_H_
 
+#include <d3d12.h>
+#include <dxgi1_4.h>
 #include <string>
 #include <vector>
-#include <dxgi1_4.h>
-#include <d3d12.h>
 #include <wrl.h>
 
 namespace Effect {}
 
 namespace ResourceLoader {
-	
-	void WCHARToString(WCHAR* wchar, std::string& s);
-	// TODO: finish this function
-	void StringToWCHAR(std::string s, WCHAR* wchar);
 
-}
+void WCHARToString(WCHAR *wchar, std::string &s);
+// TODO: finish this function
+void StringToWCHAR(std::string s, WCHAR *wchar);
 
-#define CHECK(return_value) ((return_value==false)?true:false)
+} // namespace ResourceLoader
+
+#define CHECK(return_value) ((return_value == false) ? true : false)
 
 #define CBSIZE(constant_buffer) ((sizeof(constant_buffer) + 255) & ~255)
 
@@ -33,7 +33,8 @@ typedef Microsoft::WRL::ComPtr<IDXGISwapChain3> SwapChainPtr;
 
 typedef Microsoft::WRL::ComPtr<ID3D12DebugDevice> D2d12DebugDevicePtr;
 
-typedef Microsoft::WRL::ComPtr<ID3D12DebugCommandQueue> D3d12DebugCommandQueuePtr;
+typedef Microsoft::WRL::ComPtr<ID3D12DebugCommandQueue>
+    D3d12DebugCommandQueuePtr;
 
 typedef Microsoft::WRL::ComPtr<ID3D12DebugCommandList> D3d12DebugCommandListPtr;
 
@@ -49,7 +50,8 @@ typedef Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignaturePtr;
 
 typedef Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineStateObjectPtr;
 
-typedef Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GraphicsCommandListPtr;
+typedef Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>
+    GraphicsCommandListPtr;
 
 typedef Microsoft::WRL::ComPtr<ID3D12Fence> FencePtr;
 
