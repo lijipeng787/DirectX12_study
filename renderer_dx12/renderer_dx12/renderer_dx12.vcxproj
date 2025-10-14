@@ -149,7 +149,7 @@
   <ItemGroup>
     <ClInclude Include="Material.h" />
     <ClInclude Include="ShaderLoader.h" />
-    <ClInclude Include="BitMap.h" />
+    <ClInclude Include="ScreenQuad.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Cpu.h" />
     <ClInclude Include="d3dx12.h" />
@@ -174,7 +174,7 @@
   <ItemGroup>
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
-    <ClCompile Include="BitMap.cpp" />
+    <ClCompile Include="ScreenQuad.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Cpu.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />

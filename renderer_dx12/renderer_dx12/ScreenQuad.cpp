@@ -1,20 +1,20 @@
 #include "stdafx.h"
 
-#include "BitMap.h"
+#include "ScreenQuad.h"
 
 #include "DirectX12Device.h"
 
 using namespace std;
 using namespace DirectX;
 
-bool Bitmap::Initialize(UINT screen_width, UINT screen_height,
+bool ScreenQuad::Initialize(UINT screen_width, UINT screen_height,
                         UINT bitmap_width, UINT bitmap_height) {
 
   screen_width_ = screen_width;
   screen_height_ = screen_height;
 
-  bitmap_width_ = bitmap_width;
-  bitmap_height_ = bitmap_height;
+  quad_width_ = bitmap_width;
+  quad_height_ = bitmap_height;
 
   if (CHECK(InitializeBuffers())) {
     return false;
@@ -26,33 +26,33 @@ bool Bitmap::Initialize(UINT screen_width, UINT screen_height,
   return true;
 }
 
-const VertexBufferView &Bitmap::GetVertexBufferView() const {
+const VertexBufferView &ScreenQuad::GetVertexBufferView() const {
   return vertex_buffer_view_;
 }
 
-const IndexBufferView &Bitmap::GetIndexBufferView() const {
+const IndexBufferView &ScreenQuad::GetIndexBufferView() const {
   return index_buffer_view_;
 }
 
-BitmapMaterial *Bitmap::GetMaterial() { return &material_; }
+ScreenQuadMaterial *ScreenQuad::GetMaterial() { return &material_; }
 
-bool Bitmap::UpdateBitmapPosition(int pos_x, int pos_y) {
+bool ScreenQuad::UpdatePosition(int pos_x, int pos_y) {
 
-  if (previous_pos_x_ == pos_x && previous_pos_y_ == pos_y) {
+  if (last_pos_x_ == pos_x && last_pos_y_ == pos_y) {
     return true;
   }
 
-  previous_pos_x_ = pos_x;
-  previous_pos_y_ = pos_y;
+  last_pos_x_ = pos_x;
+  last_pos_y_ = pos_y;
 
   auto left =
       (static_cast<float>(screen_width_) / 2) * -1 + static_cast<float>(pos_x);
 
-  auto right = left + static_cast<float>(bitmap_width_);
+  auto right = left + static_cast<float>(quad_width_);
 
   auto top = static_cast<float>(screen_height_) / 2 - static_cast<float>(pos_y);
 
-  auto bottom = top - static_cast<float>(bitmap_height_);
+  auto bottom = top - static_cast<float>(quad_height_);
 
   auto vertices = new VertexType[vertex_count_];
   if (!vertices) {
@@ -99,9 +99,9 @@ bool Bitmap::UpdateBitmapPosition(int pos_x, int pos_y) {
   return true;
 }
 
-const int Bitmap::GetIndexCount() { return index_count_; }
+const int ScreenQuad::GetIndexCount() { return index_count_; }
 
-bool Bitmap::InitializeBuffers() {
+bool ScreenQuad::InitializeBuffers() {
   vertex_count_ = 6;
   index_count_ = 6;
 
@@ -260,15 +260,15 @@ bool Bitmap::InitializeBuffers() {
   return true;
 }
 
-BitmapMaterial::BitmapMaterial() {}
+ScreenQuadMaterial::ScreenQuadMaterial() {}
 
-BitmapMaterial::~BitmapMaterial() {}
+ScreenQuadMaterial::~ScreenQuadMaterial() {}
 
-ResourceSharedPtr BitmapMaterial::GetConstantBuffer() const {
+ResourceSharedPtr ScreenQuadMaterial::GetConstantBuffer() const {
   return constant_buffer_;
 }
 
-bool BitmapMaterial::UpdateConstantBuffer(const XMMATRIX &world,
+bool ScreenQuadMaterial::UpdateConstantBuffer(const XMMATRIX &world,
                                           const XMMATRIX &view,
                                           const XMMATRIX &orthogonality) {
 
@@ -286,7 +286,7 @@ bool BitmapMaterial::UpdateConstantBuffer(const XMMATRIX &world,
   return true;
 }
 
-bool BitmapMaterial::Initialize() {
+bool ScreenQuadMaterial::Initialize() {
 
   D3D12_DESCRIPTOR_HEAP_DESC cbv_heap_desc = {};
   cbv_heap_desc.NumDescriptors = 1;
@@ -315,7 +315,7 @@ bool BitmapMaterial::Initialize() {
   return true;
 }
 
-bool BitmapMaterial::InitializeGraphicsPipelineState() {
+bool ScreenQuadMaterial::InitializeGraphicsPipelineState() {
 
   D3D12_INPUT_ELEMENT_DESC input_element_descs[] = {
       {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
@@ -358,7 +358,7 @@ bool BitmapMaterial::InitializeGraphicsPipelineState() {
   return true;
 }
 
-bool BitmapMaterial::InitializeRootSignature() {
+bool ScreenQuadMaterial::InitializeRootSignature() {
 
   CD3DX12_DESCRIPTOR_RANGE descriptor_ranges_srv[1];
   descriptor_ranges_srv[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);

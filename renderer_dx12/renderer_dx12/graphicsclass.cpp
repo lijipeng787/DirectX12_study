@@ -9,7 +9,7 @@
 #include "Input.h"
 #include "Light.h"
 
-#include "BitMap.h"
+#include "ScreenQuad.h"
 #include "modelclass.h"
 #include "textclass.h"
 
@@ -85,11 +85,11 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   }
 
   {
-    bitmap_ = std::make_shared<Bitmap>();
+    bitmap_ = std::make_shared<ScreenQuad>();
     if (!bitmap_) {
       return false;
     }
-    BitmapMaterial *bitmap_material = bitmap_->GetMaterial();
+    ScreenQuadMaterial *bitmap_material = bitmap_->GetMaterial();
     bitmap_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
         shader_loader_->GetVertexShaderBlobByFileName(L"textureVS.hlsl")
             .Get()));
@@ -374,7 +374,7 @@ bool Graphics::Render() {
 
     bitmap_->GetMaterial()->UpdateConstantBuffer(font_world, view,
                                                  orthogonality);
-    bitmap_->UpdateBitmapPosition(100, 100);
+    bitmap_->UpdatePosition(100, 100);
 
     auto off_screen_heap = d3d12_device_->GetOffScreenTextureHeapView();
     ID3D12DescriptorHeap *off_screen_descriptor_heap[] = {

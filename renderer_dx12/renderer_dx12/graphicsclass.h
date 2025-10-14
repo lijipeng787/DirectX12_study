@@ -15,7 +15,7 @@ class DirectX12Device;
 class Light;
 class Camera;
 class Input;
-class Bitmap;
+class ScreenQuad;
 class Text;
 class Model;
 class Fps;
@@ -52,7 +52,7 @@ private:
 
   std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader_ = nullptr;
 
-  std::shared_ptr<Bitmap> bitmap_ = nullptr;
+  std::shared_ptr<ScreenQuad> bitmap_ = nullptr;
 
   std::shared_ptr<Text> text_ = nullptr;
 

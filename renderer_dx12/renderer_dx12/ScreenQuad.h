@@ -1,20 +1,19 @@
-#ifndef _BITMAP_H_
-#define _BITMAP_H_
+#pragma once
 
 #include <DirectXMath.h>
 #include <memory>
 
 #include "Material.h"
 
-class BitmapMaterial : public Effect::Material {
+class ScreenQuadMaterial : public Effect::Material {
 public:
-  BitmapMaterial();
+  ScreenQuadMaterial();
 
-  BitmapMaterial(const BitmapMaterial &rhs) = delete;
+  ScreenQuadMaterial(const ScreenQuadMaterial &rhs) = delete;
 
-  BitmapMaterial &operator=(const BitmapMaterial &rhs) = delete;
+  ScreenQuadMaterial &operator=(const ScreenQuadMaterial &rhs) = delete;
 
-  virtual ~BitmapMaterial();
+  virtual ~ScreenQuadMaterial();
 
 private:
   struct MatrixBufferType {
@@ -43,15 +42,15 @@ private:
   MatrixBufferType matrix_constant_data_ = {};
 };
 
-class Bitmap {
+class ScreenQuad {
 public:
-  Bitmap() {}
+  ScreenQuad() {}
 
-  Bitmap(const Bitmap &rhs) = delete;
+  ScreenQuad(const ScreenQuad &rhs) = delete;
 
-  Bitmap &operator=(const Bitmap &rhs) = delete;
+  ScreenQuad &operator=(const ScreenQuad &rhs) = delete;
 
-  ~Bitmap() {}
+  ~ScreenQuad() {}
 
 private:
   struct VertexType {
@@ -67,9 +66,9 @@ public:
 
   const IndexBufferView &GetIndexBufferView() const;
 
-  BitmapMaterial *GetMaterial();
+  ScreenQuadMaterial *GetMaterial();
 
-  bool UpdateBitmapPosition(int pos_x, int pos_y);
+  bool UpdatePosition(int pos_x, int pos_y);
 
   const int GetIndexCount();
 
@@ -77,7 +76,7 @@ private:
   bool InitializeBuffers();
 
 private:
-  BitmapMaterial material_ = {};
+  ScreenQuadMaterial material_ = {};
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
 
@@ -91,9 +90,7 @@ private:
 
   UINT screen_width_ = 0, screen_height_ = 0;
 
-  UINT bitmap_height_ = 0, bitmap_width_ = 0;
+  UINT quad_height_ = 0, quad_width_ = 0;
 
-  int previous_pos_x_ = -1, previous_pos_y_ = -1;
+  int last_pos_x_ = -1, last_pos_y_ = -1;
 };
-
-#endif // !_BITMAP_H_
