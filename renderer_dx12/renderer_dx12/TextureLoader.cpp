@@ -4,9 +4,14 @@
 #include "DirectX12Device.h"
 #include "TextureLoader.h"
 
+#include <utility>
+
 using namespace std;
 
 namespace ResourceLoader {
+
+TextureLoader::TextureLoader(std::shared_ptr<DirectX12Device> device)
+    : device_(std::move(device)) {}
 
 bool TextureLoader::LoadTextureByName(WCHAR **texture_filename) {
   return false;
@@ -15,7 +20,7 @@ bool TextureLoader::LoadTextureByName(WCHAR **texture_filename) {
 bool TextureLoader::LoadTexturesByNameArray(unsigned int num_textures,
                                             WCHAR **texture_filename_arr) {
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
 
   D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc = {};
   srv_heap_desc.NumDescriptors = num_textures;

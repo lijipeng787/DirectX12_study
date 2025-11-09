@@ -20,13 +20,7 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="BitMap.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Cpu.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="d3dx12.h">
@@ -83,18 +77,18 @@
     <ClInclude Include="Font.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ScreenQuad.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CPUUsageTracker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="BitMap.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Cpu.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DDSTextureLoader.cpp">
@@ -143,6 +137,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TypeDefine.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ScreenQuad.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CPUUsageTracker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

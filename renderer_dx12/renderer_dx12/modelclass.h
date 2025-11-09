@@ -7,9 +7,11 @@
 #include "Material.h"
 #include "TextureLoader.h"
 
+class DirectX12Device;
+
 class ModelMaterial : public Effect::Material {
 public:
-  ModelMaterial();
+  explicit ModelMaterial(std::shared_ptr<DirectX12Device> device);
 
   ModelMaterial(const ModelMaterial &rhs) = delete;
 
@@ -63,6 +65,8 @@ private:
   bool InitializeGraphicsPipelineState();
 
 private:
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   ResourceSharedPtr matrix_constant_buffer_ = nullptr;
 
   MatrixBufferType matrix_constant_data_ = {};
@@ -78,7 +82,7 @@ private:
 
 class Model {
 public:
-  Model() {}
+  explicit Model(std::shared_ptr<DirectX12Device> device);
 
   Model(const Model &rhs) = delete;
 
@@ -124,7 +128,9 @@ private:
   bool LoadTexture(WCHAR **texture_filename_arr);
 
 private:
-  ModelMaterial material_ = {};
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
+
+  ModelMaterial material_;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
 

@@ -42,7 +42,7 @@ private:
   bool Render();
 
 private:
-  DirectX12Device *d3d12_device_ = nullptr;
+  std::shared_ptr<DirectX12Device> d3d12_device_ = nullptr;
 
   std::shared_ptr<Light> light_ = nullptr;
 

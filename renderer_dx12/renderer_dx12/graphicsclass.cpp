@@ -15,14 +15,17 @@
 
 bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
-  d3d12_device_ = DirectX12Device::GetD3d12DeviceInstance();
-  if (!d3d12_device_) {
-    return false;
-  }
+  DirectX12DeviceConfig device_config = {};
+  device_config.screen_width = screenWidth;
+  device_config.screen_height = screenHeight;
+  device_config.vsync_enabled = VSYNC_ENABLED;
+  device_config.hwnd = hwnd;
+  device_config.fullscreen = FULL_SCREEN;
+  device_config.screen_depth = SCREEN_DEPTH;
+  device_config.screen_near = SCREEN_NEAR;
 
-  if (CHECK(d3d12_device_->Initialize(screenWidth, screenHeight, VSYNC_ENABLED,
-                                      hwnd, FULL_SCREEN, SCREEN_DEPTH,
-                                      SCREEN_NEAR))) {
+  d3d12_device_ = DirectX12Device::Create(device_config);
+  if (!d3d12_device_) {
     MessageBox(hwnd, L"Could not initialize Direct3D.", L"Error", MB_OK);
     return false;
   }
@@ -86,7 +89,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   }
 
   {
-    bitmap_ = std::make_shared<ScreenQuad>();
+    bitmap_ = std::make_shared<ScreenQuad>(d3d12_device_);
     if (!bitmap_) {
       return false;
     }
@@ -103,7 +106,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   }
 
   {
-    model_ = std::make_shared<Model>();
+    model_ = std::make_shared<Model>(d3d12_device_);
     if (!model_) {
       return false;
     }
@@ -122,7 +125,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   }
 
   {
-    text_ = std::make_shared<Text>();
+    text_ = std::make_shared<Text>(d3d12_device_);
     if (!text_) {
       return false;
     }
@@ -150,10 +153,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
 void Graphics::Shutdown() {
 
-  if (d3d12_device_) {
-    delete d3d12_device_;
-    d3d12_device_ = nullptr;
-  }
+  d3d12_device_.reset();
 
   cpu_usage_tracker_->Shutdown();
 }

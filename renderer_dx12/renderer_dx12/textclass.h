@@ -8,10 +8,11 @@
 #include "TextureLoader.h"
 
 class BitmapFont;
+class DirectX12Device;
 
 class TextMaterial : public Effect::Material {
 public:
-  TextMaterial();
+  explicit TextMaterial(std::shared_ptr<DirectX12Device> device);
 
   TextMaterial(const TextMaterial &rhs) = delete;
 
@@ -55,6 +56,8 @@ private:
   bool InitializeGraphicsPipelineState();
 
 private:
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   ResourceSharedPtr matrix_constant_buffer_ = nullptr;
 
   ConstantBufferType matrix_constant_data_ = {};
@@ -66,7 +69,7 @@ private:
 
 class Text {
 public:
-  Text() {}
+  explicit Text(std::shared_ptr<DirectX12Device> device);
 
   Text(const Text &copy) = delete;
 
@@ -134,7 +137,9 @@ private:
   bool LoadTexture(WCHAR **filename_arr);
 
 private:
-  TextMaterial material_ = {};
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
+
+  TextMaterial material_;
 
   std::shared_ptr<BitmapFont> font_ = nullptr;
 

@@ -2,10 +2,19 @@
 
 #include "ScreenQuad.h"
 
+#include <utility>
+
 #include "DirectX12Device.h"
 
 using namespace std;
 using namespace DirectX;
+
+ScreenQuad::ScreenQuad(std::shared_ptr<DirectX12Device> device)
+    : device_(std::move(device)), material_(device_) {}
+
+ScreenQuadMaterial::ScreenQuadMaterial(
+    std::shared_ptr<DirectX12Device> device)
+    : device_(std::move(device)) {}
 
 bool ScreenQuad::Initialize(UINT screen_width, UINT screen_height,
                         UINT bitmap_width, UINT bitmap_height) {
@@ -117,7 +126,7 @@ bool ScreenQuad::InitializeBuffers() {
 
   ZeroMemory(vertices, sizeof(VertexType) * vertex_count_);
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
 
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -260,8 +269,6 @@ bool ScreenQuad::InitializeBuffers() {
   return true;
 }
 
-ScreenQuadMaterial::ScreenQuadMaterial() {}
-
 ScreenQuadMaterial::~ScreenQuadMaterial() {}
 
 ResourceSharedPtr ScreenQuadMaterial::GetConstantBuffer() const {
@@ -293,7 +300,7 @@ bool ScreenQuadMaterial::Initialize() {
   cbv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
   cbv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
@@ -338,7 +345,7 @@ bool ScreenQuadMaterial::InitializeGraphicsPipelineState() {
   pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
   pso_desc.SampleDesc.Count = 1;
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
 
   PipelineStateObjectPtr pso = {};
   if (FAILED(
@@ -400,11 +407,9 @@ bool ScreenQuadMaterial::InitializeRootSignature() {
   }
 
   RootSignaturePtr root_signature = {};
-  if (FAILED(DirectX12Device::GetD3d12DeviceInstance()
-                 ->GetD3d12Device()
-                 ->CreateRootSignature(0, signature_blob->GetBufferPointer(),
-                                       signature_blob->GetBufferSize(),
-                                       IID_PPV_ARGS(&root_signature)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
+          0, signature_blob->GetBufferPointer(), signature_blob->GetBufferSize(),
+          IID_PPV_ARGS(&root_signature)))) {
     return false;
   }
   SetRootSignature(root_signature);

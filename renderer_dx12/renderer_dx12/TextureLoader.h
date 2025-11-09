@@ -1,9 +1,12 @@
 #ifndef HEADER_TEXTURECLASS_H
 #define HEADER_TEXTURECLASS_H
 
+#include <memory>
 #include <unordered_map>
 
 #include "TypeDefine.h"
+
+class DirectX12Device;
 
 namespace ResourceLoader {
 
@@ -13,7 +16,7 @@ typedef std::unordered_map<std::string, unsigned int> TextureIndexContainer;
 
 class TextureLoader {
 public:
-  TextureLoader() {}
+  explicit TextureLoader(std::shared_ptr<DirectX12Device> device);
 
   TextureLoader(const TextureLoader &rhs) = delete;
 
@@ -32,6 +35,8 @@ public:
                                WCHAR **texture_filename_arr);
 
 private:
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   unsigned int num_textures_ = 0;
 
   TextureContainer texture_container_ = {};

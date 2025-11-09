@@ -5,9 +5,11 @@
 
 #include "Material.h"
 
+class DirectX12Device;
+
 class ScreenQuadMaterial : public Effect::Material {
 public:
-  ScreenQuadMaterial();
+  explicit ScreenQuadMaterial(std::shared_ptr<DirectX12Device> device);
 
   ScreenQuadMaterial(const ScreenQuadMaterial &rhs) = delete;
 
@@ -37,6 +39,8 @@ private:
   bool InitializeRootSignature();
 
 private:
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   ResourceSharedPtr constant_buffer_ = nullptr;
 
   MatrixBufferType matrix_constant_data_ = {};
@@ -44,7 +48,7 @@ private:
 
 class ScreenQuad {
 public:
-  ScreenQuad() {}
+  explicit ScreenQuad(std::shared_ptr<DirectX12Device> device);
 
   ScreenQuad(const ScreenQuad &rhs) = delete;
 
@@ -76,7 +80,9 @@ private:
   bool InitializeBuffers();
 
 private:
-  ScreenQuadMaterial material_ = {};
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
+
+  ScreenQuadMaterial material_;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
 

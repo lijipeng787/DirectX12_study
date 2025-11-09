@@ -1,12 +1,144 @@
 #ifndef D3D12CLASS_H
 #define D3D12CLASS_H
 
+#include <sstream>
+
 #include <DirectXMath.h>
+#include <memory>
 
 #include "TypeDefine.h"
 #include "d3dx12.h"
 
-class DirectX12Device {
+struct DirectX12DeviceConfig {
+    int screen_width = 0;
+    int screen_height = 0;
+    bool vsync_enabled = false;
+    HWND hwnd = nullptr;
+    bool fullscreen = false;
+    float screen_depth = 1000.0f;
+    float screen_near = 0.1f;
+};
+
+class DxgiResourceManager {
+public:
+    explicit DxgiResourceManager(Microsoft::WRL::ComPtr<IDXGIFactory4> factory)
+        : factory_(std::move(factory)) {
+    }
+
+    HRESULT CreateDevice(D3d12DevicePtr& device, int& video_memory_mb,
+        char(&description)[128]) {
+        if (!factory_) {
+            return E_FAIL;
+        }
+
+        Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter;
+        DXGI_ADAPTER_DESC1 adapter_desc = {};
+
+        for (UINT adapter_index = 0;
+            factory_->EnumAdapters1(adapter_index,
+                adapter.ReleaseAndGetAddressOf()) !=
+            DXGI_ERROR_NOT_FOUND;
+            ++adapter_index) {
+
+            adapter->GetDesc1(&adapter_desc);
+            if (adapter_desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
+                LogAdapterAttempt(adapter_desc, DXGI_ERROR_UNSUPPORTED);
+                continue;
+            }
+
+            HRESULT hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0,
+                IID_PPV_ARGS(&device));
+            LogAdapterAttempt(adapter_desc, hr);
+            if (SUCCEEDED(hr)) {
+                adapter_ = adapter;
+                video_memory_mb =
+                    static_cast<int>(adapter_desc.DedicatedVideoMemory / 1024 / 1024);
+                size_t string_length = 0;
+                errno_t error = wcstombs_s(&string_length, description, 128,
+                    adapter_desc.Description, 128);
+                if (error != 0) {
+                    return E_FAIL;
+                }
+                return S_OK;
+            }
+            device.Reset();
+        }
+
+        OutputDebugStringW(
+            L"[DxgiResourceManager] Can not find available hardware adapter, create device failed.\n");
+        return DXGI_ERROR_NOT_FOUND;
+    }
+
+    HRESULT CreateSwapChain(const DirectX12DeviceConfig& config,
+        ID3D12CommandQueue* command_queue,
+        Microsoft::WRL::ComPtr<IDXGISwapChain3>& swap_chain,
+        UINT frame_count) {
+        if (!factory_ || !command_queue) {
+            return E_INVALIDARG;
+        }
+
+        swap_chain.Reset();
+
+        DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {};
+        swap_chain_desc.BufferCount = frame_count;
+        swap_chain_desc.Width = config.screen_width;
+        swap_chain_desc.Height = config.screen_height;
+        swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        swap_chain_desc.SampleDesc.Count = 1;
+
+        Microsoft::WRL::ComPtr<IDXGISwapChain1> temp_swap_chain;
+        HRESULT hr = factory_->CreateSwapChainForHwnd(
+            command_queue, config.hwnd, &swap_chain_desc, nullptr, nullptr,
+            &temp_swap_chain);
+        if (FAILED(hr)) {
+            OutputDebugStringW(
+                L"[DxgiResourceManager] Create SwapChain failed, CreateSwapChainForHwnd "
+                L"returned error.\n");
+            return hr;
+        }
+
+        hr = factory_->MakeWindowAssociation(config.hwnd, DXGI_MWA_NO_ALT_ENTER);
+        if (FAILED(hr)) {
+            OutputDebugStringW(
+                L"[DxgiResourceManager] MakeWindowAssociation failed.\n");
+            return hr;
+        }
+
+        hr = temp_swap_chain.As(&swap_chain);
+        if (FAILED(hr)) {
+            OutputDebugStringW(
+                L"[DxgiResourceManager] Failed to cast SwapChain to IDXGISwapChain3.\n");
+            return hr;
+        }
+
+        std::wstringstream stream;
+        stream << L"[DxgiResourceManager] Create SwapChain successfully, size "
+            << config.screen_width << L"x" << config.screen_height << L", buffer count "
+            << frame_count << L".\n";
+        OutputDebugStringW(stream.str().c_str()); 
+
+        return S_OK;
+    }
+
+private:
+    void LogAdapterAttempt(const DXGI_ADAPTER_DESC1& desc,
+        HRESULT result) const {
+        std::wstringstream stream;
+        stream << L"[DxgiResourceManager] try adapter " << desc.Description
+            << L", video memory "
+            << static_cast<unsigned long long>(
+                desc.DedicatedVideoMemory / (1024ull * 1024ull))
+            << L" MB, result 0x" << std::hex << result << std::dec << L".\n";
+        OutputDebugStringW(stream.str().c_str());
+    }
+
+    Microsoft::WRL::ComPtr<IDXGIFactory4> factory_ = nullptr;
+    Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter_ = nullptr;
+};
+
+class DirectX12Device : public std::enable_shared_from_this<DirectX12Device> {
 public:
   DirectX12Device() {}
 
@@ -14,16 +146,16 @@ public:
 
   DirectX12Device &operator=(const DirectX12Device &rhs) = delete;
 
-  ~DirectX12Device() { WaitForPreviousFrame(); }
+  ~DirectX12Device();
 
 public:
-  static DirectX12Device *GetD3d12DeviceInstance();
+  static std::shared_ptr<DirectX12Device>
+  Create(const DirectX12DeviceConfig &config);
 
   inline D3d12DevicePtr GetD3d12Device() { return d3d12device_; }
 
 public:
-  bool Initialize(int screen_width, int screen_height, bool vsync, HWND hwnd,
-                  bool fullscreen, float screen_depth, float screen_near);
+  bool Initialize(const DirectX12DeviceConfig &config);
 
   bool ExecuteDefaultGraphicsCommandList();
 
@@ -109,7 +241,28 @@ public:
   void inline GetVideoCardInfo(char *card_name, int memory);
 
 private:
+  HRESULT EnableDebugLayer();
+
+  HRESULT CreateCommandQueues();
+
+  HRESULT CreateRenderTargetViews();
+
+  HRESULT CreateDepthStencilResources();
+
+  HRESULT CreateOffscreenResources();
+
+  HRESULT CreateCommandAllocatorsAndLists();
+
+  HRESULT CreateFenceAndEvent();
+
+  void InitializeViewportsAndScissors();
+
+  void InitializeMatrices();
+
+private:
   static const UINT frame_cout_ = 2;
+
+  DirectX12DeviceConfig config_ = {};
 
   bool is_vsync_enabled_ = false;
 
@@ -186,8 +339,7 @@ private:
 
   DirectX::XMMATRIX ortho_matrix_ = {};
 
-private:
-  static DirectX12Device *d3d12device_instance_;
+  std::unique_ptr<DxgiResourceManager> dxgi_resources_ = nullptr;
 };
 
 #endif

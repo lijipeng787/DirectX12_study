@@ -2,11 +2,19 @@
 
 #include "textclass.h"
 
+#include <utility>
+
 #include "DirectX12Device.h"
 #include "Font.h"
 
 using namespace std;
 using namespace DirectX;
+
+Text::Text(std::shared_ptr<DirectX12Device> device)
+    : device_(std::move(device)), material_(device_) {}
+
+TextMaterial::TextMaterial(std::shared_ptr<DirectX12Device> device)
+    : device_(std::move(device)) {}
 
 bool Text::SetFps(int fps) {
 
@@ -142,15 +150,13 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
     indices[i] = i;
   }
 
-  if (FAILED(DirectX12Device::GetD3d12DeviceInstance()
-                 ->GetD3d12Device()
-                 ->CreateCommittedResource(
-                     &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                     D3D12_HEAP_FLAG_NONE,
-                     &CD3DX12_RESOURCE_DESC::Buffer(sizeof(VertexType) *
-                                                    (*sentence)->vertex_count_),
-                     D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
-                     IID_PPV_ARGS(&(*sentence)->vertex_buffer_)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+          D3D12_HEAP_FLAG_NONE,
+          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(VertexType) *
+                                         (*sentence)->vertex_count_),
+          D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+          IID_PPV_ARGS(&(*sentence)->vertex_buffer_)))) {
     return false;
   }
 
@@ -160,7 +166,7 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
       sizeof(VertexType) * (*sentence)->vertex_count_;
   (*sentence)->vertex_buffer_view_.StrideInBytes = sizeof(VertexType);
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
 
   ResourceSharedPtr upload_index_buffer = nullptr;
   if (FAILED(device->CreateCommittedResource(
@@ -173,15 +179,13 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
     return false;
   }
 
-  if (FAILED(DirectX12Device::GetD3d12DeviceInstance()
-                 ->GetD3d12Device()
-                 ->CreateCommittedResource(
-                     &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                     D3D12_HEAP_FLAG_NONE,
-                     &CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint16_t) *
-                                                    (*sentence)->index_count_),
-                     D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
-                     IID_PPV_ARGS(&(*sentence)->index_buffer_)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+          D3D12_HEAP_FLAG_NONE,
+          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint16_t) *
+                                         (*sentence)->index_count_),
+          D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+          IID_PPV_ARGS(&(*sentence)->index_buffer_)))) {
     return false;
   }
 
@@ -285,7 +289,8 @@ DescriptorHeapPtr Text::GetShaderRescourceView() const {
 
 bool Text::LoadTexture(WCHAR **filename_arr) {
 
-  texture_container_ = std::make_shared<ResourceLoader::TextureLoader>();
+  texture_container_ =
+      std::make_shared<ResourceLoader::TextureLoader>(device_);
   if (!texture_container_) {
     return false;
   }
@@ -321,7 +326,7 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
 
   font_->BuildVertexArray((void *)vertices, text, drawX, drawY);
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
 
   ResourceSharedPtr upload_vertex_buffer = nullptr;
   if (FAILED(device->CreateCommittedResource(
@@ -339,12 +344,9 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
   init_data.RowPitch = sizeof(VertexType);
   init_data.SlicePitch = sizeof(VertexType) * sentence->vertex_count_;
 
-  auto command_allocator = DirectX12Device::GetD3d12DeviceInstance()
-                               ->GetDefaultGraphicsCommandAllocator()
-                               .Get();
-  auto command_list = DirectX12Device::GetD3d12DeviceInstance()
-                          ->GetDefaultGraphicsCommandList()
-                          .Get();
+  auto command_allocator =
+      device_->GetDefaultGraphicsCommandAllocator().Get();
+  auto command_list = device_->GetDefaultGraphicsCommandList().Get();
 
   if (FAILED(command_allocator->Reset())) {
     return false;
@@ -365,9 +367,7 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
     return false;
   }
 
-  auto command_queue = DirectX12Device::GetD3d12DeviceInstance()
-                           ->GetDefaultGraphicsCommandQueeue()
-                           .Get();
+  auto command_queue = device_->GetDefaultGraphicsCommandQueeue().Get();
   ID3D12CommandList *ppCommandLists[] = {command_list};
   command_queue->ExecuteCommandLists(1, ppCommandLists);
 
@@ -377,10 +377,8 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
   }
 
   ID3D12Fence *fence = nullptr;
-  if (FAILED(
-          DirectX12Device::GetD3d12DeviceInstance()
-              ->GetD3d12Device()
-              ->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateFence(
+          0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)))) {
     return false;
   }
 
@@ -403,8 +401,6 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
 
   return true;
 }
-
-TextMaterial::TextMaterial() {}
 
 TextMaterial::~TextMaterial() {}
 
@@ -469,11 +465,9 @@ bool TextMaterial::InitializeRootSignature() {
   }
 
   RootSignaturePtr root_signature = {};
-  if (FAILED(DirectX12Device::GetD3d12DeviceInstance()
-                 ->GetD3d12Device()
-                 ->CreateRootSignature(0, signature_blob->GetBufferPointer(),
-                                       signature_blob->GetBufferSize(),
-                                       IID_PPV_ARGS(&root_signature)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
+          0, signature_blob->GetBufferPointer(), signature_blob->GetBufferSize(),
+          IID_PPV_ARGS(&root_signature)))) {
     return false;
   }
   SetRootSignature(root_signature);
@@ -505,10 +499,8 @@ bool TextMaterial::InitializeGraphicsPipelineState() {
   pso_desc.SampleDesc.Count = 1;
 
   PipelineStateObjectPtr pso = {};
-  if (FAILED(
-          DirectX12Device::GetD3d12DeviceInstance()
-              ->GetD3d12Device()
-              ->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateGraphicsPipelineState(
+          &pso_desc, IID_PPV_ARGS(&pso)))) {
     return false;
   }
   SetPSOByName("text_normal", pso);
@@ -528,10 +520,8 @@ bool TextMaterial::InitializeGraphicsPipelineState() {
   pso_desc.BlendState = blend_desc;
 
   pso.Reset();
-  if (FAILED(
-          DirectX12Device::GetD3d12DeviceInstance()
-              ->GetD3d12Device()
-              ->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateGraphicsPipelineState(
+          &pso_desc, IID_PPV_ARGS(&pso)))) {
     return false;
   }
   SetPSOByName("text_blend_enable", pso);
@@ -541,25 +531,21 @@ bool TextMaterial::InitializeGraphicsPipelineState() {
 
 bool TextMaterial::InitializeConstantBuffer() {
 
-  if (FAILED(DirectX12Device::GetD3d12DeviceInstance()
-                 ->GetD3d12Device()
-                 ->CreateCommittedResource(
-                     &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                     D3D12_HEAP_FLAG_NONE,
-                     &CD3DX12_RESOURCE_DESC::Buffer(sizeof(ConstantBufferType)),
-                     D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-                     IID_PPV_ARGS(&matrix_constant_buffer_)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+          D3D12_HEAP_FLAG_NONE,
+          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(ConstantBufferType)),
+          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+          IID_PPV_ARGS(&matrix_constant_buffer_)))) {
     return false;
   }
 
-  if (FAILED(DirectX12Device::GetD3d12DeviceInstance()
-                 ->GetD3d12Device()
-                 ->CreateCommittedResource(
-                     &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                     D3D12_HEAP_FLAG_NONE,
-                     &CD3DX12_RESOURCE_DESC::Buffer(sizeof(PixelBufferType)),
-                     D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-                     IID_PPV_ARGS(&pixel_color_constant_buffer_)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+          D3D12_HEAP_FLAG_NONE,
+          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(PixelBufferType)),
+          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+          IID_PPV_ARGS(&pixel_color_constant_buffer_)))) {
     return false;
   }
 

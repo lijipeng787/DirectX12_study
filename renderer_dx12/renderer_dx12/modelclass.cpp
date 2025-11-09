@@ -2,6 +2,8 @@
 
 #include "modelclass.h"
 
+#include <utility>
+
 #include <fstream>
 
 #include "DirectX12Device.h"
@@ -9,6 +11,12 @@
 using namespace std;
 using namespace DirectX;
 using namespace ResourceLoader;
+
+Model::Model(std::shared_ptr<DirectX12Device> device)
+    : device_(std::move(device)), material_(device_) {}
+
+ModelMaterial::ModelMaterial(std::shared_ptr<DirectX12Device> device)
+    : device_(std::move(device)) {}
 
 bool Model::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) {
 
@@ -32,7 +40,7 @@ ModelMaterial *Model::GetMaterial() { return &material_; }
 
 bool Model::LoadTexture(WCHAR **texture_filename_arr) {
 
-  texture_container_ = std::make_shared<TextureLoader>();
+  texture_container_ = std::make_shared<TextureLoader>(device_);
   return texture_container_->LoadTexturesByNameArray(3, texture_filename_arr);
 }
 
@@ -101,7 +109,7 @@ bool Model::InitializeBuffers() {
     indices[i] = i;
   }
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
 
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -159,13 +167,11 @@ bool Model::InitializeBuffers() {
   return true;
 }
 
-ModelMaterial::ModelMaterial() {}
-
 ModelMaterial::~ModelMaterial() {}
 
 bool ModelMaterial::Initialize() {
 
-  auto device = DirectX12Device::GetD3d12DeviceInstance()->GetD3d12Device();
+  auto device = device_->GetD3d12Device();
 
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -265,11 +271,9 @@ bool ModelMaterial::InitializeRootSignature() {
   }
 
   RootSignaturePtr root_signature = {};
-  if (FAILED(DirectX12Device::GetD3d12DeviceInstance()
-                 ->GetD3d12Device()
-                 ->CreateRootSignature(0, signature_blob->GetBufferPointer(),
-                                       signature_blob->GetBufferSize(),
-                                       IID_PPV_ARGS(&root_signature)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
+          0, signature_blob->GetBufferPointer(), signature_blob->GetBufferSize(),
+          IID_PPV_ARGS(&root_signature)))) {
     return false;
   }
   SetRootSignature(root_signature);
@@ -304,10 +308,8 @@ bool ModelMaterial::InitializeGraphicsPipelineState() {
   pso_desc.SampleDesc.Count = 1;
 
   PipelineStateObjectPtr pso = {};
-  if (FAILED(
-          DirectX12Device::GetD3d12DeviceInstance()
-              ->GetD3d12Device()
-              ->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateGraphicsPipelineState(
+          &pso_desc, IID_PPV_ARGS(&pso)))) {
     return false;
   }
   SetPSOByName("model_normal", pso);

@@ -1,119 +1,141 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 #include "DirectX12Device.h"
 
-DirectX12Device *DirectX12Device::d3d12device_instance_ = nullptr;
-
-DirectX12Device *DirectX12Device::GetD3d12DeviceInstance() {
-
-  if (nullptr == d3d12device_instance_) {
-    d3d12device_instance_ = new DirectX12Device;
+DirectX12Device::~DirectX12Device() {
+  if (fence_ && default_graphics_command_queue_) {
+    WaitForPreviousFrame();
   }
-  return d3d12device_instance_;
+  if (fence_handle_) {
+    CloseHandle(fence_handle_);
+    fence_handle_ = nullptr;
+  }
 }
 
-bool DirectX12Device::Initialize(int screen_width, int screen_height,
-                                 bool vsync, HWND hwnd, bool fullscreen,
-                                 float screen_depth, float screen_near) {
-
-#if defined(_DEBUG)
-
-  Microsoft::WRL::ComPtr<ID3D12Debug> debug_controller = nullptr;
-  if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller)))) {
-    debug_controller->EnableDebugLayer();
-  } else {
-    assert(0);
+std::shared_ptr<DirectX12Device>
+DirectX12Device::Create(const DirectX12DeviceConfig &config) {
+  auto device = std::shared_ptr<DirectX12Device>(new DirectX12Device());
+  if (!device->Initialize(config)) {
+    return nullptr;
   }
+  return device;
+}
 
-#endif // !(_DEBUG)
+bool DirectX12Device::Initialize(const DirectX12DeviceConfig &config) {
 
-  IDXGIFactory4 *factory = nullptr;
-  {
-    if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory)))) {
-      return false;
-    }
-  }
+  config_ = config;
+  is_vsync_enabled_ = config.vsync_enabled;
 
-  IDXGIAdapter1 *adapter = nullptr;
-  DXGI_ADAPTER_DESC1 adapter_desc = {0};
-
-  for (UINT adapter_index = 0;
-       DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(adapter_index, &adapter);
-       ++adapter_index) {
-    adapter->GetDesc1(&adapter_desc);
-    if (DXGI_ADAPTER_FLAG_SOFTWARE & adapter_desc.Flags) {
-      continue;
-    }
-    if (SUCCEEDED(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0,
-                                    IID_PPV_ARGS(&d3d12device_)))) {
-
-      video_card_memory_ =
-          static_cast<int>(adapter_desc.DedicatedVideoMemory / 1024 / 1024);
-      size_t string_length = 0;
-      auto error = wcstombs_s(&string_length, video_card_description_, 128,
-                              adapter_desc.Description, 128);
-      if (error != 0) {
-        return false;
-      }
-
-      break;
-    }
-    adapter_desc = {0};
-  }
-  adapter->Release();
-
-  D3D12_COMMAND_QUEUE_DESC queue_desc = {};
-  queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-  queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
-  if (FAILED(d3d12device_->CreateCommandQueue(
-          &queue_desc, IID_PPV_ARGS(&default_graphics_command_queue_)))) {
+  if (FAILED(EnableDebugLayer())) {
     return false;
   }
 
-  queue_desc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-  if (FAILED(d3d12device_->CreateCommandQueue(
-          &queue_desc, IID_PPV_ARGS(&default_copy_command_queue_)))) {
+  Microsoft::WRL::ComPtr<IDXGIFactory4> factory;
+  if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory)))) {
     return false;
   }
 
-  DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {};
-  swap_chain_desc.BufferCount = frame_cout_;
-  swap_chain_desc.Width = screen_width;
-  swap_chain_desc.Height = screen_height;
-  swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-  swap_chain_desc.SampleDesc.Count = 1;
+  dxgi_resources_ =
+      std::make_unique<DxgiResourceManager>(Microsoft::WRL::ComPtr<IDXGIFactory4>(factory));
 
-  Microsoft::WRL::ComPtr<IDXGISwapChain1> tem_swap_chain = nullptr;
-
-  if (FAILED(factory->CreateSwapChainForHwnd(
-          default_graphics_command_queue_.Get(), hwnd, &swap_chain_desc,
-          nullptr, nullptr, &tem_swap_chain))) {
+  if (FAILED(dxgi_resources_->CreateDevice(
+          d3d12device_, video_card_memory_, video_card_description_))) {
     return false;
   }
 
-  if (FAILED(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER))) {
+  if (FAILED(CreateCommandQueues())) {
     return false;
   }
 
-  if (FAILED(tem_swap_chain.As(&swap_chain_))) {
+  if (FAILED(dxgi_resources_->CreateSwapChain(
+          config_, default_graphics_command_queue_.Get(), swap_chain_,
+          frame_cout_))) {
     return false;
   }
 
   frame_index_ = swap_chain_->GetCurrentBackBufferIndex();
 
-  factory->Release();
+  if (FAILED(CreateRenderTargetViews())) {
+    return false;
+  }
+
+  if (FAILED(CreateDepthStencilResources())) {
+    return false;
+  }
+
+  if (FAILED(CreateOffscreenResources())) {
+    return false;
+  }
+
+  if (FAILED(CreateCommandAllocatorsAndLists())) {
+    return false;
+  }
+
+  if (FAILED(CreateFenceAndEvent())) {
+    return false;
+  }
+
+  InitializeViewportsAndScissors();
+  InitializeMatrices();
+
+  return true;
+}
+
+HRESULT DirectX12Device::EnableDebugLayer() {
+#if defined(_DEBUG)
+  Microsoft::WRL::ComPtr<ID3D12Debug> debug_controller;
+  HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller));
+  if (FAILED(hr)) {
+    return hr;
+  }
+  debug_controller->EnableDebugLayer();
+#endif
+  return S_OK;
+}
+
+HRESULT DirectX12Device::CreateCommandQueues() {
+  if (!d3d12device_) {
+    return E_FAIL;
+  }
+
+  default_graphics_command_queue_.Reset();
+  default_copy_command_queue_.Reset();
+
+  D3D12_COMMAND_QUEUE_DESC queue_desc = {};
+  queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+  queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+  HRESULT hr = d3d12device_->CreateCommandQueue(
+      &queue_desc, IID_PPV_ARGS(&default_graphics_command_queue_));
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  queue_desc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+  hr = d3d12device_->CreateCommandQueue(
+      &queue_desc, IID_PPV_ARGS(&default_copy_command_queue_));
+  return hr;
+}
+
+HRESULT DirectX12Device::CreateRenderTargetViews() {
+  if (!d3d12device_ || !swap_chain_) {
+    return E_FAIL;
+  }
+
+  render_target_view_heap_.Reset();
+  for (auto &render_target : render_targets_) {
+    render_target.Reset();
+  }
 
   D3D12_DESCRIPTOR_HEAP_DESC render_target_heap_desc = {};
   render_target_heap_desc.NumDescriptors = frame_cout_;
   render_target_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
   render_target_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-  if (FAILED(d3d12device_->CreateDescriptorHeap(
-          &render_target_heap_desc, IID_PPV_ARGS(&render_target_view_heap_)))) {
-    return false;
+  HRESULT hr = d3d12device_->CreateDescriptorHeap(
+      &render_target_heap_desc, IID_PPV_ARGS(&render_target_view_heap_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
   render_target_descriptor_size_ =
@@ -124,88 +146,116 @@ bool DirectX12Device::Initialize(int screen_width, int screen_height,
       render_target_view_heap_->GetCPUDescriptorHandleForHeapStart());
 
   for (UINT index = 0; index < frame_cout_; ++index) {
-    if (FAILED(swap_chain_->GetBuffer(index,
-                                      IID_PPV_ARGS(&render_targets_[index])))) {
-      return false;
+    hr = swap_chain_->GetBuffer(index, IID_PPV_ARGS(&render_targets_[index]));
+    if (FAILED(hr)) {
+      return hr;
     }
     d3d12device_->CreateRenderTargetView(render_targets_[index].Get(), nullptr,
                                          render_target_handle);
     render_target_handle.Offset(1, render_target_descriptor_size_);
   }
 
-  D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-  dsvHeapDesc.NumDescriptors = 1;
-  dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-  dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-  if (FAILED(d3d12device_->CreateDescriptorHeap(
-          &dsvHeapDesc, IID_PPV_ARGS(&depth_stencil_view_heap_)))) {
-    return false;
+  return S_OK;
+}
+
+HRESULT DirectX12Device::CreateDepthStencilResources() {
+  if (!d3d12device_) {
+    return E_FAIL;
   }
 
-  D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-  depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-  depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-  depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+  depth_stencil_view_heap_.Reset();
+  depth_stencil_resource_.Reset();
 
-  D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-  depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-  depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-  depthOptimizedClearValue.DepthStencil.Stencil = 0;
+  D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc = {};
+  dsv_heap_desc.NumDescriptors = 1;
+  dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+  dsv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-  if (FAILED(d3d12device_->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Tex2D(
-              DXGI_FORMAT_D32_FLOAT, screen_width, screen_height, 1, 0, 1, 0,
-              D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-          D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue,
-          IID_PPV_ARGS(&depth_stencil_resource_)))) {
-    return false;
+  HRESULT hr = d3d12device_->CreateDescriptorHeap(
+      &dsv_heap_desc, IID_PPV_ARGS(&depth_stencil_view_heap_));
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  D3D12_DEPTH_STENCIL_VIEW_DESC depth_stencil_desc = {};
+  depth_stencil_desc.Format = DXGI_FORMAT_D32_FLOAT;
+  depth_stencil_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+  depth_stencil_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+  D3D12_CLEAR_VALUE depth_clear_value = {};
+  depth_clear_value.Format = DXGI_FORMAT_D32_FLOAT;
+  depth_clear_value.DepthStencil.Depth = 1.0f;
+  depth_clear_value.DepthStencil.Stencil = 0;
+
+  hr = d3d12device_->CreateCommittedResource(
+      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+      D3D12_HEAP_FLAG_NONE,
+      &CD3DX12_RESOURCE_DESC::Tex2D(
+          DXGI_FORMAT_D32_FLOAT, config_.screen_width, config_.screen_height, 1,
+          0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+      D3D12_RESOURCE_STATE_DEPTH_WRITE, &depth_clear_value,
+      IID_PPV_ARGS(&depth_stencil_resource_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
   d3d12device_->CreateDepthStencilView(
-      depth_stencil_resource_.Get(), &depthStencilDesc,
+      depth_stencil_resource_.Get(), &depth_stencil_desc,
       depth_stencil_view_heap_->GetCPUDescriptorHandleForHeapStart());
 
   depth_stencil_descriptor_size_ =
       d3d12device_->GetDescriptorHandleIncrementSize(
           D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
-  D3D12_RESOURCE_DESC texDesc = {};
-  texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-  texDesc.Alignment = 0;
-  texDesc.Width = screen_width;
-  texDesc.Height = screen_height;
-  texDesc.DepthOrArraySize = 1;
-  texDesc.MipLevels = 1;
-  texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  texDesc.SampleDesc.Count = 1;
-  texDesc.SampleDesc.Quality = 0;
-  texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-  texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+  return S_OK;
+}
 
-  D3D12_CLEAR_VALUE off_screen_color = {};
-  off_screen_color.Color[0] = 0.0f;
-  off_screen_color.Color[1] = 0.2f;
-  off_screen_color.Color[2] = 0.4f;
-  off_screen_color.Color[3] = 1.0f;
-  off_screen_color.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-  if (FAILED(d3d12device_->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-          D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
-          &off_screen_color, IID_PPV_ARGS(&off_screen_texture_)))) {
-    return false;
+HRESULT DirectX12Device::CreateOffscreenResources() {
+  if (!d3d12device_) {
+    return E_FAIL;
   }
 
-  D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-  descriptorHeapDesc.NumDescriptors = 1;
-  descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-  descriptorHeapDesc.NodeMask = 0;
-  descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-  if (FAILED(d3d12device_->CreateDescriptorHeap(
-          &descriptorHeapDesc, IID_PPV_ARGS(&off_screen_srv_)))) {
-    return false;
+  off_screen_texture_.Reset();
+  off_screen_srv_.Reset();
+  off_screen_rtv_.Reset();
+
+  D3D12_RESOURCE_DESC texture_desc = {};
+  texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+  texture_desc.Alignment = 0;
+  texture_desc.Width = config_.screen_width;
+  texture_desc.Height = config_.screen_height;
+  texture_desc.DepthOrArraySize = 1;
+  texture_desc.MipLevels = 1;
+  texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  texture_desc.SampleDesc.Count = 1;
+  texture_desc.SampleDesc.Quality = 0;
+  texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+  texture_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+  D3D12_CLEAR_VALUE clear_value = {};
+  clear_value.Color[0] = 0.0f;
+  clear_value.Color[1] = 0.2f;
+  clear_value.Color[2] = 0.4f;
+  clear_value.Color[3] = 1.0f;
+  clear_value.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+  HRESULT hr = d3d12device_->CreateCommittedResource(
+      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+      D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_GENERIC_READ,
+      &clear_value, IID_PPV_ARGS(&off_screen_texture_));
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc = {};
+  srv_heap_desc.NumDescriptors = 1;
+  srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+  srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+  hr = d3d12device_->CreateDescriptorHeap(
+      &srv_heap_desc, IID_PPV_ARGS(&off_screen_srv_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
   D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
@@ -215,78 +265,109 @@ bool DirectX12Device::Initialize(int screen_width, int screen_height,
   srv_desc.Texture2D.MipLevels = 1;
   srv_desc.Texture2D.MostDetailedMip = 0;
   srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
   d3d12device_->CreateShaderResourceView(
       off_screen_texture_.Get(), &srv_desc,
       off_screen_srv_->GetCPUDescriptorHandleForHeapStart());
 
-  D3D12_DESCRIPTOR_HEAP_DESC off_screen_heap_desc = {};
-  off_screen_heap_desc.NumDescriptors = frame_cout_;
-  off_screen_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-  off_screen_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-  if (FAILED(d3d12device_->CreateDescriptorHeap(
-          &off_screen_heap_desc, IID_PPV_ARGS(&off_screen_rtv_)))) {
-    return false;
+  D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc = {};
+  rtv_heap_desc.NumDescriptors = frame_cout_;
+  rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+  rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+  hr = d3d12device_->CreateDescriptorHeap(
+      &rtv_heap_desc, IID_PPV_ARGS(&off_screen_rtv_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
-  D3D12_RENDER_TARGET_VIEW_DESC off_screen_rtv_desc = {};
-  off_screen_rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-  off_screen_rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  off_screen_rtv_desc.Texture2D.MipSlice = 0;
-  off_screen_rtv_desc.Texture2D.PlaneSlice = 0;
+  D3D12_RENDER_TARGET_VIEW_DESC rtv_desc = {};
+  rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+  rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  rtv_desc.Texture2D.MipSlice = 0;
+  rtv_desc.Texture2D.PlaneSlice = 0;
+
   d3d12device_->CreateRenderTargetView(
-      off_screen_texture_.Get(), &off_screen_rtv_desc,
+      off_screen_texture_.Get(), &rtv_desc,
       off_screen_rtv_->GetCPUDescriptorHandleForHeapStart());
 
-  if (FAILED(d3d12device_->CreateCommandAllocator(
-          D3D12_COMMAND_LIST_TYPE_DIRECT,
-          IID_PPV_ARGS(&default_graphics_command_allocator_)))) {
-    return false;
+  return S_OK;
+}
+
+HRESULT DirectX12Device::CreateCommandAllocatorsAndLists() {
+  if (!d3d12device_) {
+    return E_FAIL;
   }
 
-  if (FAILED(d3d12device_->CreateCommandAllocator(
-          D3D12_COMMAND_LIST_TYPE_COPY,
-          IID_PPV_ARGS(&default_copy_command_allocator_)))) {
-    return false;
+  default_graphics_command_allocator_.Reset();
+  default_copy_command_allocator_.Reset();
+  default_graphics_command_list_.Reset();
+  default_copy_command_list_.Reset();
+
+  HRESULT hr = d3d12device_->CreateCommandAllocator(
+      D3D12_COMMAND_LIST_TYPE_DIRECT,
+      IID_PPV_ARGS(&default_graphics_command_allocator_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
-  if (FAILED(d3d12device_->CreateCommandList(
-          0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-          default_graphics_command_allocator_.Get(), nullptr,
-          IID_PPV_ARGS(&default_graphics_command_list_)))) {
-    return false;
+  hr = d3d12device_->CreateCommandAllocator(
+      D3D12_COMMAND_LIST_TYPE_COPY,
+      IID_PPV_ARGS(&default_copy_command_allocator_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
-  if (FAILED(d3d12device_->CreateCommandList(
-          0, D3D12_COMMAND_LIST_TYPE_COPY,
-          default_copy_command_allocator_.Get(), nullptr,
-          IID_PPV_ARGS(&default_copy_command_list_)))) {
-    return false;
+  hr = d3d12device_->CreateCommandList(
+      0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+      default_graphics_command_allocator_.Get(), nullptr,
+      IID_PPV_ARGS(&default_graphics_command_list_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
-  if (FAILED(default_graphics_command_list_->Close())) {
-    return false;
+  hr = d3d12device_->CreateCommandList(
+      0, D3D12_COMMAND_LIST_TYPE_COPY,
+      default_copy_command_allocator_.Get(), nullptr,
+      IID_PPV_ARGS(&default_copy_command_list_));
+  if (FAILED(hr)) {
+    return hr;
   }
 
-  if (FAILED(default_copy_command_list_->Close())) {
-    return false;
+  hr = default_graphics_command_list_->Close();
+  if (FAILED(hr)) {
+    return hr;
   }
 
-  if (FAILED(d3d12device_->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-                                       IID_PPV_ARGS(&fence_)))) {
-    return false;
+  return default_copy_command_list_->Close();
+}
+
+HRESULT DirectX12Device::CreateFenceAndEvent() {
+  if (!d3d12device_) {
+    return E_FAIL;
   }
 
-  fence_handle_ = CreateEvent(nullptr, false, false, nullptr);
-
-  if (nullptr == fence_handle_) {
-    if (FAILED((HRESULT_FROM_WIN32(GetLastError())))) {
-      return false;
-    }
+  HRESULT hr = d3d12device_->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+                                         IID_PPV_ARGS(&fence_));
+  if (FAILED(hr)) {
+    return hr;
   }
+
+  fence_handle_ = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+  if (!fence_handle_) {
+    return HRESULT_FROM_WIN32(GetLastError());
+  }
+
+  return S_OK;
+}
+
+void DirectX12Device::InitializeViewportsAndScissors() {
+  viewport_.clear();
+  scissor_rect_.clear();
 
   D3D12_VIEWPORT view_port = {};
-  view_port.Width = static_cast<float>(screen_width);
-  view_port.Height = static_cast<float>(screen_height);
+  view_port.Width = static_cast<float>(config_.screen_width);
+  view_port.Height = static_cast<float>(config_.screen_height);
   view_port.MinDepth = 0.0f;
   view_port.MaxDepth = 1.0f;
   view_port.TopLeftX = 0.0f;
@@ -294,28 +375,28 @@ bool DirectX12Device::Initialize(int screen_width, int screen_height,
   viewport_.push_back(view_port);
 
   D3D12_RECT rect = {};
-  rect.right = static_cast<LONG>(screen_width);
-  rect.bottom = static_cast<LONG>(screen_height);
+  rect.left = 0;
+  rect.top = 0;
+  rect.right = static_cast<LONG>(config_.screen_width);
+  rect.bottom = static_cast<LONG>(config_.screen_height);
   scissor_rect_.push_back(rect);
+}
 
-  float field_of_View, screen_aspect;
-
-  field_of_View = (DirectX::XM_PI / 4.0f);
-  screen_aspect =
-      static_cast<float>(screen_width) / static_cast<float>(screen_height);
-
-  projection_matrix_ = DirectX::XMMatrixIdentity();
+void DirectX12Device::InitializeMatrices() {
+  const float field_of_view = DirectX::XM_PI / 4.0f;
+  const float screen_aspect =
+      static_cast<float>(config_.screen_width) /
+      static_cast<float>(config_.screen_height);
 
   projection_matrix_ = DirectX::XMMatrixPerspectiveFovLH(
-      field_of_View, screen_aspect, screen_near, screen_depth);
+      field_of_view, screen_aspect, config_.screen_near, config_.screen_depth);
 
   world_matrix_ = DirectX::XMMatrixIdentity();
 
   ortho_matrix_ = DirectX::XMMatrixOrthographicLH(
-      static_cast<float>(screen_width), static_cast<float>(screen_height),
-      screen_near, screen_depth);
-
-  return true;
+      static_cast<float>(config_.screen_width),
+      static_cast<float>(config_.screen_height), config_.screen_near,
+      config_.screen_depth);
 }
 
 bool DirectX12Device::ExecuteDefaultGraphicsCommandList() {
