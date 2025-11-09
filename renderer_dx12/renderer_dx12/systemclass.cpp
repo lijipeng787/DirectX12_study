@@ -3,8 +3,8 @@
 #include "systemclass.h"
 
 #include "Input.h"
-#include "graphicsclass.h"
 #include "Timer.h"
+#include "graphicsclass.h"
 
 bool System::Initialize() {
   int screenWidth, screenHeight;

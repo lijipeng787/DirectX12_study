@@ -90,7 +90,8 @@ bool LoadTarga32Bit(const std::wstring &file_path, std::vector<uint8_t> &data,
   const bool flip_vertical = ((header.image_descriptor & 0x20) == 0);
   for (uint32_t y = 0; y < height; ++y) {
     uint32_t src_row = flip_vertical ? (height - 1 - y) : y;
-    const uint8_t *src = raw_data.data() + (static_cast<size_t>(src_row) * width * 4);
+    const uint8_t *src =
+        raw_data.data() + (static_cast<size_t>(src_row) * width * 4);
     uint8_t *dst = data.data() + (static_cast<size_t>(y) * width * 4);
     for (uint32_t x = 0; x < width; ++x) {
       dst[0] = src[2];
@@ -131,9 +132,8 @@ bool CreateTextureFromTga(ID3D12Device *device, const std::wstring &file_path,
   ResourceSharedPtr texture_resource = nullptr;
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-          D3D12_HEAP_FLAG_NONE, &resource_desc,
-          D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
-          IID_PPV_ARGS(&texture_resource)))) {
+          D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_COPY_DEST,
+          nullptr, IID_PPV_ARGS(&texture_resource)))) {
     return false;
   }
 
@@ -143,8 +143,7 @@ bool CreateTextureFromTga(ID3D12Device *device, const std::wstring &file_path,
   ResourceSharedPtr upload_resource = nullptr;
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(upload_size),
+          D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(upload_size),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&upload_resource)))) {
     return false;
@@ -167,15 +166,14 @@ bool CreateTextureFromTga(ID3D12Device *device, const std::wstring &file_path,
 
   Microsoft::WRL::ComPtr<ID3D12CommandAllocator> command_allocator = nullptr;
   if (FAILED(device->CreateCommandAllocator(
-          D3D12_COMMAND_LIST_TYPE_DIRECT,
-          IID_PPV_ARGS(&command_allocator)))) {
+          D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&command_allocator)))) {
     return false;
   }
 
   Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list = nullptr;
-  if (FAILED(device->CreateCommandList(
-          0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator.Get(), nullptr,
-          IID_PPV_ARGS(&command_list)))) {
+  if (FAILED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                       command_allocator.Get(), nullptr,
+                                       IID_PPV_ARGS(&command_list)))) {
     return false;
   }
 
@@ -210,8 +208,8 @@ bool CreateTextureFromTga(ID3D12Device *device, const std::wstring &file_path,
   }
 
   if (fence->GetCompletedValue() < fence_value) {
-    if (FAILED(fence->SetEventOnCompletion(fence_value,
-                                           fence_event.Handle()))) {
+    if (FAILED(
+            fence->SetEventOnCompletion(fence_value, fence_event.Handle()))) {
       return false;
     }
     WaitForSingleObject(fence_event.Handle(), INFINITE);
@@ -233,8 +231,9 @@ bool CreateTextureFromTga(ID3D12Device *device, const std::wstring &file_path,
 }
 
 std::wstring ToLower(std::wstring value) {
-  std::transform(value.begin(), value.end(), value.begin(),
-                 [](wchar_t c) { return static_cast<wchar_t>(std::towlower(c)); });
+  std::transform(value.begin(), value.end(), value.begin(), [](wchar_t c) {
+    return static_cast<wchar_t>(std::towlower(c));
+  });
   return value;
 }
 
@@ -285,10 +284,9 @@ bool TextureLoader::LoadTexturesByNameArray(unsigned int num_textures,
 
     bool load_result = false;
     if (EndsWith(lowercase, L".dds")) {
-      load_result =
-          SUCCEEDED(CreateDDSTextureFromFile(device.Get(),
-                                             texture_filename_arr[i], 0, false,
-                                             &tem_texture, handle));
+      load_result = SUCCEEDED(
+          CreateDDSTextureFromFile(device.Get(), texture_filename_arr[i], 0,
+                                   false, &tem_texture, handle));
     } else if (EndsWith(lowercase, L".tga")) {
       load_result =
           CreateTextureFromTga(device.Get(), file_path, tem_texture, handle);
@@ -304,8 +302,8 @@ bool TextureLoader::LoadTexturesByNameArray(unsigned int num_textures,
 
     filename.clear();
     WCHARToString(texture_filename_arr[i], filename);
-    index_container_.insert(
-        make_pair(filename, static_cast<unsigned int>(texture_container_.size() - 1)));
+    index_container_.insert(make_pair(
+        filename, static_cast<unsigned int>(texture_container_.size() - 1)));
 
     handle.Offset(increasement_size);
   }

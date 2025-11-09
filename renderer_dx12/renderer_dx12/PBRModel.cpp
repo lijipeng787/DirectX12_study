@@ -188,12 +188,12 @@ void PBRModel::CalculateTangentBinormal(const TempVertexType &vertex1,
 
   float denominator = 1.0f / determinant;
 
-  tangent.x = (tv_vector[1] * vector1[0] - tv_vector[0] * vector2[0]) *
-              denominator;
-  tangent.y = (tv_vector[1] * vector1[1] - tv_vector[0] * vector2[1]) *
-              denominator;
-  tangent.z = (tv_vector[1] * vector1[2] - tv_vector[0] * vector2[2]) *
-              denominator;
+  tangent.x =
+      (tv_vector[1] * vector1[0] - tv_vector[0] * vector2[0]) * denominator;
+  tangent.y =
+      (tv_vector[1] * vector1[1] - tv_vector[0] * vector2[1]) * denominator;
+  tangent.z =
+      (tv_vector[1] * vector1[2] - tv_vector[0] * vector2[2]) * denominator;
 
   binormal.x =
       (tu_vector[0] * vector2[0] - tu_vector[1] * vector1[0]) * denominator;
@@ -238,8 +238,7 @@ bool PBRModel::InitializeBuffers() {
   for (UINT i = 0; i < vertex_count_; ++i) {
     vertices[i].position =
         XMFLOAT3(model_data_[i].x, model_data_[i].y, model_data_[i].z);
-    vertices[i].texcoord =
-        XMFLOAT2(model_data_[i].tu, model_data_[i].tv);
+    vertices[i].texcoord = XMFLOAT2(model_data_[i].tu, model_data_[i].tv);
     vertices[i].normal =
         XMFLOAT3(model_data_[i].nx, model_data_[i].ny, model_data_[i].nz);
     vertices[i].tangent =
@@ -299,4 +298,3 @@ bool PBRModel::LoadTexture(WCHAR **texture_filename_arr) {
   texture_container_ = std::make_shared<TextureLoader>(device_);
   return texture_container_->LoadTexturesByNameArray(3, texture_filename_arr);
 }
-

@@ -289,8 +289,7 @@ DescriptorHeapPtr Text::GetShaderRescourceView() const {
 
 bool Text::LoadTexture(WCHAR **filename_arr) {
 
-  texture_container_ =
-      std::make_shared<ResourceLoader::TextureLoader>(device_);
+  texture_container_ = std::make_shared<ResourceLoader::TextureLoader>(device_);
   if (!texture_container_) {
     return false;
   }
@@ -344,8 +343,7 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
   init_data.RowPitch = sizeof(VertexType);
   init_data.SlicePitch = sizeof(VertexType) * sentence->vertex_count_;
 
-  auto command_allocator =
-      device_->GetDefaultGraphicsCommandAllocator().Get();
+  auto command_allocator = device_->GetDefaultGraphicsCommandAllocator().Get();
   auto command_list = device_->GetDefaultGraphicsCommandList().Get();
 
   if (FAILED(command_allocator->Reset())) {
@@ -377,8 +375,8 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
   }
 
   ID3D12Fence *fence = nullptr;
-  if (FAILED(device_->GetD3d12Device()->CreateFence(
-          0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)))) {
+  if (FAILED(device_->GetD3d12Device()->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+                                                    IID_PPV_ARGS(&fence)))) {
     return false;
   }
 
@@ -466,8 +464,8 @@ bool TextMaterial::InitializeRootSignature() {
 
   RootSignaturePtr root_signature = {};
   if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
-          0, signature_blob->GetBufferPointer(), signature_blob->GetBufferSize(),
-          IID_PPV_ARGS(&root_signature)))) {
+          0, signature_blob->GetBufferPointer(),
+          signature_blob->GetBufferSize(), IID_PPV_ARGS(&root_signature)))) {
     return false;
   }
   SetRootSignature(root_signature);

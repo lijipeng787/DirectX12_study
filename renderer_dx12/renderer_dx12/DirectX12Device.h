@@ -1,9 +1,9 @@
 #ifndef D3D12CLASS_H
 #define D3D12CLASS_H
 
+#include <limits>
 #include <sstream>
 #include <unordered_map>
-#include <limits>
 #include <utility>
 
 #include <DirectXMath.h>
@@ -14,132 +14,130 @@
 #include "d3dx12.h"
 
 struct DirectX12DeviceConfig {
-    int screen_width = 0;
-    int screen_height = 0;
-    bool vsync_enabled = false;
-    HWND hwnd = nullptr;
-    bool fullscreen = false;
-    float screen_depth = 1000.0f;
-    float screen_near = 0.1f;
+  int screen_width = 0;
+  int screen_height = 0;
+  bool vsync_enabled = false;
+  HWND hwnd = nullptr;
+  bool fullscreen = false;
+  float screen_depth = 1000.0f;
+  float screen_near = 0.1f;
 };
 
 class DxgiResourceManager {
 public:
-    explicit DxgiResourceManager(Microsoft::WRL::ComPtr<IDXGIFactory4> factory)
-        : factory_(std::move(factory)) {
+  explicit DxgiResourceManager(Microsoft::WRL::ComPtr<IDXGIFactory4> factory)
+      : factory_(std::move(factory)) {}
+
+  HRESULT CreateDevice(D3d12DevicePtr &device, int &video_memory_mb,
+                       char (&description)[128]) {
+    if (!factory_) {
+      return E_FAIL;
     }
 
-    HRESULT CreateDevice(D3d12DevicePtr& device, int& video_memory_mb,
-        char(&description)[128]) {
-        if (!factory_) {
-            return E_FAIL;
+    Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter;
+    DXGI_ADAPTER_DESC1 adapter_desc = {};
+
+    for (UINT adapter_index = 0;
+         factory_->EnumAdapters1(adapter_index,
+                                 adapter.ReleaseAndGetAddressOf()) !=
+         DXGI_ERROR_NOT_FOUND;
+         ++adapter_index) {
+
+      adapter->GetDesc1(&adapter_desc);
+      if (adapter_desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
+        LogAdapterAttempt(adapter_desc, DXGI_ERROR_UNSUPPORTED);
+        continue;
+      }
+
+      HRESULT hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0,
+                                     IID_PPV_ARGS(&device));
+      LogAdapterAttempt(adapter_desc, hr);
+      if (SUCCEEDED(hr)) {
+        adapter_ = adapter;
+        video_memory_mb =
+            static_cast<int>(adapter_desc.DedicatedVideoMemory / 1024 / 1024);
+        size_t string_length = 0;
+        errno_t error = wcstombs_s(&string_length, description, 128,
+                                   adapter_desc.Description, 128);
+        if (error != 0) {
+          return E_FAIL;
         }
-
-        Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter;
-        DXGI_ADAPTER_DESC1 adapter_desc = {};
-
-        for (UINT adapter_index = 0;
-            factory_->EnumAdapters1(adapter_index,
-                adapter.ReleaseAndGetAddressOf()) !=
-            DXGI_ERROR_NOT_FOUND;
-            ++adapter_index) {
-
-            adapter->GetDesc1(&adapter_desc);
-            if (adapter_desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
-                LogAdapterAttempt(adapter_desc, DXGI_ERROR_UNSUPPORTED);
-                continue;
-            }
-
-            HRESULT hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0,
-                IID_PPV_ARGS(&device));
-            LogAdapterAttempt(adapter_desc, hr);
-            if (SUCCEEDED(hr)) {
-                adapter_ = adapter;
-                video_memory_mb =
-                    static_cast<int>(adapter_desc.DedicatedVideoMemory / 1024 / 1024);
-                size_t string_length = 0;
-                errno_t error = wcstombs_s(&string_length, description, 128,
-                    adapter_desc.Description, 128);
-                if (error != 0) {
-                    return E_FAIL;
-                }
-                return S_OK;
-            }
-            device.Reset();
-        }
-
-        OutputDebugStringW(
-            L"[DxgiResourceManager] Can not find available hardware adapter, create device failed.\n");
-        return DXGI_ERROR_NOT_FOUND;
-    }
-
-    HRESULT CreateSwapChain(const DirectX12DeviceConfig& config,
-        ID3D12CommandQueue* command_queue,
-        Microsoft::WRL::ComPtr<IDXGISwapChain3>& swap_chain,
-        UINT frame_count) {
-        if (!factory_ || !command_queue) {
-            return E_INVALIDARG;
-        }
-
-        swap_chain.Reset();
-
-        DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {};
-        swap_chain_desc.BufferCount = frame_count;
-        swap_chain_desc.Width = config.screen_width;
-        swap_chain_desc.Height = config.screen_height;
-        swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-        swap_chain_desc.SampleDesc.Count = 1;
-
-        Microsoft::WRL::ComPtr<IDXGISwapChain1> temp_swap_chain;
-        HRESULT hr = factory_->CreateSwapChainForHwnd(
-            command_queue, config.hwnd, &swap_chain_desc, nullptr, nullptr,
-            &temp_swap_chain);
-        if (FAILED(hr)) {
-            OutputDebugStringW(
-                L"[DxgiResourceManager] Create SwapChain failed, CreateSwapChainForHwnd "
-                L"returned error.\n");
-            return hr;
-        }
-
-        hr = factory_->MakeWindowAssociation(config.hwnd, DXGI_MWA_NO_ALT_ENTER);
-        if (FAILED(hr)) {
-            OutputDebugStringW(
-                L"[DxgiResourceManager] MakeWindowAssociation failed.\n");
-            return hr;
-        }
-
-        hr = temp_swap_chain.As(&swap_chain);
-        if (FAILED(hr)) {
-            OutputDebugStringW(
-                L"[DxgiResourceManager] Failed to cast SwapChain to IDXGISwapChain3.\n");
-            return hr;
-        }
-
-        std::wstringstream stream;
-        stream << L"[DxgiResourceManager] Create SwapChain successfully, size "
-            << config.screen_width << L"x" << config.screen_height << L", buffer count "
-            << frame_count << L".\n";
-        OutputDebugStringW(stream.str().c_str()); 
-
         return S_OK;
+      }
+      device.Reset();
     }
+
+    OutputDebugStringW(L"[DxgiResourceManager] Can not find available hardware "
+                       L"adapter, create device failed.\n");
+    return DXGI_ERROR_NOT_FOUND;
+  }
+
+  HRESULT CreateSwapChain(const DirectX12DeviceConfig &config,
+                          ID3D12CommandQueue *command_queue,
+                          Microsoft::WRL::ComPtr<IDXGISwapChain3> &swap_chain,
+                          UINT frame_count) {
+    if (!factory_ || !command_queue) {
+      return E_INVALIDARG;
+    }
+
+    swap_chain.Reset();
+
+    DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {};
+    swap_chain_desc.BufferCount = frame_count;
+    swap_chain_desc.Width = config.screen_width;
+    swap_chain_desc.Height = config.screen_height;
+    swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swap_chain_desc.SampleDesc.Count = 1;
+
+    Microsoft::WRL::ComPtr<IDXGISwapChain1> temp_swap_chain;
+    HRESULT hr = factory_->CreateSwapChainForHwnd(command_queue, config.hwnd,
+                                                  &swap_chain_desc, nullptr,
+                                                  nullptr, &temp_swap_chain);
+    if (FAILED(hr)) {
+      OutputDebugStringW(L"[DxgiResourceManager] Create SwapChain failed, "
+                         L"CreateSwapChainForHwnd "
+                         L"returned error.\n");
+      return hr;
+    }
+
+    hr = factory_->MakeWindowAssociation(config.hwnd, DXGI_MWA_NO_ALT_ENTER);
+    if (FAILED(hr)) {
+      OutputDebugStringW(
+          L"[DxgiResourceManager] MakeWindowAssociation failed.\n");
+      return hr;
+    }
+
+    hr = temp_swap_chain.As(&swap_chain);
+    if (FAILED(hr)) {
+      OutputDebugStringW(L"[DxgiResourceManager] Failed to cast SwapChain to "
+                         L"IDXGISwapChain3.\n");
+      return hr;
+    }
+
+    std::wstringstream stream;
+    stream << L"[DxgiResourceManager] Create SwapChain successfully, size "
+           << config.screen_width << L"x" << config.screen_height
+           << L", buffer count " << frame_count << L".\n";
+    OutputDebugStringW(stream.str().c_str());
+
+    return S_OK;
+  }
 
 private:
-    void LogAdapterAttempt(const DXGI_ADAPTER_DESC1& desc,
-        HRESULT result) const {
-        std::wstringstream stream;
-        stream << L"[DxgiResourceManager] try adapter " << desc.Description
-            << L", video memory "
-            << static_cast<unsigned long long>(
-                desc.DedicatedVideoMemory / (1024ull * 1024ull))
-            << L" MB, result 0x" << std::hex << result << std::dec << L".\n";
-        OutputDebugStringW(stream.str().c_str());
-    }
+  void LogAdapterAttempt(const DXGI_ADAPTER_DESC1 &desc, HRESULT result) const {
+    std::wstringstream stream;
+    stream << L"[DxgiResourceManager] try adapter " << desc.Description
+           << L", video memory "
+           << static_cast<unsigned long long>(desc.DedicatedVideoMemory /
+                                              (1024ull * 1024ull))
+           << L" MB, result 0x" << std::hex << result << std::dec << L".\n";
+    OutputDebugStringW(stream.str().c_str());
+  }
 
-    Microsoft::WRL::ComPtr<IDXGIFactory4> factory_ = nullptr;
-    Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter_ = nullptr;
+  Microsoft::WRL::ComPtr<IDXGIFactory4> factory_ = nullptr;
+  Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter_ = nullptr;
 };
 
 struct RenderTargetDescriptor {
@@ -220,6 +218,7 @@ public:
                              UINT StartInstanceLocation = 0);
 
   bool WaitForPreviousFrame();
+  bool WaitForGpuIdle();
 
   DescriptorHeapPtr GetOffScreenTextureHeapView() {
     return GetRenderTargetSrv(default_offscreen_handle_);
@@ -266,7 +265,8 @@ public:
 
   void inline GetVideoCardInfo(char *card_name, int &memory);
 
-  RenderTargetHandle CreateRenderTarget(const RenderTargetDescriptor &descriptor);
+  RenderTargetHandle
+  CreateRenderTarget(const RenderTargetDescriptor &descriptor);
 
   void DestroyRenderTarget(RenderTargetHandle handle);
 
@@ -384,8 +384,8 @@ private:
 
   std::unique_ptr<DxgiResourceManager> dxgi_resources_ = nullptr;
 
-  std::unordered_map<RenderTargetHandle, RenderTargetResource> user_render_targets_ =
-      {};
+  std::unordered_map<RenderTargetHandle, RenderTargetResource>
+      user_render_targets_ = {};
 
   RenderTargetHandle default_offscreen_handle_ = kInvalidRenderTargetHandle;
 

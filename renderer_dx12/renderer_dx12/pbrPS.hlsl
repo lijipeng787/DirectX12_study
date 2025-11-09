@@ -3,7 +3,9 @@ Texture2D normalMap : register(t1);
 Texture2D rmTexture : register(t2);
 SamplerState SampleType : register(s0);
 
-cbuffer LightBuffer : register(b0)
+// Use b2 to avoid confusion with VS b0 (MatrixBuffer)
+// Even though ShaderVisibility keeps them separate, global unique numbering improves readability
+cbuffer LightBuffer : register(b2)
 {
     float3 lightDirection;
     float padding;
@@ -41,6 +43,22 @@ float3 FresnelSchlick(float cosTheta, float3 F0)
     return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
 }
 
+// Gamma correction: Linear to sRGB
+// All lighting calculations are done in linear space
+// Convert to sRGB before output for proper display
+float3 LinearToSRGB(float3 linearColor)
+{
+    // Approximation of sRGB gamma curve (close to pow(x, 1/2.2))
+    // Uses exact sRGB specification:
+    // if (linear <= 0.0031308) return linear * 12.92
+    // else return 1.055 * pow(linear, 1/2.4) - 0.055
+    float3 sRGB;
+    sRGB.r = linearColor.r <= 0.0031308f ? linearColor.r * 12.92f : 1.055f * pow(linearColor.r, 1.0f / 2.4f) - 0.055f;
+    sRGB.g = linearColor.g <= 0.0031308f ? linearColor.g * 12.92f : 1.055f * pow(linearColor.g, 1.0f / 2.4f) - 0.055f;
+    sRGB.b = linearColor.b <= 0.0031308f ? linearColor.b * 12.92f : 1.055f * pow(linearColor.b, 1.0f / 2.4f) - 0.055f;
+    return sRGB;
+}
+
 float4 PbrPixelShader(PixelInputType input) : SV_TARGET
 {
     float3 lightDir = normalize(-lightDirection);
@@ -51,9 +69,13 @@ float4 PbrPixelShader(PixelInputType input) : SV_TARGET
 
     float3 bumpMap = normalMap.Sample(SampleType, input.tex).rgb;
     bumpMap = bumpMap * 2.0f - 1.0f;
+    // Reconstruct TBN normal - the result needs normalization due to weighted sum
     float3 bumpNormal =
         normalize(bumpMap.x * input.tangent + bumpMap.y * input.binormal + bumpMap.z * input.normal);
 
+    // IMPORTANT: Re-normalize after rasterizer interpolation
+    // Even though viewDirection was normalized in VS, linear interpolation destroys unit length
+    // Example: normalize(A) + normalize(B) != normalize(A + B)
     float3 viewDir = normalize(input.viewDirection);
     float3 halfDir = normalize(viewDir + lightDir);
 
@@ -77,10 +99,24 @@ float4 PbrPixelShader(PixelInputType input) : SV_TARGET
 
     float3 diffuse = kD * albedo / 3.14159265f;
 
-    // Add ambient lighting to prevent the model from being too dark
-    float3 ambient = float3(0.15f, 0.15f, 0.15f) * albedo;
+    // Ambient lighting using simple approximation
+    // NOTE: This is a simplified approach. For proper PBR, use:
+    // - Image-Based Lighting (IBL) with environment maps
+    // - Spherical Harmonics for diffuse
+    // - Pre-filtered environment maps for specular
+    // 
+    // Current implementation: Simple hemisphere ambient with energy conservation
+    float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo * kD;  // Only diffuse gets ambient
     
-    float3 color = ambient + (diffuse + specular) * NdotL;
+    // Combine: ambient (constant) + directional light contribution
+    float3 Lo = (diffuse + specular) * NdotL;  // Direct lighting
+    float3 color = ambient + Lo;               // Total lighting
+    
+    // Apply gamma correction for proper display on sRGB monitors
+    // Since render target is DXGI_FORMAT_R8G8B8A8_UNORM (linear),
+    // we need to convert from linear space to sRGB
+    color = LinearToSRGB(color);
+    
     return float4(color, 1.0f);
 }
 

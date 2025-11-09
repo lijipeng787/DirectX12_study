@@ -46,6 +46,8 @@ private:
     DirectX::XMFLOAT4X4 world;
     DirectX::XMFLOAT4X4 view;
     DirectX::XMFLOAT4X4 projection;
+    DirectX::XMFLOAT4X4 normalMatrix; // Inverse-transpose of world matrix for
+                                      // correct normal transformation
   };
 
   struct CameraBufferType {
@@ -70,4 +72,3 @@ private:
 };
 
 #endif // !_PBRMATERIAL_H_
-

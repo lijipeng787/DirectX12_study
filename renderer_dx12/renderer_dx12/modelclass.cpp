@@ -272,8 +272,8 @@ bool ModelMaterial::InitializeRootSignature() {
 
   RootSignaturePtr root_signature = {};
   if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
-          0, signature_blob->GetBufferPointer(), signature_blob->GetBufferSize(),
-          IID_PPV_ARGS(&root_signature)))) {
+          0, signature_blob->GetBufferPointer(),
+          signature_blob->GetBufferSize(), IID_PPV_ARGS(&root_signature)))) {
     return false;
   }
   SetRootSignature(root_signature);

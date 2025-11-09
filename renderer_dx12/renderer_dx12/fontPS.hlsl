@@ -19,7 +19,9 @@ float4 FontPixelShader(PixelInputType input) : SV_TARGET
 	color = shaderTexture.Sample(SampleType, input.tex);
 	
 	// If the color is black on the texture then treat this pixel as transparent.
-	if(color.r == 0.0f)
+	// Use threshold comparison instead of exact equality for floating point values
+	const float threshold = 0.01f;
+	if(color.r < threshold)
 	{
 		color.a = 0.0f;
 	}

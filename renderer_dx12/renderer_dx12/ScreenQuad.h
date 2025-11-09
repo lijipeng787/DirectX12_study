@@ -35,13 +35,11 @@ public:
 
   bool IsInitialized() const { return initialized_; }
 
-  void SetExternalConstantBuffer(const ResourceSharedPtr &constant_buffer,
-                                 const DirectX::XMMATRIX &initial_world =
-                                     DirectX::XMMatrixIdentity(),
-                                 const DirectX::XMMATRIX &initial_view =
-                                     DirectX::XMMatrixIdentity(),
-                                 const DirectX::XMMATRIX &initial_ortho =
-                                     DirectX::XMMatrixIdentity());
+  void SetExternalConstantBuffer(
+      const ResourceSharedPtr &constant_buffer,
+      const DirectX::XMMATRIX &initial_world = DirectX::XMMatrixIdentity(),
+      const DirectX::XMMATRIX &initial_view = DirectX::XMMatrixIdentity(),
+      const DirectX::XMMATRIX &initial_ortho = DirectX::XMMatrixIdentity());
 
 private:
   bool InitializeGraphicsPipelineState();

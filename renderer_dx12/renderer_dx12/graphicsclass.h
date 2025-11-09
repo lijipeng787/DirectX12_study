@@ -1,8 +1,8 @@
 #ifndef HEADER_GRAPHICSCLASS_H
 #define HEADER_GRAPHICSCLASS_H
 
-#include <Windows.h>
 #include <DirectXMath.h>
+#include <Windows.h>
 #include <memory>
 
 #include "ShaderLoader.h"

@@ -17,7 +17,7 @@ ScreenQuadMaterial::ScreenQuadMaterial(std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)) {}
 
 bool ScreenQuad::Initialize(UINT screen_width, UINT screen_height,
-                        UINT bitmap_width, UINT bitmap_height) {
+                            UINT bitmap_width, UINT bitmap_height) {
 
   screen_width_ = screen_width;
   screen_height_ = screen_height;
@@ -54,8 +54,8 @@ void ScreenQuad::SetVertexBufferView(const VertexBufferView &view) {
 
 void ScreenQuad::SetIndexBufferView(const IndexBufferView &view) {
   index_buffer_view_ = view;
-  index_count_ = static_cast<UINT>(index_buffer_view_.SizeInBytes /
-                                   sizeof(uint16_t));
+  index_count_ =
+      static_cast<UINT>(index_buffer_view_.SizeInBytes / sizeof(uint16_t));
 }
 
 ScreenQuadMaterial *ScreenQuad::GetMaterial() { return material_.get(); }
@@ -302,8 +302,8 @@ ResourceSharedPtr ScreenQuadMaterial::GetConstantBuffer() const {
 }
 
 bool ScreenQuadMaterial::UpdateConstantBuffer(const XMMATRIX &world,
-                                          const XMMATRIX &view,
-                                          const XMMATRIX &orthogonality) {
+                                              const XMMATRIX &view,
+                                              const XMMATRIX &orthogonality) {
 
   UINT8 *data_begin = 0;
   if (FAILED(constant_buffer_->Map(0, nullptr,
@@ -450,8 +450,8 @@ bool ScreenQuadMaterial::InitializeRootSignature() {
 
   RootSignaturePtr root_signature = {};
   if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
-          0, signature_blob->GetBufferPointer(), signature_blob->GetBufferSize(),
-          IID_PPV_ARGS(&root_signature)))) {
+          0, signature_blob->GetBufferPointer(),
+          signature_blob->GetBufferSize(), IID_PPV_ARGS(&root_signature)))) {
     return false;
   }
   SetRootSignature(root_signature);

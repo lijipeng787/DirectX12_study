@@ -99,4 +99,3 @@ private:
 };
 
 #endif // !_PBRMODEL_H_
-

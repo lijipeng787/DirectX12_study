@@ -43,8 +43,8 @@ bool DirectX12Device::Initialize(const DirectX12DeviceConfig &config) {
     return false;
   }
 
-  dxgi_resources_ =
-      std::make_unique<DxgiResourceManager>(Microsoft::WRL::ComPtr<IDXGIFactory4>(factory));
+  dxgi_resources_ = std::make_unique<DxgiResourceManager>(
+      Microsoft::WRL::ComPtr<IDXGIFactory4>(factory));
 
   hr = dxgi_resources_->CreateDevice(d3d12device_, video_card_memory_,
                                      video_card_description_);
@@ -61,9 +61,8 @@ bool DirectX12Device::Initialize(const DirectX12DeviceConfig &config) {
     return false;
   }
 
-  hr = dxgi_resources_->CreateSwapChain(config_,
-                                        default_graphics_command_queue_.Get(),
-                                        swap_chain_, frame_cout_);
+  hr = dxgi_resources_->CreateSwapChain(
+      config_, default_graphics_command_queue_.Get(), swap_chain_, frame_cout_);
   if (FAILED(hr)) {
     LogInitializationFailure(L"CreateSwapChain", hr);
     ResetDeviceState();
@@ -178,14 +177,14 @@ HRESULT DirectX12Device::CreateRenderTargetViews() {
       render_target_view_heap_->GetCPUDescriptorHandleForHeapStart());
 
   for (UINT index = 0; index < frame_cout_; ++index) {
-    hr = swap_chain_->GetBuffer(index,
-                                IID_PPV_ARGS(&back_buffer_render_targets_[index]));
+    hr = swap_chain_->GetBuffer(
+        index, IID_PPV_ARGS(&back_buffer_render_targets_[index]));
     if (FAILED(hr)) {
       return hr;
     }
     d3d12device_->CreateRenderTargetView(
         back_buffer_render_targets_[index].Get(), nullptr,
-                                         render_target_handle);
+        render_target_handle);
     render_target_handle.Offset(1, render_target_descriptor_size_);
   }
 
@@ -222,11 +221,10 @@ HRESULT DirectX12Device::CreateDepthStencilResources() {
   depth_clear_value.DepthStencil.Stencil = 0;
 
   hr = d3d12device_->CreateCommittedResource(
-      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-      D3D12_HEAP_FLAG_NONE,
-      &CD3DX12_RESOURCE_DESC::Tex2D(
-          DXGI_FORMAT_D32_FLOAT, config_.screen_width, config_.screen_height, 1,
-          0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+      &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, config_.screen_width,
+                                    config_.screen_height, 1, 0, 1, 0,
+                                    D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
       D3D12_RESOURCE_STATE_DEPTH_WRITE, &depth_clear_value,
       IID_PPV_ARGS(&depth_stencil_resource_));
   if (FAILED(hr)) {
@@ -296,8 +294,7 @@ HRESULT DirectX12Device::CreateCommandAllocatorsAndLists() {
 
   for (auto &frame : frame_resources_) {
     hr = d3d12device_->CreateCommandAllocator(
-        D3D12_COMMAND_LIST_TYPE_DIRECT,
-        IID_PPV_ARGS(&frame.command_allocator));
+        D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frame.command_allocator));
     if (FAILED(hr)) {
       return hr;
     }
@@ -319,9 +316,8 @@ HRESULT DirectX12Device::CreateCommandAllocatorsAndLists() {
   }
 
   hr = d3d12device_->CreateCommandList(
-      0, D3D12_COMMAND_LIST_TYPE_COPY,
-      default_copy_command_allocator_.Get(), nullptr,
-      IID_PPV_ARGS(&default_copy_command_list_));
+      0, D3D12_COMMAND_LIST_TYPE_COPY, default_copy_command_allocator_.Get(),
+      nullptr, IID_PPV_ARGS(&default_copy_command_list_));
   if (FAILED(hr)) {
     return hr;
   }
@@ -353,7 +349,8 @@ HRESULT DirectX12Device::CreateFenceAndEvent() {
   return S_OK;
 }
 
-auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descriptor) -> RenderTargetHandle {
+auto DirectX12Device::CreateRenderTarget(
+    const RenderTargetDescriptor &descriptor) -> RenderTargetHandle {
   if (!d3d12device_) {
     LogInitializationFailure(L"CreateRenderTarget::DeviceMissing", E_FAIL);
     return kInvalidRenderTargetHandle;
@@ -383,9 +380,8 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
   clear_value.Color[3] = descriptor.clear_color[3];
 
   HRESULT hr = d3d12device_->CreateCommittedResource(
-      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-      D3D12_HEAP_FLAG_NONE, &texture_desc,
-      D3D12_RESOURCE_STATE_GENERIC_READ, &clear_value,
+      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+      &texture_desc, D3D12_RESOURCE_STATE_GENERIC_READ, &clear_value,
       IID_PPV_ARGS(&resource.texture));
   if (FAILED(hr)) {
     LogInitializationFailure(L"CreateRenderTarget::CreateTexture", hr);
@@ -400,8 +396,8 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
     srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-    hr = d3d12device_->CreateDescriptorHeap(
-        &srv_heap_desc, IID_PPV_ARGS(&resource.srv));
+    hr = d3d12device_->CreateDescriptorHeap(&srv_heap_desc,
+                                            IID_PPV_ARGS(&resource.srv));
     if (FAILED(hr)) {
       LogInitializationFailure(L"CreateRenderTarget::CreateSrvHeap", hr);
       return kInvalidRenderTargetHandle;
@@ -409,8 +405,7 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
     srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srv_desc.Shader4ComponentMapping =
-        D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     srv_desc.Format = descriptor.format;
     srv_desc.Texture2D.MipLevels = 1;
     srv_desc.Texture2D.MostDetailedMip = 0;
@@ -427,8 +422,8 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
     rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-    hr = d3d12device_->CreateDescriptorHeap(
-        &rtv_heap_desc, IID_PPV_ARGS(&resource.rtv));
+    hr = d3d12device_->CreateDescriptorHeap(&rtv_heap_desc,
+                                            IID_PPV_ARGS(&resource.rtv));
     if (FAILED(hr)) {
       LogInitializationFailure(L"CreateRenderTarget::CreateRtvHeap", hr);
       return kInvalidRenderTargetHandle;
@@ -449,8 +444,8 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
   user_render_targets_.insert(std::make_pair(handle, std::move(resource)));
 
   std::wstringstream stream;
-  stream << L"[DirectX12Device] Created render target handle " << handle << L" ("
-         << descriptor.width << L"x" << descriptor.height << L").\n";
+  stream << L"[DirectX12Device] Created render target handle " << handle
+         << L" (" << descriptor.width << L"x" << descriptor.height << L").\n";
   OutputDebugStringW(stream.str().c_str());
 
   return handle;
@@ -473,7 +468,8 @@ void DirectX12Device::DestroyRenderTarget(RenderTargetHandle handle) {
   user_render_targets_.erase(it);
 }
 
-auto DirectX12Device::GetRenderTargetSrv(RenderTargetHandle handle) const -> DescriptorHeapPtr {
+auto DirectX12Device::GetRenderTargetSrv(RenderTargetHandle handle) const
+    -> DescriptorHeapPtr {
   auto resolved = ResolveRenderTargetHandle(handle);
   auto it = user_render_targets_.find(resolved);
   if (it == user_render_targets_.end()) {
@@ -482,7 +478,8 @@ auto DirectX12Device::GetRenderTargetSrv(RenderTargetHandle handle) const -> Des
   return it->second.srv;
 }
 
-auto DirectX12Device::ResolveRenderTargetHandle(RenderTargetHandle handle) const -> RenderTargetHandle {
+auto DirectX12Device::ResolveRenderTargetHandle(RenderTargetHandle handle) const
+    -> RenderTargetHandle {
   if (handle == kInvalidRenderTargetHandle) {
     return default_offscreen_handle_;
   }
@@ -493,7 +490,8 @@ auto DirectX12Device::ResolveRenderTargetHandle(RenderTargetHandle handle) const
   return handle;
 }
 
-auto DirectX12Device::GetRenderTargetResource(RenderTargetHandle handle) -> DirectX12Device::RenderTargetResource * {
+auto DirectX12Device::GetRenderTargetResource(RenderTargetHandle handle)
+    -> DirectX12Device::RenderTargetResource * {
   auto resolved = ResolveRenderTargetHandle(handle);
   if (resolved == kInvalidRenderTargetHandle) {
     return nullptr;
@@ -505,7 +503,8 @@ auto DirectX12Device::GetRenderTargetResource(RenderTargetHandle handle) -> Dire
   return &it->second;
 }
 
-auto DirectX12Device::GetRenderTargetResource(RenderTargetHandle handle) const -> const DirectX12Device::RenderTargetResource * {
+auto DirectX12Device::GetRenderTargetResource(RenderTargetHandle handle) const
+    -> const DirectX12Device::RenderTargetResource * {
   auto resolved = ResolveRenderTargetHandle(handle);
   if (resolved == kInvalidRenderTargetHandle) {
     return nullptr;
@@ -540,9 +539,8 @@ void DirectX12Device::InitializeViewportsAndScissors() {
 
 void DirectX12Device::InitializeMatrices() {
   const float field_of_view = DirectX::XM_PI / 4.0f;
-  const float screen_aspect =
-      static_cast<float>(config_.screen_width) /
-      static_cast<float>(config_.screen_height);
+  const float screen_aspect = static_cast<float>(config_.screen_width) /
+                              static_cast<float>(config_.screen_height);
 
   projection_matrix_ = DirectX::XMMatrixPerspectiveFovLH(
       field_of_view, screen_aspect, config_.screen_near, config_.screen_depth);
@@ -701,8 +699,7 @@ void DirectX12Device::BeginPopulateGraphicsCommandList() {
   default_graphics_command_list_->ResourceBarrier(
       1, &CD3DX12_RESOURCE_BARRIER::Transition(
              back_buffer_render_targets_[frame_index_].Get(),
-             D3D12_RESOURCE_STATE_PRESENT,
-             D3D12_RESOURCE_STATE_RENDER_TARGET));
+             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(
       render_target_view_heap_->GetCPUDescriptorHandleForHeapStart(),
@@ -727,8 +724,7 @@ void DirectX12Device::EndPopulateGraphicsCommandList() {
   default_graphics_command_list_->ResourceBarrier(
       1, &CD3DX12_RESOURCE_BARRIER::Transition(
              back_buffer_render_targets_[frame_index_].Get(),
-             D3D12_RESOURCE_STATE_RENDER_TARGET,
-             D3D12_RESOURCE_STATE_PRESENT));
+             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 }
 
 void DirectX12Device::Draw(UINT IndexCountPerInstance, UINT InstanceCount,
@@ -757,11 +753,43 @@ bool DirectX12Device::WaitForPreviousFrame() {
   auto &next_frame = CurrentFrameResource();
   if (next_frame.fence_value != 0 &&
       fence_->GetCompletedValue() < next_frame.fence_value) {
-    if (FAILED(
-            fence_->SetEventOnCompletion(next_frame.fence_value, fence_handle_))) {
+    if (FAILED(fence_->SetEventOnCompletion(next_frame.fence_value,
+                                            fence_handle_))) {
       return false;
     }
     WaitForSingleObject(fence_handle_, INFINITE);
+  }
+
+  return true;
+}
+
+bool DirectX12Device::WaitForGpuIdle() {
+  if (!fence_ || !fence_handle_) {
+    return true;
+  }
+
+  auto wait_on_queue = [&](const CommandQueuePtr &queue) -> bool {
+    if (!queue) {
+      return true;
+    }
+    const UINT64 fence_to_wait = fence_value_;
+    if (FAILED(queue->Signal(fence_.Get(), fence_to_wait))) {
+      return false;
+    }
+    ++fence_value_;
+    if (FAILED(fence_->SetEventOnCompletion(fence_to_wait, fence_handle_))) {
+      return false;
+    }
+    WaitForSingleObject(fence_handle_, INFINITE);
+    return true;
+  };
+
+  if (!wait_on_queue(default_graphics_command_queue_)) {
+    return false;
+  }
+
+  if (!wait_on_queue(default_copy_command_queue_)) {
+    return false;
   }
 
   return true;

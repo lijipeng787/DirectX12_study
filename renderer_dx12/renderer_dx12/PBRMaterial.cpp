@@ -64,6 +64,14 @@ bool PBRMaterial::UpdateMatrixConstant(const XMMATRIX &world,
   XMStoreFloat4x4(&matrix_data_.world, world);
   XMStoreFloat4x4(&matrix_data_.view, view);
   XMStoreFloat4x4(&matrix_data_.projection, projection);
+
+  // Calculate normal matrix: inverse-transpose of world matrix
+  // This ensures correct normal transformation even with non-uniform scaling
+  XMVECTOR det;
+  XMMATRIX worldInverse = XMMatrixInverse(&det, world);
+  XMMATRIX normalMatrix = XMMatrixTranspose(worldInverse);
+  XMStoreFloat4x4(&matrix_data_.normalMatrix, normalMatrix);
+
   memcpy(data_begin, &matrix_data_, sizeof(MatrixBufferType));
   matrix_constant_buffer_->Unmap(0, nullptr);
 
@@ -119,12 +127,16 @@ bool PBRMaterial::InitializeRootSignature() {
   CD3DX12_ROOT_PARAMETER root_parameters[4];
   root_parameters[0].InitAsDescriptorTable(1, &descriptor_range,
                                            D3D12_SHADER_VISIBILITY_PIXEL);
-  root_parameters[1].InitAsConstantBufferView(0, 0,
-                                              D3D12_SHADER_VISIBILITY_VERTEX);
-  root_parameters[2].InitAsConstantBufferView(1, 0,
-                                              D3D12_SHADER_VISIBILITY_VERTEX);
-  root_parameters[3].InitAsConstantBufferView(0, 0,
-                                              D3D12_SHADER_VISIBILITY_PIXEL);
+  root_parameters[1].InitAsConstantBufferView(
+      0, 0,
+      D3D12_SHADER_VISIBILITY_VERTEX); // VS: MatrixBuffer (b0)
+  root_parameters[2].InitAsConstantBufferView(
+      1, 0,
+      D3D12_SHADER_VISIBILITY_VERTEX); // VS: CameraBuffer (b1)
+  root_parameters[3].InitAsConstantBufferView(
+      2, 0,
+      D3D12_SHADER_VISIBILITY_PIXEL); // PS: LightBuffer (b2) - global unique
+                                      // numbering
 
   D3D12_STATIC_SAMPLER_DESC sampler_desc = {};
   sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -208,4 +220,3 @@ bool PBRMaterial::InitializeGraphicsPipelineState() {
 
   return true;
 }
-

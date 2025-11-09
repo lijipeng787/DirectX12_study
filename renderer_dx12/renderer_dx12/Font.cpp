@@ -54,7 +54,7 @@ bool BitmapFont::LoadFontData(WCHAR *filename) {
 }
 
 void BitmapFont::BuildVertexArray(void *vertices, WCHAR *sentence, float drawX,
-                            float drawY) {
+                                  float drawY) {
 
   VertexType *vertexPtr = (VertexType *)vertices;
 

@@ -1,8 +1,12 @@
+// Constant Buffers - using global unique register numbering across VS/PS
+// VS uses b0, b1
+// PS uses b2 (see pbrPS.hlsl)
 cbuffer MatrixBuffer : register(b0)
 {
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
+    matrix normalMatrix;  // Inverse-transpose of world matrix for correct normal transformation
 };
 
 cbuffer CameraBuffer : register(b1)
@@ -43,12 +47,25 @@ PixelInputType PbrVertexShader(VertexInputType input)
 
     output.tex = input.tex;
 
-    float3x3 world3x3 = (float3x3)worldMatrix;
-    output.normal = normalize(mul(input.normal, world3x3));
-    output.tangent = normalize(mul(input.tangent, world3x3));
-    output.binormal = normalize(mul(input.binormal, world3x3));
+    // Transform normals to world space using the normal matrix
+    // The normal matrix is the inverse-transpose of the world matrix,
+    // which correctly handles:
+    // - Rotation (orthogonal matrices)
+    // - Uniform scaling
+    // - NON-UNIFORM scaling (e.g., Scale(2, 1, 1))
+    // - Shear transformations
+    // - Mirror transformations (e.g., Scale(-1, 1, 1))
+    //
+    // This ensures normals remain perpendicular to the surface even when
+    // the object is scaled non-uniformly or transformed in complex ways.
+    float3x3 normal3x3 = (float3x3)normalMatrix;
+    output.normal = normalize(mul(input.normal, normal3x3));
+    output.tangent = normalize(mul(input.tangent, normal3x3));
+    output.binormal = normalize(mul(input.binormal, normal3x3));
 
     worldPosition = mul(input.position, worldMatrix);
+    // Pre-normalize in VS to reduce interpolation error and maintain data range
+    // PS will re-normalize because linear interpolation destroys unit length
     output.viewDirection = normalize(cameraPosition - worldPosition.xyz);
 
     return output;

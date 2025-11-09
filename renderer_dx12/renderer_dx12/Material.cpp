@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "Material.h"
 
 using namespace std;

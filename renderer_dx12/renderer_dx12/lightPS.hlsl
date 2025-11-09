@@ -42,8 +42,9 @@ float4 LightPixelShader(PixelInputType input) : SV_TARGET
 
     color = color * textureColor;
     
-    // Set the color of the fog.
-    float4 fogColor = float4(0.5f, 0.5f, 0.0f, 1.0f);
+    // Fog color - currently hardcoded
+    // TODO: Pass fog color via constant buffer for runtime configuration
+    float4 fogColor = float4(0.5f, 0.5f, 0.5f, 1.0f);  // Gray fog instead of yellow-green
 
     // Calculate the final color using the fog effect equation.
     color = input.fogFactor * color + (1.0 - input.fogFactor) * fogColor;

@@ -2,8 +2,8 @@
 
 #include "graphicsclass.h"
 
-#include "Camera.h"
 #include "CPUUsageTracker.h"
+#include "Camera.h"
 #include "DirectX12Device.h"
 #include "Fps.h"
 #include "Input.h"
@@ -56,7 +56,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   light_->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
   light_->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
   light_->SetDirection(0.0f, 0.0f, 1.0f);
-  
+
   // Initialize PBR light direction (normalized)
   pbr_light_direction_ = DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
 
@@ -189,9 +189,26 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
 void Graphics::Shutdown() {
 
-  d3d12_device_.reset();
+  if (d3d12_device_) {
+    d3d12_device_->WaitForGpuIdle();
+  }
 
-  cpu_usage_tracker_->Shutdown();
+  bitmap_.reset();
+  text_.reset();
+  model_.reset();
+  pbr_model_.reset();
+
+  shader_loader_.reset();
+  light_.reset();
+  camera_.reset();
+  fps_.reset();
+
+  if (cpu_usage_tracker_) {
+    cpu_usage_tracker_->Shutdown();
+    cpu_usage_tracker_.reset();
+  }
+
+  d3d12_device_.reset();
 }
 
 bool Graphics::Frame(float delta_seconds, Input *input) {
@@ -216,8 +233,7 @@ bool Graphics::Frame(float delta_seconds, Input *input) {
   return true;
 }
 
-void Graphics::UpdateCameraFromInput(float delta_seconds,
-                                     Input *input) {
+void Graphics::UpdateCameraFromInput(float delta_seconds, Input *input) {
   if (!camera_ || !input) {
     return;
   }
@@ -233,9 +249,8 @@ void Graphics::UpdateCameraFromInput(float delta_seconds,
 
   float yaw_radians = camera_rotation.y * XM_PI / 180.0f;
 
-  XMVECTOR forward =
-      XMVector3Normalize(XMVectorSet(sinf(yaw_radians), 0.0f,
-                                     cosf(yaw_radians), 0.0f));
+  XMVECTOR forward = XMVector3Normalize(
+      XMVectorSet(sinf(yaw_radians), 0.0f, cosf(yaw_radians), 0.0f));
   XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
   XMVECTOR right = XMVector3Normalize(XMVector3Cross(up, forward));
 
@@ -266,8 +281,7 @@ void Graphics::UpdateCameraFromInput(float delta_seconds,
   position = XMVectorAdd(position, XMVectorScale(movement, move_distance));
 
   XMStoreFloat3(&camera_position, position);
-  camera_->SetPosition(camera_position.x, camera_position.y,
-                       camera_position.z);
+  camera_->SetPosition(camera_position.x, camera_position.y, camera_position.z);
 }
 
 bool Graphics::Render() {
@@ -299,9 +313,8 @@ bool Graphics::Render() {
   d3d12_device_->GetOrthoMatrix(orthogonality);
   orthogonality = DirectX::XMMatrixTranspose(orthogonality);
 
-  DirectX::XMMATRIX pbr_world =
-      DirectX::XMMatrixRotationY(rotation * 0.5f) *
-      DirectX::XMMatrixTranslation(3.0f, 0.0f, 0.0f);
+  DirectX::XMMATRIX pbr_world = DirectX::XMMatrixRotationY(rotation * 0.5f) *
+                                DirectX::XMMatrixTranslation(3.0f, 0.0f, 0.0f);
   pbr_world = DirectX::XMMatrixTranspose(pbr_world);
 
   if (CHECK(model_->GetMaterial()->UpdateMatrixConstant(rotate_world, view,
@@ -332,7 +345,8 @@ bool Graphics::Render() {
   if (pbr_model_) {
     auto camera_position = camera_->GetPosition();
     auto pbr_material = pbr_model_->GetMaterial();
-    if (CHECK(pbr_material->UpdateMatrixConstant(pbr_world, view, projection))) {
+    if (CHECK(
+            pbr_material->UpdateMatrixConstant(pbr_world, view, projection))) {
       return false;
     }
     if (CHECK(pbr_material->UpdateCameraConstant(camera_position))) {
@@ -450,8 +464,7 @@ bool Graphics::Render() {
       d3d12_device_->SetGraphicsRootConstantBufferView(
           3, pbr_light_cb->GetGPUVirtualAddress());
 
-      d3d12_device_->BindVertexBuffer(0, 1,
-                                      &pbr_model_->GetVertexBufferView());
+      d3d12_device_->BindVertexBuffer(0, 1, &pbr_model_->GetVertexBufferView());
       d3d12_device_->BindIndexBuffer(&pbr_model_->GetIndexBufferView());
       d3d12_device_->Draw(pbr_model_->GetIndexCount());
     }

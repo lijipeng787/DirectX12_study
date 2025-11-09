@@ -39,6 +39,9 @@ PixelInputType LightVertexShader(VertexInputType input)
     
 	output.tex = input.tex;
 	
+	// Transform normal to world space
+	// NOTE: Direct multiplication only works for orthogonal/uniform-scale matrices
+	// For non-uniform scaling, use inverse-transpose of world matrix
 	output.normal = mul(input.normal, (float3x3)worldMatrix);
 	
 	output.normal = normalize(output.normal);
