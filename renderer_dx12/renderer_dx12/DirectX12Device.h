@@ -8,6 +8,7 @@
 
 #include <DirectXMath.h>
 #include <memory>
+#include <vector>
 
 #include "TypeDefine.h"
 #include "d3dx12.h"
@@ -241,7 +242,10 @@ public:
   }
 
   CommandAllocatorPtr GetDefaultGraphicsCommandAllocator() {
-    return default_graphics_command_allocator_;
+    if (frame_resources_.empty()) {
+      return {};
+    }
+    return frame_resources_[frame_index_].command_allocator;
   }
 
   CommandAllocatorPtr GetDefaultCopyCommandAllocator() {
@@ -287,6 +291,10 @@ private:
 
   void InitializeMatrices();
 
+  void ResetDeviceState();
+
+  void LogInitializationFailure(const wchar_t *stage, HRESULT hr) const;
+
 private:
   static const UINT frame_cout_ = 2;
 
@@ -312,8 +320,6 @@ private:
   D3d12DebugCommandListPtr debug_command_list_ = nullptr;
 
   D3d12DevicePtr d3d12device_ = nullptr;
-
-  CommandAllocatorPtr default_graphics_command_allocator_ = nullptr;
 
   CommandAllocatorPtr default_copy_command_allocator_ = nullptr;
 
@@ -369,21 +375,31 @@ private:
 
   DirectX::XMMATRIX ortho_matrix_ = {};
 
+  struct FrameResource {
+    CommandAllocatorPtr command_allocator = nullptr;
+    UINT64 fence_value = 0;
+  };
+
+  std::vector<FrameResource> frame_resources_ = {};
+
   std::unique_ptr<DxgiResourceManager> dxgi_resources_ = nullptr;
-  
+
   std::unordered_map<RenderTargetHandle, RenderTargetResource> user_render_targets_ =
       {};
 
   RenderTargetHandle default_offscreen_handle_ = kInvalidRenderTargetHandle;
-  
+
   RenderTargetHandle next_render_target_handle_ = 0;
 
   RenderTargetResource *GetRenderTargetResource(RenderTargetHandle handle);
-  
+
   const RenderTargetResource *
   GetRenderTargetResource(RenderTargetHandle handle) const;
 
   RenderTargetHandle ResolveRenderTargetHandle(RenderTargetHandle handle) const;
+
+  FrameResource &CurrentFrameResource();
+  const FrameResource &CurrentFrameResource() const;
 };
 
 #endif

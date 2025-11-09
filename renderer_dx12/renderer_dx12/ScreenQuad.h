@@ -33,6 +33,16 @@ public:
 
   ResourceSharedPtr GetConstantBuffer() const;
 
+  bool IsInitialized() const { return initialized_; }
+
+  void SetExternalConstantBuffer(const ResourceSharedPtr &constant_buffer,
+                                 const DirectX::XMMATRIX &initial_world =
+                                     DirectX::XMMatrixIdentity(),
+                                 const DirectX::XMMATRIX &initial_view =
+                                     DirectX::XMMatrixIdentity(),
+                                 const DirectX::XMMATRIX &initial_ortho =
+                                     DirectX::XMMatrixIdentity());
+
 private:
   bool InitializeGraphicsPipelineState();
 
@@ -44,11 +54,14 @@ private:
   ResourceSharedPtr constant_buffer_ = nullptr;
 
   MatrixBufferType matrix_constant_data_ = {};
+
+  bool initialized_ = false;
 };
 
 class ScreenQuad {
 public:
-  explicit ScreenQuad(std::shared_ptr<DirectX12Device> device);
+  ScreenQuad(std::shared_ptr<DirectX12Device> device,
+             std::shared_ptr<ScreenQuadMaterial> material = nullptr);
 
   ScreenQuad(const ScreenQuad &rhs) = delete;
 
@@ -70,7 +83,15 @@ public:
 
   const IndexBufferView &GetIndexBufferView() const;
 
+  void SetVertexBufferView(const VertexBufferView &view);
+
+  void SetIndexBufferView(const IndexBufferView &view);
+
   ScreenQuadMaterial *GetMaterial();
+
+  std::shared_ptr<ScreenQuadMaterial> GetMaterialShared() const;
+
+  void SetMaterial(std::shared_ptr<ScreenQuadMaterial> material);
 
   bool UpdatePosition(int pos_x, int pos_y);
 
@@ -82,7 +103,7 @@ private:
 private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
-  ScreenQuadMaterial material_;
+  std::shared_ptr<ScreenQuadMaterial> material_ = nullptr;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
 

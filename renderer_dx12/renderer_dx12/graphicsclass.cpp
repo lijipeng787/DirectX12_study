@@ -89,16 +89,20 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   }
 
   {
-    bitmap_ = std::make_shared<ScreenQuad>(d3d12_device_);
-    if (!bitmap_) {
+    auto bitmap_material = std::make_shared<ScreenQuadMaterial>(d3d12_device_);
+    if (!bitmap_material) {
       return false;
     }
-    ScreenQuadMaterial *bitmap_material = bitmap_->GetMaterial();
     bitmap_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
         shader_loader_->GetVertexShaderBlobByFileName(L"textureVS.hlsl")
             .Get()));
     bitmap_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
         shader_loader_->GetPixelShaderBlobByFileName(L"texturePS.hlsl").Get()));
+
+    bitmap_ = std::make_shared<ScreenQuad>(d3d12_device_, bitmap_material);
+    if (!bitmap_) {
+      return false;
+    }
     if (CHECK(bitmap_->Initialize(screenWidth, screenHeight, 255, 255))) {
       MessageBox(hwnd, L"Could not initialize Bitmap.", L"Error", MB_OK);
       return false;

@@ -9,11 +9,11 @@
 using namespace std;
 using namespace DirectX;
 
-ScreenQuad::ScreenQuad(std::shared_ptr<DirectX12Device> device)
-    : device_(std::move(device)), material_(device_) {}
+ScreenQuad::ScreenQuad(std::shared_ptr<DirectX12Device> device,
+                       std::shared_ptr<ScreenQuadMaterial> material)
+    : device_(std::move(device)), material_(std::move(material)) {}
 
-ScreenQuadMaterial::ScreenQuadMaterial(
-    std::shared_ptr<DirectX12Device> device)
+ScreenQuadMaterial::ScreenQuadMaterial(std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)) {}
 
 bool ScreenQuad::Initialize(UINT screen_width, UINT screen_height,
@@ -25,10 +25,15 @@ bool ScreenQuad::Initialize(UINT screen_width, UINT screen_height,
   quad_width_ = bitmap_width;
   quad_height_ = bitmap_height;
 
+  if (!material_) {
+    OutputDebugStringW(L"[ScreenQuad] Initialize failed: material is null.\n");
+    return false;
+  }
+
   if (CHECK(InitializeBuffers())) {
     return false;
   }
-  if (CHECK(material_.Initialize())) {
+  if (!material_->IsInitialized() && CHECK(material_->Initialize())) {
     return false;
   }
 
@@ -43,7 +48,28 @@ const IndexBufferView &ScreenQuad::GetIndexBufferView() const {
   return index_buffer_view_;
 }
 
-ScreenQuadMaterial *ScreenQuad::GetMaterial() { return &material_; }
+void ScreenQuad::SetVertexBufferView(const VertexBufferView &view) {
+  vertex_buffer_view_ = view;
+}
+
+void ScreenQuad::SetIndexBufferView(const IndexBufferView &view) {
+  index_buffer_view_ = view;
+  index_count_ = static_cast<UINT>(index_buffer_view_.SizeInBytes /
+                                   sizeof(uint16_t));
+}
+
+ScreenQuadMaterial *ScreenQuad::GetMaterial() { return material_.get(); }
+
+std::shared_ptr<ScreenQuadMaterial> ScreenQuad::GetMaterialShared() const {
+  return material_;
+}
+
+void ScreenQuad::SetMaterial(std::shared_ptr<ScreenQuadMaterial> material) {
+  if (!material) {
+    return;
+  }
+  material_ = std::move(material);
+}
 
 bool ScreenQuad::UpdatePosition(int pos_x, int pos_y) {
 
@@ -295,6 +321,10 @@ bool ScreenQuadMaterial::UpdateConstantBuffer(const XMMATRIX &world,
 
 bool ScreenQuadMaterial::Initialize() {
 
+  if (initialized_) {
+    return true;
+  }
+
   D3D12_DESCRIPTOR_HEAP_DESC cbv_heap_desc = {};
   cbv_heap_desc.NumDescriptors = 1;
   cbv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -319,7 +349,19 @@ bool ScreenQuadMaterial::Initialize() {
   if (CHECK(InitializeGraphicsPipelineState())) {
     return false;
   }
+  initialized_ = true;
   return true;
+}
+
+void ScreenQuadMaterial::SetExternalConstantBuffer(
+    const ResourceSharedPtr &constant_buffer,
+    const DirectX::XMMATRIX &initial_world,
+    const DirectX::XMMATRIX &initial_view,
+    const DirectX::XMMATRIX &initial_ortho) {
+  constant_buffer_ = constant_buffer;
+  XMStoreFloat4x4(&matrix_constant_data_.world_, initial_world);
+  XMStoreFloat4x4(&matrix_constant_data_.view_, initial_view);
+  XMStoreFloat4x4(&matrix_constant_data_.orthogonality_, initial_ortho);
 }
 
 bool ScreenQuadMaterial::InitializeGraphicsPipelineState() {

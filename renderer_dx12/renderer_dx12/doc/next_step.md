@@ -34,12 +34,19 @@
 
 ## 任务 5：ScreenQuad 解耦材质
 
-- 将 `ScreenQuadMaterial` 从 `ScreenQuad` 类中分离，允许通过构造或 setter 注入。
-- 暴露 `VertexBufferView`/`IndexBufferView` 的更新接口，方便实验不同顶点布局。
-- 整理常量缓冲接口，允许自定义布局或绑定外部 CBV 资源。
+- ✅ 将 `ScreenQuadMaterial` 从 `ScreenQuad` 类中分离，允许通过构造或 setter 注入。
+- ✅ 暴露 `VertexBufferView`/`IndexBufferView` 的更新接口，方便实验不同顶点布局。
+- ✅ 整理常量缓冲接口，允许自定义布局或绑定外部 CBV 资源。
 
 ## 验收标准
 
 - ✅ 完成以上任务后，可在不依赖单例的情况下初始化渲染设备并渲染 ScreenQuad。
-- ⏳ 设备初始化任意阶段失败时，资源可自动释放，日志输出含错误码与描述。（待完善）
-- ⏳ Off-screen 渲染目标可通过配置调整尺寸与格式，ScreenQuad 支持绑定自定义材质。（待完善）
+- ⏳ 初始化失败的回滚与详细日志仍需增强，需补齐错误码输出与资源清理路径。
+- ✅ Off-screen 渲染目标可动态生成并绑定自定义材质，支持不同尺寸/格式的试验。
+- ⏳ Frame 资源/命令调度仍待实现，完成后需扩充验收标准。
+
+## 后续重点方向
+
+1. `DirectX12Device`：扩展 per-frame 资源环（覆盖常量缓冲/资源回收），并进一步加强运行期日志。
+2. `Graphics` 及示例渲染：演示多 RenderTarget/材质注入/自定义 CBV 的使用模式。
+3. 动态配置：实现窗口 Resize、MSAA/HDR 切换的资源重建流程。

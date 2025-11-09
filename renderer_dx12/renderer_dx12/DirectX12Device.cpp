@@ -2,6 +2,8 @@
 
 #include "DirectX12Device.h"
 
+#include <sstream>
+
 DirectX12Device::~DirectX12Device() {
   if (fence_ && default_graphics_command_queue_) {
     WaitForPreviousFrame();
@@ -23,55 +25,85 @@ DirectX12Device::Create(const DirectX12DeviceConfig &config) {
 
 bool DirectX12Device::Initialize(const DirectX12DeviceConfig &config) {
 
+  ResetDeviceState();
+
   config_ = config;
   is_vsync_enabled_ = config.vsync_enabled;
 
-  if (FAILED(EnableDebugLayer())) {
+  HRESULT hr = EnableDebugLayer();
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"EnableDebugLayer", hr);
     return false;
   }
 
   Microsoft::WRL::ComPtr<IDXGIFactory4> factory;
-  if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&factory)))) {
+  hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateDXGIFactory1", hr);
     return false;
   }
 
   dxgi_resources_ =
       std::make_unique<DxgiResourceManager>(Microsoft::WRL::ComPtr<IDXGIFactory4>(factory));
 
-  if (FAILED(dxgi_resources_->CreateDevice(
-          d3d12device_, video_card_memory_, video_card_description_))) {
+  hr = dxgi_resources_->CreateDevice(d3d12device_, video_card_memory_,
+                                     video_card_description_);
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateDevice", hr);
+    ResetDeviceState();
     return false;
   }
 
-  if (FAILED(CreateCommandQueues())) {
+  hr = CreateCommandQueues();
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateCommandQueues", hr);
+    ResetDeviceState();
     return false;
   }
 
-  if (FAILED(dxgi_resources_->CreateSwapChain(
-          config_, default_graphics_command_queue_.Get(), swap_chain_,
-          frame_cout_))) {
+  hr = dxgi_resources_->CreateSwapChain(config_,
+                                        default_graphics_command_queue_.Get(),
+                                        swap_chain_, frame_cout_);
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateSwapChain", hr);
+    ResetDeviceState();
     return false;
   }
 
   frame_index_ = swap_chain_->GetCurrentBackBufferIndex();
 
-  if (FAILED(CreateRenderTargetViews())) {
+  hr = CreateRenderTargetViews();
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateRenderTargetViews", hr);
+    ResetDeviceState();
     return false;
   }
 
-  if (FAILED(CreateDepthStencilResources())) {
+  hr = CreateDepthStencilResources();
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateDepthStencilResources", hr);
+    ResetDeviceState();
     return false;
   }
 
-  if (FAILED(CreateOffscreenResources())) {
+  hr = CreateOffscreenResources();
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateOffscreenResources", hr);
+    ResetDeviceState();
     return false;
   }
 
-  if (FAILED(CreateCommandAllocatorsAndLists())) {
+  hr = CreateCommandAllocatorsAndLists();
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateCommandAllocatorsAndLists", hr);
+    ResetDeviceState();
     return false;
   }
 
-  if (FAILED(CreateFenceAndEvent())) {
+  hr = CreateFenceAndEvent();
+  if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateFenceAndEvent", hr);
+    ResetDeviceState();
     return false;
   }
 
@@ -247,16 +279,28 @@ HRESULT DirectX12Device::CreateCommandAllocatorsAndLists() {
     return E_FAIL;
   }
 
-  default_graphics_command_allocator_.Reset();
+  if (frame_resources_.empty()) {
+    frame_resources_.resize(frame_cout_);
+  }
+
+  for (auto &frame : frame_resources_) {
+    frame.command_allocator.Reset();
+    frame.fence_value = 0;
+  }
+
   default_copy_command_allocator_.Reset();
   default_graphics_command_list_.Reset();
   default_copy_command_list_.Reset();
 
-  HRESULT hr = d3d12device_->CreateCommandAllocator(
-      D3D12_COMMAND_LIST_TYPE_DIRECT,
-      IID_PPV_ARGS(&default_graphics_command_allocator_));
-  if (FAILED(hr)) {
-    return hr;
+  HRESULT hr = S_OK;
+
+  for (auto &frame : frame_resources_) {
+    hr = d3d12device_->CreateCommandAllocator(
+        D3D12_COMMAND_LIST_TYPE_DIRECT,
+        IID_PPV_ARGS(&frame.command_allocator));
+    if (FAILED(hr)) {
+      return hr;
+    }
   }
 
   hr = d3d12device_->CreateCommandAllocator(
@@ -268,7 +312,7 @@ HRESULT DirectX12Device::CreateCommandAllocatorsAndLists() {
 
   hr = d3d12device_->CreateCommandList(
       0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-      default_graphics_command_allocator_.Get(), nullptr,
+      frame_resources_[frame_index_].command_allocator.Get(), nullptr,
       IID_PPV_ARGS(&default_graphics_command_list_));
   if (FAILED(hr)) {
     return hr;
@@ -311,6 +355,7 @@ HRESULT DirectX12Device::CreateFenceAndEvent() {
 
 auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descriptor) -> RenderTargetHandle {
   if (!d3d12device_) {
+    LogInitializationFailure(L"CreateRenderTarget::DeviceMissing", E_FAIL);
     return kInvalidRenderTargetHandle;
   }
 
@@ -343,6 +388,7 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
       D3D12_RESOURCE_STATE_GENERIC_READ, &clear_value,
       IID_PPV_ARGS(&resource.texture));
   if (FAILED(hr)) {
+    LogInitializationFailure(L"CreateRenderTarget::CreateTexture", hr);
     return kInvalidRenderTargetHandle;
   }
 
@@ -357,6 +403,7 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
     hr = d3d12device_->CreateDescriptorHeap(
         &srv_heap_desc, IID_PPV_ARGS(&resource.srv));
     if (FAILED(hr)) {
+      LogInitializationFailure(L"CreateRenderTarget::CreateSrvHeap", hr);
       return kInvalidRenderTargetHandle;
     }
 
@@ -383,6 +430,7 @@ auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descripto
     hr = d3d12device_->CreateDescriptorHeap(
         &rtv_heap_desc, IID_PPV_ARGS(&resource.rtv));
     if (FAILED(hr)) {
+      LogInitializationFailure(L"CreateRenderTarget::CreateRtvHeap", hr);
       return kInvalidRenderTargetHandle;
     }
 
@@ -528,8 +576,12 @@ bool DirectX12Device::ExecuteDefaultGraphicsCommandList() {
 }
 
 bool DirectX12Device::ResetCommandList() {
+  auto &frame = CurrentFrameResource();
+  if (!frame.command_allocator) {
+    return false;
+  }
   if (FAILED(default_graphics_command_list_->Reset(
-          default_graphics_command_allocator_.Get(), nullptr))) {
+          frame.command_allocator.Get(), nullptr))) {
     return false;
   }
   return true;
@@ -543,7 +595,11 @@ bool DirectX12Device::CloseCommandList() {
 }
 
 bool DirectX12Device::ResetCommandAllocator() {
-  if (FAILED(default_graphics_command_allocator_->Reset())) {
+  auto &frame = CurrentFrameResource();
+  if (!frame.command_allocator) {
+    return false;
+  }
+  if (FAILED(frame.command_allocator->Reset())) {
     return false;
   }
   return true;
@@ -686,22 +742,27 @@ void DirectX12Device::Draw(UINT IndexCountPerInstance, UINT InstanceCount,
 
 bool DirectX12Device::WaitForPreviousFrame() {
 
-  const UINT64 fence = fence_value_;
+  auto &current_frame = CurrentFrameResource();
+
+  const UINT64 fence_to_wait = fence_value_;
   if (FAILED(default_graphics_command_queue_->Signal(fence_.Get(),
-                                                     fence_value_))) {
+                                                     fence_to_wait))) {
     return false;
   }
+  current_frame.fence_value = fence_to_wait;
   ++fence_value_;
 
-  auto gpu_work_procress = fence_->GetCompletedValue();
-  if (fence_->GetCompletedValue() < fence) {
-    if (FAILED(fence_->SetEventOnCompletion(fence, fence_handle_))) {
+  frame_index_ = swap_chain_->GetCurrentBackBufferIndex();
+
+  auto &next_frame = CurrentFrameResource();
+  if (next_frame.fence_value != 0 &&
+      fence_->GetCompletedValue() < next_frame.fence_value) {
+    if (FAILED(
+            fence_->SetEventOnCompletion(next_frame.fence_value, fence_handle_))) {
       return false;
     }
     WaitForSingleObject(fence_handle_, INFINITE);
   }
-
-  frame_index_ = swap_chain_->GetCurrentBackBufferIndex();
 
   return true;
 }
@@ -709,4 +770,62 @@ bool DirectX12Device::WaitForPreviousFrame() {
 void DirectX12Device::GetVideoCardInfo(char *card_name, int memory) {
   strcpy_s(card_name, 128, video_card_description_);
   memory = video_card_memory_;
+}
+
+void DirectX12Device::ResetDeviceState() {
+  for (auto &target : back_buffer_render_targets_) {
+    target.Reset();
+  }
+  user_render_targets_.clear();
+  default_offscreen_handle_ = kInvalidRenderTargetHandle;
+  next_render_target_handle_ = 0;
+
+  render_target_view_heap_.Reset();
+  depth_stencil_resource_.Reset();
+  depth_stencil_view_heap_.Reset();
+
+  default_graphics_command_list_.Reset();
+  default_copy_command_list_.Reset();
+  default_copy_command_allocator_.Reset();
+  frame_resources_.clear();
+
+  default_graphics_command_queue_.Reset();
+  default_copy_command_queue_.Reset();
+
+  if (fence_handle_) {
+    CloseHandle(fence_handle_);
+    fence_handle_ = nullptr;
+  }
+  fence_.Reset();
+
+  swap_chain_.Reset();
+  dxgi_resources_.reset();
+  d3d12device_.Reset();
+
+  viewport_.clear();
+  scissor_rect_.clear();
+
+  projection_matrix_ = DirectX::XMMatrixIdentity();
+  world_matrix_ = DirectX::XMMatrixIdentity();
+  ortho_matrix_ = DirectX::XMMatrixIdentity();
+
+  frame_index_ = 0;
+  fence_value_ = 1;
+}
+
+void DirectX12Device::LogInitializationFailure(const wchar_t *stage,
+                                               HRESULT hr) const {
+  std::wstringstream stream;
+  stream << L"[DirectX12Device] Initialization failed at " << stage
+         << L" (hr=0x" << std::hex << hr << std::dec << L")\n";
+  OutputDebugStringW(stream.str().c_str());
+}
+
+DirectX12Device::FrameResource &DirectX12Device::CurrentFrameResource() {
+  return frame_resources_.at(frame_index_);
+}
+
+const DirectX12Device::FrameResource &
+DirectX12Device::CurrentFrameResource() const {
+  return frame_resources_.at(frame_index_);
 }
