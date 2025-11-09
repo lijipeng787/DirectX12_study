@@ -9,6 +9,14 @@
 #include <vector>
 #include <wrl.h>
 
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
 namespace Effect {}
 
 namespace ResourceLoader {

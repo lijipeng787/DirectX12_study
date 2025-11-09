@@ -2,6 +2,9 @@
 #define D3D12CLASS_H
 
 #include <sstream>
+#include <unordered_map>
+#include <limits>
+#include <utility>
 
 #include <DirectXMath.h>
 #include <memory>
@@ -138,6 +141,21 @@ private:
     Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter_ = nullptr;
 };
 
+struct RenderTargetDescriptor {
+  UINT width = 0;
+  UINT height = 0;
+  DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  bool create_rtv = true;
+  bool create_srv = true;
+  float clear_color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+  D3D12_RESOURCE_FLAGS resource_flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+};
+
+using RenderTargetHandle = size_t;
+
+static constexpr RenderTargetHandle kInvalidRenderTargetHandle =
+    std::numeric_limits<RenderTargetHandle>::max();
+
 class DirectX12Device : public std::enable_shared_from_this<DirectX12Device> {
 public:
   DirectX12Device() {}
@@ -185,9 +203,11 @@ public:
 
   void BindIndexBuffer(const IndexBufferView *index_buffer_view);
 
-  void DirectX12Device::BeginDrawToOffScreen();
+  void DirectX12Device::BeginDrawToOffScreen(
+      RenderTargetHandle handle = kInvalidRenderTargetHandle);
 
-  void DirectX12Device::EndDrawToOffScreen();
+  void DirectX12Device::EndDrawToOffScreen(
+      RenderTargetHandle handle = kInvalidRenderTargetHandle);
 
   void DirectX12Device::BeginPopulateGraphicsCommandList();
 
@@ -200,7 +220,9 @@ public:
 
   bool WaitForPreviousFrame();
 
-  DescriptorHeapPtr GetOffScreenTextureHeapView() { return off_screen_srv_; }
+  DescriptorHeapPtr GetOffScreenTextureHeapView() {
+    return GetRenderTargetSrv(default_offscreen_handle_);
+  }
 
   GraphicsCommandListPtr GetDefaultGraphicsCommandList() {
     return default_graphics_command_list_;
@@ -239,6 +261,12 @@ public:
   }
 
   void inline GetVideoCardInfo(char *card_name, int memory);
+
+  RenderTargetHandle CreateRenderTarget(const RenderTargetDescriptor &descriptor);
+
+  void DestroyRenderTarget(RenderTargetHandle handle);
+
+  DescriptorHeapPtr GetRenderTargetSrv(RenderTargetHandle handle) const;
 
 private:
   HRESULT EnableDebugLayer();
@@ -300,13 +328,15 @@ private:
   FencePtr fence_ = nullptr;
 
 private:
-  ResourceSharedPtr off_screen_texture_ = {nullptr};
+  ResourceSharedPtr back_buffer_render_targets_[frame_cout_] = {nullptr};
 
-  DescriptorHeapPtr off_screen_srv_ = {nullptr};
-
-  DescriptorHeapPtr off_screen_rtv_ = {nullptr};
-
-  ResourceSharedPtr render_targets_[frame_cout_] = {nullptr};
+  struct RenderTargetResource {
+    RenderTargetDescriptor descriptor = {};
+    ResourceSharedPtr texture = nullptr;
+    DescriptorHeapPtr srv = nullptr;
+    DescriptorHeapPtr rtv = nullptr;
+    D3D12_RESOURCE_STATES current_state = D3D12_RESOURCE_STATE_COMMON;
+  };
 
   DescriptorHeapPtr render_target_view_heap_ = nullptr;
 
@@ -340,6 +370,20 @@ private:
   DirectX::XMMATRIX ortho_matrix_ = {};
 
   std::unique_ptr<DxgiResourceManager> dxgi_resources_ = nullptr;
+  
+  std::unordered_map<RenderTargetHandle, RenderTargetResource> user_render_targets_ =
+      {};
+
+  RenderTargetHandle default_offscreen_handle_ = kInvalidRenderTargetHandle;
+  
+  RenderTargetHandle next_render_target_handle_ = 0;
+
+  RenderTargetResource *GetRenderTargetResource(RenderTargetHandle handle);
+  
+  const RenderTargetResource *
+  GetRenderTargetResource(RenderTargetHandle handle) const;
+
+  RenderTargetHandle ResolveRenderTargetHandle(RenderTargetHandle handle) const;
 };
 
 #endif

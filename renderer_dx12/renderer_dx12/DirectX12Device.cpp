@@ -123,7 +123,7 @@ HRESULT DirectX12Device::CreateRenderTargetViews() {
   }
 
   render_target_view_heap_.Reset();
-  for (auto &render_target : render_targets_) {
+  for (auto &render_target : back_buffer_render_targets_) {
     render_target.Reset();
   }
 
@@ -146,11 +146,13 @@ HRESULT DirectX12Device::CreateRenderTargetViews() {
       render_target_view_heap_->GetCPUDescriptorHandleForHeapStart());
 
   for (UINT index = 0; index < frame_cout_; ++index) {
-    hr = swap_chain_->GetBuffer(index, IID_PPV_ARGS(&render_targets_[index]));
+    hr = swap_chain_->GetBuffer(index,
+                                IID_PPV_ARGS(&back_buffer_render_targets_[index]));
     if (FAILED(hr)) {
       return hr;
     }
-    d3d12device_->CreateRenderTargetView(render_targets_[index].Get(), nullptr,
+    d3d12device_->CreateRenderTargetView(
+        back_buffer_render_targets_[index].Get(), nullptr,
                                          render_target_handle);
     render_target_handle.Offset(1, render_target_descriptor_size_);
   }
@@ -215,82 +217,28 @@ HRESULT DirectX12Device::CreateOffscreenResources() {
     return E_FAIL;
   }
 
-  off_screen_texture_.Reset();
-  off_screen_srv_.Reset();
-  off_screen_rtv_.Reset();
-
-  D3D12_RESOURCE_DESC texture_desc = {};
-  texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-  texture_desc.Alignment = 0;
-  texture_desc.Width = config_.screen_width;
-  texture_desc.Height = config_.screen_height;
-  texture_desc.DepthOrArraySize = 1;
-  texture_desc.MipLevels = 1;
-  texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  texture_desc.SampleDesc.Count = 1;
-  texture_desc.SampleDesc.Quality = 0;
-  texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-  texture_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-
-  D3D12_CLEAR_VALUE clear_value = {};
-  clear_value.Color[0] = 0.0f;
-  clear_value.Color[1] = 0.2f;
-  clear_value.Color[2] = 0.4f;
-  clear_value.Color[3] = 1.0f;
-  clear_value.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-  HRESULT hr = d3d12device_->CreateCommittedResource(
-      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-      D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_GENERIC_READ,
-      &clear_value, IID_PPV_ARGS(&off_screen_texture_));
-  if (FAILED(hr)) {
-    return hr;
+  if (default_offscreen_handle_ != kInvalidRenderTargetHandle) {
+    DestroyRenderTarget(default_offscreen_handle_);
+    default_offscreen_handle_ = kInvalidRenderTargetHandle;
   }
 
-  D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc = {};
-  srv_heap_desc.NumDescriptors = 1;
-  srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-  srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+  RenderTargetDescriptor descriptor = {};
+  descriptor.width = config_.screen_width;
+  descriptor.height = config_.screen_height;
+  descriptor.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  descriptor.create_rtv = true;
+  descriptor.create_srv = true;
+  descriptor.clear_color[0] = 0.0f;
+  descriptor.clear_color[1] = 0.2f;
+  descriptor.clear_color[2] = 0.4f;
+  descriptor.clear_color[3] = 1.0f;
 
-  hr = d3d12device_->CreateDescriptorHeap(
-      &srv_heap_desc, IID_PPV_ARGS(&off_screen_srv_));
-  if (FAILED(hr)) {
-    return hr;
+  auto handle = CreateRenderTarget(descriptor);
+  if (handle == kInvalidRenderTargetHandle) {
+    return E_FAIL;
   }
 
-  D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
-  srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-  srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-  srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  srv_desc.Texture2D.MipLevels = 1;
-  srv_desc.Texture2D.MostDetailedMip = 0;
-  srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-  d3d12device_->CreateShaderResourceView(
-      off_screen_texture_.Get(), &srv_desc,
-      off_screen_srv_->GetCPUDescriptorHandleForHeapStart());
-
-  D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc = {};
-  rtv_heap_desc.NumDescriptors = frame_cout_;
-  rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-  rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-  hr = d3d12device_->CreateDescriptorHeap(
-      &rtv_heap_desc, IID_PPV_ARGS(&off_screen_rtv_));
-  if (FAILED(hr)) {
-    return hr;
-  }
-
-  D3D12_RENDER_TARGET_VIEW_DESC rtv_desc = {};
-  rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-  rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  rtv_desc.Texture2D.MipSlice = 0;
-  rtv_desc.Texture2D.PlaneSlice = 0;
-
-  d3d12device_->CreateRenderTargetView(
-      off_screen_texture_.Get(), &rtv_desc,
-      off_screen_rtv_->GetCPUDescriptorHandleForHeapStart());
-
+  default_offscreen_handle_ = handle;
   return S_OK;
 }
 
@@ -359,6 +307,166 @@ HRESULT DirectX12Device::CreateFenceAndEvent() {
   }
 
   return S_OK;
+}
+
+auto DirectX12Device::CreateRenderTarget(const RenderTargetDescriptor &descriptor) -> RenderTargetHandle {
+  if (!d3d12device_) {
+    return kInvalidRenderTargetHandle;
+  }
+
+  RenderTargetResource resource = {};
+  resource.descriptor = descriptor;
+
+  D3D12_RESOURCE_DESC texture_desc = {};
+  texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+  texture_desc.Alignment = 0;
+  texture_desc.Width = descriptor.width;
+  texture_desc.Height = descriptor.height;
+  texture_desc.DepthOrArraySize = 1;
+  texture_desc.MipLevels = 1;
+  texture_desc.Format = descriptor.format;
+  texture_desc.SampleDesc.Count = 1;
+  texture_desc.SampleDesc.Quality = 0;
+  texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+  texture_desc.Flags = descriptor.resource_flags;
+
+  D3D12_CLEAR_VALUE clear_value = {};
+  clear_value.Format = descriptor.format;
+  clear_value.Color[0] = descriptor.clear_color[0];
+  clear_value.Color[1] = descriptor.clear_color[1];
+  clear_value.Color[2] = descriptor.clear_color[2];
+  clear_value.Color[3] = descriptor.clear_color[3];
+
+  HRESULT hr = d3d12device_->CreateCommittedResource(
+      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+      D3D12_HEAP_FLAG_NONE, &texture_desc,
+      D3D12_RESOURCE_STATE_GENERIC_READ, &clear_value,
+      IID_PPV_ARGS(&resource.texture));
+  if (FAILED(hr)) {
+    return kInvalidRenderTargetHandle;
+  }
+
+  resource.current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
+
+  if (descriptor.create_srv) {
+    D3D12_DESCRIPTOR_HEAP_DESC srv_heap_desc = {};
+    srv_heap_desc.NumDescriptors = 1;
+    srv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    srv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+    hr = d3d12device_->CreateDescriptorHeap(
+        &srv_heap_desc, IID_PPV_ARGS(&resource.srv));
+    if (FAILED(hr)) {
+      return kInvalidRenderTargetHandle;
+    }
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.Shader4ComponentMapping =
+        D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srv_desc.Format = descriptor.format;
+    srv_desc.Texture2D.MipLevels = 1;
+    srv_desc.Texture2D.MostDetailedMip = 0;
+    srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+    d3d12device_->CreateShaderResourceView(
+        resource.texture.Get(), &srv_desc,
+        resource.srv->GetCPUDescriptorHandleForHeapStart());
+  }
+
+  if (descriptor.create_rtv) {
+    D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc = {};
+    rtv_heap_desc.NumDescriptors = 1;
+    rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+    hr = d3d12device_->CreateDescriptorHeap(
+        &rtv_heap_desc, IID_PPV_ARGS(&resource.rtv));
+    if (FAILED(hr)) {
+      return kInvalidRenderTargetHandle;
+    }
+
+    D3D12_RENDER_TARGET_VIEW_DESC rtv_desc = {};
+    rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+    rtv_desc.Format = descriptor.format;
+    rtv_desc.Texture2D.MipSlice = 0;
+    rtv_desc.Texture2D.PlaneSlice = 0;
+
+    d3d12device_->CreateRenderTargetView(
+        resource.texture.Get(), &rtv_desc,
+        resource.rtv->GetCPUDescriptorHandleForHeapStart());
+  }
+
+  RenderTargetHandle handle = next_render_target_handle_++;
+  user_render_targets_.insert(std::make_pair(handle, std::move(resource)));
+
+  std::wstringstream stream;
+  stream << L"[DirectX12Device] Created render target handle " << handle << L" ("
+         << descriptor.width << L"x" << descriptor.height << L").\n";
+  OutputDebugStringW(stream.str().c_str());
+
+  return handle;
+}
+
+void DirectX12Device::DestroyRenderTarget(RenderTargetHandle handle) {
+  if (handle == kInvalidRenderTargetHandle) {
+    return;
+  }
+
+  auto it = user_render_targets_.find(handle);
+  if (it == user_render_targets_.end()) {
+    return;
+  }
+
+  if (default_offscreen_handle_ == handle) {
+    default_offscreen_handle_ = kInvalidRenderTargetHandle;
+  }
+
+  user_render_targets_.erase(it);
+}
+
+auto DirectX12Device::GetRenderTargetSrv(RenderTargetHandle handle) const -> DescriptorHeapPtr {
+  auto resolved = ResolveRenderTargetHandle(handle);
+  auto it = user_render_targets_.find(resolved);
+  if (it == user_render_targets_.end()) {
+    return nullptr;
+  }
+  return it->second.srv;
+}
+
+auto DirectX12Device::ResolveRenderTargetHandle(RenderTargetHandle handle) const -> RenderTargetHandle {
+  if (handle == kInvalidRenderTargetHandle) {
+    return default_offscreen_handle_;
+  }
+  auto it = user_render_targets_.find(handle);
+  if (it == user_render_targets_.end()) {
+    return kInvalidRenderTargetHandle;
+  }
+  return handle;
+}
+
+auto DirectX12Device::GetRenderTargetResource(RenderTargetHandle handle) -> DirectX12Device::RenderTargetResource * {
+  auto resolved = ResolveRenderTargetHandle(handle);
+  if (resolved == kInvalidRenderTargetHandle) {
+    return nullptr;
+  }
+  auto it = user_render_targets_.find(resolved);
+  if (it == user_render_targets_.end()) {
+    return nullptr;
+  }
+  return &it->second;
+}
+
+auto DirectX12Device::GetRenderTargetResource(RenderTargetHandle handle) const -> const DirectX12Device::RenderTargetResource * {
+  auto resolved = ResolveRenderTargetHandle(handle);
+  if (resolved == kInvalidRenderTargetHandle) {
+    return nullptr;
+  }
+  auto it = user_render_targets_.find(resolved);
+  if (it == user_render_targets_.end()) {
+    return nullptr;
+  }
+  return &it->second;
 }
 
 void DirectX12Device::InitializeViewportsAndScissors() {
@@ -481,18 +589,25 @@ void DirectX12Device::BindIndexBuffer(
   default_graphics_command_list_->IASetIndexBuffer(index_buffer_view);
 }
 
-void DirectX12Device::BeginDrawToOffScreen() {
+void DirectX12Device::BeginDrawToOffScreen(RenderTargetHandle handle) {
+  auto resource = GetRenderTargetResource(handle);
+  if (!resource || !resource->texture || !resource->rtv) {
+    return;
+  }
 
   default_graphics_command_list_->RSSetViewports(1, &viewport_.at(0));
   default_graphics_command_list_->RSSetScissorRects(1, &scissor_rect_.at(0));
 
-  default_graphics_command_list_->ResourceBarrier(
-      1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             off_screen_texture_.Get(), D3D12_RESOURCE_STATE_GENERIC_READ,
-             D3D12_RESOURCE_STATE_RENDER_TARGET));
+  if (resource->current_state != D3D12_RESOURCE_STATE_RENDER_TARGET) {
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        resource->texture.Get(), resource->current_state,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
+    default_graphics_command_list_->ResourceBarrier(1, &barrier);
+    resource->current_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
+  }
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(
-      off_screen_rtv_->GetCPUDescriptorHandleForHeapStart());
+      resource->rtv->GetCPUDescriptorHandleForHeapStart());
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE dsv_handle(
       depth_stencil_view_heap_->GetCPUDescriptorHandleForHeapStart());
@@ -500,21 +615,27 @@ void DirectX12Device::BeginDrawToOffScreen() {
   default_graphics_command_list_->OMSetRenderTargets(1, &rtv_handle, FALSE,
                                                      &dsv_handle);
 
-  const float clear_color[] = {0.0f, 0.2f, 0.4f, 1.0f};
-  default_graphics_command_list_->ClearRenderTargetView(rtv_handle, clear_color,
-                                                        0, nullptr);
+  default_graphics_command_list_->ClearRenderTargetView(
+      rtv_handle, resource->descriptor.clear_color, 0, nullptr);
   default_graphics_command_list_->ClearDepthStencilView(
       dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
   default_graphics_command_list_->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void DirectX12Device::EndDrawToOffScreen() {
+void DirectX12Device::EndDrawToOffScreen(RenderTargetHandle handle) {
+  auto resource = GetRenderTargetResource(handle);
+  if (!resource || !resource->texture) {
+    return;
+  }
 
-  default_graphics_command_list_->ResourceBarrier(
-      1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             off_screen_texture_.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET,
-             D3D12_RESOURCE_STATE_GENERIC_READ));
+  if (resource->current_state != D3D12_RESOURCE_STATE_GENERIC_READ) {
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        resource->texture.Get(), resource->current_state,
+        D3D12_RESOURCE_STATE_GENERIC_READ);
+    default_graphics_command_list_->ResourceBarrier(1, &barrier);
+    resource->current_state = D3D12_RESOURCE_STATE_GENERIC_READ;
+  }
 }
 
 void DirectX12Device::BeginPopulateGraphicsCommandList() {
@@ -523,7 +644,8 @@ void DirectX12Device::BeginPopulateGraphicsCommandList() {
 
   default_graphics_command_list_->ResourceBarrier(
       1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             render_targets_[frame_index_].Get(), D3D12_RESOURCE_STATE_PRESENT,
+             back_buffer_render_targets_[frame_index_].Get(),
+             D3D12_RESOURCE_STATE_PRESENT,
              D3D12_RESOURCE_STATE_RENDER_TARGET));
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(
@@ -548,8 +670,9 @@ void DirectX12Device::BeginPopulateGraphicsCommandList() {
 void DirectX12Device::EndPopulateGraphicsCommandList() {
   default_graphics_command_list_->ResourceBarrier(
       1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             render_targets_[frame_index_].Get(),
-             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+             back_buffer_render_targets_[frame_index_].Get(),
+             D3D12_RESOURCE_STATE_RENDER_TARGET,
+             D3D12_RESOURCE_STATE_PRESENT));
 }
 
 void DirectX12Device::Draw(UINT IndexCountPerInstance, UINT InstanceCount,

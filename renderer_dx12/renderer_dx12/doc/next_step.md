@@ -28,9 +28,9 @@
 
 ## 任务 4：离屏渲染构建抽象
 
-- 定义 `RenderTargetDescriptor`（尺寸、格式、用途），允许外部请求离屏纹理。
-- 重构 `BeginDrawToOffScreen/EndDrawToOffScreen`，改为操作外部提供的目标句柄。
-- 针对现有 ScreenQuad 保持兼容，提供默认 off-screen 目标的便捷工厂。
+- ✅ 定义 `RenderTargetDescriptor`（尺寸、格式、用途），允许外部请求离屏纹理。
+- ✅ 重构 `BeginDrawToOffScreen/EndDrawToOffScreen`，改为操作外部提供的目标句柄。
+- ✅ 针对现有 ScreenQuad 保持兼容，提供默认 off-screen 目标的便捷工厂。
 
 ## 任务 5：ScreenQuad 解耦材质
 

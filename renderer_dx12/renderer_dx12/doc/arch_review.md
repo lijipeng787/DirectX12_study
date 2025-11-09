@@ -14,7 +14,7 @@
 - **单例限制扩展性**：`DirectX12Device::GetD3d12DeviceInstance()` 使用进程级单例且缺乏线程安全，无法支持多 GPU / 多设备并行实验，限制架构弹性。
 - **初始化流程耦合**：`DirectX12Device::Initialize` 集成了适配器选择、交换链、命令队列、离屏资源等全部逻辑，失败时缺乏回滚与日志记录，难以替换单个环节进行实验。
 - **帧资源与同步抽象缺失**：仅维护单个 `ID3D12Fence` 与 `frame_index_`，没有 per-frame 资源封装，难以支持多 Pass 或异步执行的研究场景。
-- **离屏渲染路径固定**：`BeginDrawToOffScreen` / `EndDrawToOffScreen` 绑定唯一的 `off_screen_texture_`，尺寸与格式写死，无法灵活创建多 RenderTarget 或可变分辨率资源。
+- **离屏渲染路径固定**：`BeginDrawToOffScreen` / `EndDrawToOffScreen` 绑定唯一的 `off_screen_texture_`，尺寸与格式写死，无法灵活创建多 RenderTarget 或可变分辨率资源。（✅ 已通过 `RenderTargetDescriptor` 与可配置句柄解决）
 - **命令队列功能不足**：只创建 direct/ copy 队列且未暴露管理接口，缺少 compute 队列与多命令列表调度，难以尝试异步计算或复杂录制策略。
 - **资源生命周期管理不统一**：`adapter->Release()`、`factory->Release()` 与大量 `ComPtr` 混用，遇到中途失败易泄漏，建议统一采用 RAII/智能指针。
 - **ScreenQuad 封装僵硬**：`ScreenQuad` 将 `ScreenQuadMaterial` 内嵌为成员，几何与材质强耦合，限制复用与自定义 Shader/CBV 的自由度。
@@ -31,6 +31,7 @@
 
 - ✅ 单例访问接口已移除：`DirectX12Device` 通过 `DirectX12DeviceConfig` 与 `Create` 工厂创建，使用 `std::shared_ptr` 管理生命周期，并向 `ScreenQuad`、`Model`、`Text`、`TextureLoader` 等组件注入依赖。
 - ✅ 渲染组件更新：所有依赖已改为通过设备实例创建资源和命令，`Graphics` 初始化/销毁流程同步调整。
+- ✅ 离屏渲染抽象：新增 `RenderTargetDescriptor`、`CreateRenderTarget` 等接口，可按需创建离屏纹理并通过句柄在 `BeginDrawToOffScreen`/`EndDrawToOffScreen` 中使用。
 
 ## 开放问题
 
