@@ -7,6 +7,7 @@
 
 class Input;
 class Graphics;
+class TimerClass;
 
 class System {
 
@@ -45,6 +46,8 @@ private:
   Input *input_ = nullptr;
 
   Graphics *graphics_ = nullptr;
+
+  TimerClass *timer_ = nullptr;
 };
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

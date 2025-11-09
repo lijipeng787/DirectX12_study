@@ -2,6 +2,7 @@
 #define HEADER_GRAPHICSCLASS_H
 
 #include <Windows.h>
+#include <DirectXMath.h>
 #include <memory>
 
 #include "ShaderLoader.h"
@@ -18,6 +19,7 @@ class Input;
 class ScreenQuad;
 class Text;
 class Model;
+class PBRModel;
 class Fps;
 class CPUUsageTracker;
 
@@ -36,10 +38,12 @@ public:
 
   void Shutdown();
 
-  bool Frame();
+  bool Frame(float delta_seconds, Input *input);
 
 private:
   bool Render();
+
+  void UpdateCameraFromInput(float delta_seconds, Input *input);
 
 private:
   std::shared_ptr<DirectX12Device> d3d12_device_ = nullptr;
@@ -48,8 +52,6 @@ private:
 
   std::shared_ptr<Camera> camera_ = nullptr;
 
-  std::shared_ptr<Input> input_ = nullptr;
-
   std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader_ = nullptr;
 
   std::shared_ptr<ScreenQuad> bitmap_ = nullptr;
@@ -57,10 +59,15 @@ private:
   std::shared_ptr<Text> text_ = nullptr;
 
   std::shared_ptr<Model> model_ = nullptr;
+  std::shared_ptr<PBRModel> pbr_model_ = nullptr;
 
   std::shared_ptr<Fps> fps_ = nullptr;
 
   std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
+
+  DirectX::XMFLOAT3 pbr_light_direction_ = DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
+
+  float camera_move_speed_ = 5.0f;
 };
 
 #endif //! HEADER_GRAPHICSCLASS_H

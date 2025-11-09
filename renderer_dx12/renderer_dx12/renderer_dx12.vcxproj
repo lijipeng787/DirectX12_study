@@ -163,6 +163,8 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="modelclass.h" />
+    <ClInclude Include="PBRMaterial.h" />
+    <ClInclude Include="PBRModel.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="systemclass.h" />
@@ -186,6 +188,8 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="modelclass.cpp" />
+    <ClCompile Include="PBRMaterial.cpp" />
+    <ClCompile Include="PBRModel.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -210,6 +214,12 @@
       <FileType>Document</FileType>
     </None>
     <None Include="lightVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="pbrPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="pbrVS.hlsl">
       <FileType>Document</FileType>
     </None>
     <None Include="texturePS.hlsl">

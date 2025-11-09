@@ -41,7 +41,13 @@ public:
 
   bool IsDownPressed();
 
+  bool IsWPressed();
+
+  bool IsSPressed();
+
   bool IsAPressed();
+
+  bool IsDPressed();
 
   bool IsZPressed();
 

@@ -4,6 +4,7 @@
 
 #include "Input.h"
 #include "graphicsclass.h"
+#include "Timer.h"
 
 bool System::Initialize() {
   int screenWidth, screenHeight;
@@ -25,7 +26,19 @@ bool System::Initialize() {
   }
 
   // Initialize the input object.
-  input_->Initialize(hinstance_, hwnd_, screenWidth, screenHeight);
+  if (!input_->Initialize(hinstance_, hwnd_, screenWidth, screenHeight)) {
+    return false;
+  }
+
+  // Create and initialize the high resolution timer.
+  timer_ = new TimerClass();
+  if (!timer_) {
+    return false;
+  }
+
+  if (!timer_->Initialize()) {
+    return false;
+  }
 
   // Create the graphics object.  This object will handle rendering all the
   // graphics for this application.
@@ -55,6 +68,11 @@ void System::Shutdown() {
   if (input_) {
     delete input_;
     input_ = 0;
+  }
+
+  if (timer_) {
+    delete timer_;
+    timer_ = nullptr;
   }
 
   // Shutdown the window.
@@ -95,11 +113,23 @@ void System::Run() {
 }
 
 bool System::Frame() {
-  bool result;
+  float delta_seconds = 0.0f;
+  if (timer_) {
+    timer_->Update();
+    delta_seconds = timer_->GetTime() * 0.001f;
+  }
 
-  // Do the frame processing for the graphics object.
-  result = graphics_->Frame();
-  if (!result) {
+  if (input_) {
+    if (!input_->Update()) {
+      return false;
+    }
+
+    if (input_->IsEscapePressed()) {
+      return false;
+    }
+  }
+
+  if (!graphics_->Frame(delta_seconds, input_)) {
     return false;
   }
 

@@ -194,8 +194,26 @@ bool Input::IsDownPressed() {
   return false;
 }
 
+bool Input::IsWPressed() {
+  if (keyboard_state_[DIK_W] & 0x80)
+    return true;
+  return false;
+}
+
+bool Input::IsSPressed() {
+  if (keyboard_state_[DIK_S] & 0x80)
+    return true;
+  return false;
+}
+
 bool Input::IsAPressed() {
   if (keyboard_state_[DIK_A] & 0x80)
+    return true;
+  return false;
+}
+
+bool Input::IsDPressed() {
+  if (keyboard_state_[DIK_D] & 0x80)
     return true;
   return false;
 }

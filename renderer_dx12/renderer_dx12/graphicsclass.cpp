@@ -8,6 +8,7 @@
 #include "Fps.h"
 #include "Input.h"
 #include "Light.h"
+#include "PBRModel.h"
 
 #include "ScreenQuad.h"
 #include "modelclass.h"
@@ -55,6 +56,9 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   light_->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
   light_->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
   light_->SetDirection(0.0f, 0.0f, 1.0f);
+  
+  // Initialize PBR light direction (normalized)
+  pbr_light_direction_ = DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
 
   {
     shader_loader_ = std::make_shared<ResourceLoader::ShaderLoader>();
@@ -84,6 +88,14 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"fontVS.hlsl",
                                                     L"fontPS.hlsl"))) {
       MessageBox(hwnd, L"Could not initialize Font Shader.", L"Error", MB_OK);
+      return false;
+    }
+
+    shader_loader_->SetVSEntryPoint("PbrVertexShader");
+    shader_loader_->SetPSEntryPoint("PbrPixelShader");
+    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"pbrVS.hlsl",
+                                                    L"pbrPS.hlsl"))) {
+      MessageBox(hwnd, L"Could not initialize PBR Shader.", L"Error", MB_OK);
       return false;
     }
   }
@@ -152,6 +164,26 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
   }
 
+  {
+    pbr_model_ = std::make_shared<PBRModel>(d3d12_device_);
+    if (!pbr_model_) {
+      return false;
+    }
+    PBRMaterial *pbr_material = pbr_model_->GetMaterial();
+    pbr_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
+        shader_loader_->GetVertexShaderBlobByFileName(L"pbrVS.hlsl").Get()));
+    pbr_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
+        shader_loader_->GetPixelShaderBlobByFileName(L"pbrPS.hlsl").Get()));
+
+    WCHAR *pbr_textures[3] = {L"data/pbr/pbr_albedo.tga",
+                              L"data/pbr/pbr_normal.tga",
+                              L"data/pbr/pbr_roughmetal.tga"};
+    if (CHECK(pbr_model_->Initialize(L"data/pbr/sphere.txt", pbr_textures))) {
+      MessageBox(hwnd, L"Could not initialize PBR Model.", L"Error", MB_OK);
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -162,7 +194,7 @@ void Graphics::Shutdown() {
   cpu_usage_tracker_->Shutdown();
 }
 
-bool Graphics::Frame() {
+bool Graphics::Frame(float delta_seconds, Input *input) {
 
   cpu_usage_tracker_->Update();
   if (CHECK(text_->SetCpu(cpu_usage_tracker_->GetCpuPercentage()))) {
@@ -174,12 +206,68 @@ bool Graphics::Frame() {
     return false;
   }
 
+  UpdateCameraFromInput(delta_seconds, input);
+
   camera_->Update();
   if (FAILED(Render())) {
     return false;
   }
 
   return true;
+}
+
+void Graphics::UpdateCameraFromInput(float delta_seconds,
+                                     Input *input) {
+  if (!camera_ || !input) {
+    return;
+  }
+
+  if (delta_seconds <= 0.0f) {
+    return;
+  }
+
+  using namespace DirectX;
+
+  XMFLOAT3 camera_position = camera_->GetPosition();
+  XMFLOAT3 camera_rotation = camera_->GetRotation();
+
+  float yaw_radians = camera_rotation.y * XM_PI / 180.0f;
+
+  XMVECTOR forward =
+      XMVector3Normalize(XMVectorSet(sinf(yaw_radians), 0.0f,
+                                     cosf(yaw_radians), 0.0f));
+  XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+  XMVECTOR right = XMVector3Normalize(XMVector3Cross(up, forward));
+
+  XMVECTOR movement = XMVectorZero();
+
+  if (input->IsWPressed()) {
+    movement = XMVectorAdd(movement, forward);
+  }
+  if (input->IsSPressed()) {
+    movement = XMVectorSubtract(movement, forward);
+  }
+  if (input->IsDPressed()) {
+    movement = XMVectorAdd(movement, right);
+  }
+  if (input->IsAPressed()) {
+    movement = XMVectorSubtract(movement, right);
+  }
+
+  float movement_length_sq = XMVectorGetX(XMVector3LengthSq(movement));
+  if (movement_length_sq <= 0.0f) {
+    return;
+  }
+
+  movement = XMVector3Normalize(movement);
+
+  float move_distance = camera_move_speed_ * delta_seconds;
+  XMVECTOR position = XMLoadFloat3(&camera_position);
+  position = XMVectorAdd(position, XMVectorScale(movement, move_distance));
+
+  XMStoreFloat3(&camera_position, position);
+  camera_->SetPosition(camera_position.x, camera_position.y,
+                       camera_position.z);
 }
 
 bool Graphics::Render() {
@@ -211,6 +299,11 @@ bool Graphics::Render() {
   d3d12_device_->GetOrthoMatrix(orthogonality);
   orthogonality = DirectX::XMMatrixTranspose(orthogonality);
 
+  DirectX::XMMATRIX pbr_world =
+      DirectX::XMMatrixRotationY(rotation * 0.5f) *
+      DirectX::XMMatrixTranslation(3.0f, 0.0f, 0.0f);
+  pbr_world = DirectX::XMMatrixTranspose(pbr_world);
+
   if (CHECK(model_->GetMaterial()->UpdateMatrixConstant(rotate_world, view,
                                                         projection))) {
     return false;
@@ -234,6 +327,20 @@ bool Graphics::Render() {
   DirectX::XMFLOAT4 pixel_color(1.0f, 0.0f, 0.0f, 0.0f);
   if (CHECK(text_->GetMaterial()->UpdateLightConstant(pixel_color))) {
     return false;
+  }
+
+  if (pbr_model_) {
+    auto camera_position = camera_->GetPosition();
+    auto pbr_material = pbr_model_->GetMaterial();
+    if (CHECK(pbr_material->UpdateMatrixConstant(pbr_world, view, projection))) {
+      return false;
+    }
+    if (CHECK(pbr_material->UpdateCameraConstant(camera_position))) {
+      return false;
+    }
+    if (CHECK(pbr_material->UpdateLightConstant(pbr_light_direction_))) {
+      return false;
+    }
   }
 
   auto off_screen_root_signature = bitmap_->GetMaterial()->GetRootSignature();
@@ -319,6 +426,35 @@ bool Graphics::Render() {
 
   {
     d3d12_device_->BeginPopulateGraphicsCommandList();
+
+    if (pbr_model_) {
+      auto pbr_material = pbr_model_->GetMaterial();
+      auto pbr_root_signature = pbr_material->GetRootSignature();
+      auto pbr_pso = pbr_material->GetPSOByName("pbr_pipeline");
+      auto pbr_matrix_cb = pbr_material->GetMatrixConstantBuffer();
+      auto pbr_camera_cb = pbr_material->GetCameraConstantBuffer();
+      auto pbr_light_cb = pbr_material->GetLightConstantBuffer();
+
+      ID3D12DescriptorHeap *pbr_heap[] = {
+          pbr_model_->GetShaderRescourceView().Get()};
+      d3d12_device_->SetDescriptorHeaps(1, pbr_heap);
+
+      d3d12_device_->SetGraphicsRootSignature(pbr_root_signature);
+      d3d12_device_->SetPipelineStateObject(pbr_pso);
+      d3d12_device_->SetGraphicsRootDescriptorTable(
+          0, pbr_heap[0]->GetGPUDescriptorHandleForHeapStart());
+      d3d12_device_->SetGraphicsRootConstantBufferView(
+          1, pbr_matrix_cb->GetGPUVirtualAddress());
+      d3d12_device_->SetGraphicsRootConstantBufferView(
+          2, pbr_camera_cb->GetGPUVirtualAddress());
+      d3d12_device_->SetGraphicsRootConstantBufferView(
+          3, pbr_light_cb->GetGPUVirtualAddress());
+
+      d3d12_device_->BindVertexBuffer(0, 1,
+                                      &pbr_model_->GetVertexBufferView());
+      d3d12_device_->BindIndexBuffer(&pbr_model_->GetIndexBufferView());
+      d3d12_device_->Draw(pbr_model_->GetIndexCount());
+    }
 
     d3d12_device_->SetGraphicsRootSignature(light_root_signature);
     d3d12_device_->SetPipelineStateObject(pso);
