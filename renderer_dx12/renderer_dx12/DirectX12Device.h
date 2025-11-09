@@ -264,7 +264,7 @@ public:
     ortho = ortho_matrix_;
   }
 
-  void inline GetVideoCardInfo(char *card_name, int memory);
+  void inline GetVideoCardInfo(char *card_name, int &memory);
 
   RenderTargetHandle CreateRenderTarget(const RenderTargetDescriptor &descriptor);
 

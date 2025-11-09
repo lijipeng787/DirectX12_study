@@ -767,7 +767,7 @@ bool DirectX12Device::WaitForPreviousFrame() {
   return true;
 }
 
-void DirectX12Device::GetVideoCardInfo(char *card_name, int memory) {
+void DirectX12Device::GetVideoCardInfo(char *card_name, int &memory) {
   strcpy_s(card_name, 128, video_card_description_);
   memory = video_card_memory_;
 }

@@ -186,8 +186,8 @@ bool Graphics::Render() {
 
   static float rotation = 0.0f;
   rotation += (DirectX::XM_PI * 0.01f);
-  if (rotation > 360.0f) {
-    rotation -= 360.0f;
+  if (rotation > DirectX::XM_2PI) {
+    rotation -= DirectX::XM_2PI;
   }
 
   DirectX::XMMATRIX rotate_world = {};
