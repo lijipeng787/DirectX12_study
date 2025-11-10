@@ -204,30 +204,31 @@
     <ClCompile Include="TypeDefine.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="fontPS.hlsl">
+    <FxCompile Include="shaders\fontPS.hlsl">
       <FileType>Document</FileType>
-    </None>
-    <None Include="fontVS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="lightPS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="lightVS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="pbrPS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="pbrVS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="texturePS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="textureVS.hlsl">
-      <FileType>Document</FileType>
-    </None>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shaders\fontVS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shaders\lightPS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shaders\lightVS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shaders\pbrPS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shaders\pbrVS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shaders\texturePS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shaders\textureVS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

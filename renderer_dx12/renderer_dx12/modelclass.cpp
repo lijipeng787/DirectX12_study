@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include "DirectX12Device.h"
+#include "SceneLight.h"
 
 using namespace std;
 using namespace DirectX;
@@ -354,6 +355,17 @@ bool ModelMaterial::UpdateLightConstant(const XMFLOAT4 &ambient_color,
   }
 
   return true;
+}
+
+bool ModelMaterial::UpdateFromLight(const Lighting::SceneLight *scene_light) {
+  if (!scene_light) {
+    return false;
+  }
+
+  // For traditional Blinn-Phong lighting, extract full light parameters
+  return UpdateLightConstant(scene_light->GetAmbientColor(),
+                             scene_light->GetDiffuseColor(),
+                             scene_light->GetDirection());
 }
 
 bool ModelMaterial::UpdateFogConstant(float fog_begin, float fog_end) {

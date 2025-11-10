@@ -3,6 +3,7 @@
 #include "PBRMaterial.h"
 
 #include "DirectX12Device.h"
+#include "SceneLight.h"
 
 using namespace DirectX;
 
@@ -11,7 +12,7 @@ PBRMaterial::PBRMaterial(std::shared_ptr<DirectX12Device> device)
 
 PBRMaterial::~PBRMaterial() {}
 
-bool PBRMaterial::Initialize() {
+auto PBRMaterial::Initialize() -> bool {
   auto device = device_->GetD3d12Device();
 
   if (FAILED(device->CreateCommittedResource(
@@ -52,9 +53,9 @@ bool PBRMaterial::Initialize() {
   return true;
 }
 
-bool PBRMaterial::UpdateMatrixConstant(const XMMATRIX &world,
+auto PBRMaterial::UpdateMatrixConstant(const XMMATRIX &world,
                                        const XMMATRIX &view,
-                                       const XMMATRIX &projection) {
+                                       const XMMATRIX &projection) -> bool {
   UINT8 *data_begin = nullptr;
   if (FAILED(matrix_constant_buffer_->Map(
           0, nullptr, reinterpret_cast<void **>(&data_begin)))) {
@@ -78,7 +79,8 @@ bool PBRMaterial::UpdateMatrixConstant(const XMMATRIX &world,
   return true;
 }
 
-bool PBRMaterial::UpdateCameraConstant(const XMFLOAT3 &camera_position) {
+auto PBRMaterial::UpdateCameraConstant(const XMFLOAT3 &camera_position)
+    -> bool {
   UINT8 *data_begin = nullptr;
   if (FAILED(camera_constant_buffer_->Map(
           0, nullptr, reinterpret_cast<void **>(&data_begin)))) {
@@ -93,7 +95,7 @@ bool PBRMaterial::UpdateCameraConstant(const XMFLOAT3 &camera_position) {
   return true;
 }
 
-bool PBRMaterial::UpdateLightConstant(const XMFLOAT3 &light_direction) {
+auto PBRMaterial::UpdateLightConstant(const XMFLOAT3 &light_direction) -> bool {
   UINT8 *data_begin = nullptr;
   if (FAILED(light_constant_buffer_->Map(
           0, nullptr, reinterpret_cast<void **>(&data_begin)))) {
@@ -108,19 +110,32 @@ bool PBRMaterial::UpdateLightConstant(const XMFLOAT3 &light_direction) {
   return true;
 }
 
-ResourceSharedPtr PBRMaterial::GetMatrixConstantBuffer() const {
+auto PBRMaterial::UpdateFromLight(const Lighting::SceneLight *scene_light)
+    -> bool {
+  if (!scene_light) {
+    return false;
+  }
+
+  // For PBR, extract light direction and effective color
+  // PBR typically uses direction and radiance (color * intensity)
+  const auto &direction = scene_light->GetDirection();
+
+  return UpdateLightConstant(direction);
+}
+
+auto PBRMaterial::GetMatrixConstantBuffer() const -> ResourceSharedPtr {
   return matrix_constant_buffer_;
 }
 
-ResourceSharedPtr PBRMaterial::GetCameraConstantBuffer() const {
+auto PBRMaterial::GetCameraConstantBuffer() const -> ResourceSharedPtr {
   return camera_constant_buffer_;
 }
 
-ResourceSharedPtr PBRMaterial::GetLightConstantBuffer() const {
+auto PBRMaterial::GetLightConstantBuffer() const -> ResourceSharedPtr {
   return light_constant_buffer_;
 }
 
-bool PBRMaterial::InitializeRootSignature() {
+auto PBRMaterial::InitializeRootSignature() -> bool {
   CD3DX12_DESCRIPTOR_RANGE descriptor_range;
   descriptor_range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
 
@@ -179,7 +194,7 @@ bool PBRMaterial::InitializeRootSignature() {
   return true;
 }
 
-bool PBRMaterial::InitializeGraphicsPipelineState() {
+auto PBRMaterial::InitializeGraphicsPipelineState() -> bool {
   D3D12_INPUT_ELEMENT_DESC input_layout[] = {
       {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
        D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},

@@ -1,5 +1,4 @@
-#ifndef _MODELCLASS_H_
-#define _MODELCLASS_H_
+#pragma once
 
 #include <DirectXMath.h>
 #include <memory>
@@ -9,15 +8,19 @@
 
 class DirectX12Device;
 
+namespace Lighting {
+class SceneLight;
+}
+
 class ModelMaterial : public Effect::Material {
 public:
   explicit ModelMaterial(std::shared_ptr<DirectX12Device> device);
 
   ModelMaterial(const ModelMaterial &rhs) = delete;
 
-  ModelMaterial &operator=(const ModelMaterial &rhs) = delete;
+  auto operator=(const ModelMaterial &rhs) -> ModelMaterial & = delete;
 
-  virtual ~ModelMaterial();
+  virtual ~ModelMaterial() override;
 
 private:
   struct MatrixBufferType {
@@ -41,7 +44,7 @@ private:
   };
 
 public:
-  virtual bool Initialize() override;
+  auto Initialize() -> bool override;
 
   ResourceSharedPtr GetMatrixConstantBuffer() const;
 
@@ -49,22 +52,24 @@ public:
 
   ResourceSharedPtr GetFogConstantBuffer() const;
 
-  bool UpdateMatrixConstant(const DirectX::XMMATRIX &world,
+  auto UpdateMatrixConstant(const DirectX::XMMATRIX &world,
                             const DirectX::XMMATRIX &view,
-                            const DirectX::XMMATRIX &projection);
+                            const DirectX::XMMATRIX &projection) -> bool;
 
-  bool UpdateLightConstant(const DirectX::XMFLOAT4 &ambient_color,
+  auto UpdateLightConstant(const DirectX::XMFLOAT4 &ambient_color,
                            const DirectX::XMFLOAT4 &diffuse_color,
-                           const DirectX::XMFLOAT3 &direction);
+                           const DirectX::XMFLOAT3 &direction) -> bool;
 
-  bool UpdateFogConstant(float fog_begin, float fog_end);
+  // New unified light interface - extract parameters from SceneLight
+  auto UpdateFromLight(const Lighting::SceneLight *scene_light) -> bool;
 
-private:
-  bool InitializeRootSignature();
-
-  bool InitializeGraphicsPipelineState();
+  auto UpdateFogConstant(float fog_begin, float fog_end) -> bool;
 
 private:
+  auto InitializeRootSignature() -> bool;
+
+  auto InitializeGraphicsPipelineState() -> bool;
+
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   ResourceSharedPtr matrix_constant_buffer_ = nullptr;
@@ -86,7 +91,7 @@ public:
 
   Model(const Model &rhs) = delete;
 
-  Model &operator=(const Model &rhs) = delete;
+  auto operator=(const Model &rhs) -> Model & = delete;
 
   ~Model() {}
 
@@ -121,13 +126,12 @@ public:
   }
 
 private:
-  bool LoadModel(WCHAR *filename);
+  auto LoadModel(WCHAR *filename) -> bool;
 
-  bool InitializeBuffers();
+  auto InitializeBuffers() -> bool;
 
-  bool LoadTexture(WCHAR **texture_filename_arr);
+  auto LoadTexture(WCHAR **texture_filename_arr) -> bool;
 
-private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   ModelMaterial material_;
@@ -140,7 +144,6 @@ private:
 
   D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
-private:
   UINT vertex_count_ = 0;
 
   UINT index_count_ = 0;
@@ -149,5 +152,3 @@ private:
 
   std::shared_ptr<ResourceLoader::TextureLoader> texture_container_ = nullptr;
 };
-
-#endif // !_MODELCLASS_H_

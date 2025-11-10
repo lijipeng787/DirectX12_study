@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef _PBRMATERIAL_H_
-#define _PBRMATERIAL_H_
-
 #include <DirectXMath.h>
 #include <memory>
 
@@ -10,38 +7,44 @@
 
 class DirectX12Device;
 
+namespace Lighting {
+class SceneLight;
+}
+
 class PBRMaterial : public Effect::Material {
 public:
   explicit PBRMaterial(std::shared_ptr<DirectX12Device> device);
 
   PBRMaterial(const PBRMaterial &rhs) = delete;
-  PBRMaterial &operator=(const PBRMaterial &rhs) = delete;
+
+  auto operator=(const PBRMaterial &rhs) -> PBRMaterial & = delete;
 
   ~PBRMaterial();
 
-public:
-  bool Initialize() override;
+  auto Initialize() -> bool override;
 
-  bool UpdateMatrixConstant(const DirectX::XMMATRIX &world,
+  auto UpdateMatrixConstant(const DirectX::XMMATRIX &world,
                             const DirectX::XMMATRIX &view,
-                            const DirectX::XMMATRIX &projection);
+                            const DirectX::XMMATRIX &projection) -> bool;
 
-  bool UpdateCameraConstant(const DirectX::XMFLOAT3 &camera_position);
+  auto UpdateCameraConstant(const DirectX::XMFLOAT3 &camera_position) -> bool;
 
-  bool UpdateLightConstant(const DirectX::XMFLOAT3 &light_direction);
+  auto UpdateLightConstant(const DirectX::XMFLOAT3 &light_direction) -> bool;
 
-  ResourceSharedPtr GetMatrixConstantBuffer() const;
+  // New unified light interface - extract parameters from SceneLight
+  auto UpdateFromLight(const Lighting::SceneLight *scene_light) -> bool;
 
-  ResourceSharedPtr GetCameraConstantBuffer() const;
+  auto GetMatrixConstantBuffer() const -> ResourceSharedPtr;
 
-  ResourceSharedPtr GetLightConstantBuffer() const;
+  auto GetCameraConstantBuffer() const -> ResourceSharedPtr;
 
-private:
-  bool InitializeRootSignature();
-
-  bool InitializeGraphicsPipelineState();
+  auto GetLightConstantBuffer() const -> ResourceSharedPtr;
 
 private:
+  auto InitializeRootSignature() -> bool;
+
+  auto InitializeGraphicsPipelineState() -> bool;
+
   struct MatrixBufferType {
     DirectX::XMFLOAT4X4 world;
     DirectX::XMFLOAT4X4 view;
@@ -58,7 +61,6 @@ private:
     DirectX::XMFLOAT4 light_direction;
   };
 
-private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   ResourceSharedPtr matrix_constant_buffer_ = nullptr;
@@ -70,5 +72,3 @@ private:
   ResourceSharedPtr light_constant_buffer_ = nullptr;
   LightBufferType light_data_ = {};
 };
-
-#endif // !_PBRMATERIAL_H_

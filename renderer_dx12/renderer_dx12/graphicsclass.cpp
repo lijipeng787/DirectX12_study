@@ -7,7 +7,7 @@
 #include "DirectX12Device.h"
 #include "Fps.h"
 #include "Input.h"
-#include "Light.h"
+#include "LightManager.h"
 #include "PBRModel.h"
 
 #include "ScreenQuad.h"
@@ -49,16 +49,25 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
   camera_->SetPosition(0.0f, 0.0f, -5.0f);
   camera_->Update();
 
-  light_ = std::make_shared<Light>();
-  if (!light_) {
+  // Initialize unified light manager
+  light_manager_ = std::make_shared<Lighting::LightManager>();
+  if (!light_manager_) {
     return false;
   }
-  light_->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
-  light_->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-  light_->SetDirection(0.0f, 0.0f, 1.0f);
 
-  // Initialize PBR light direction (normalized)
-  pbr_light_direction_ = DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
+  // Create the main directional light
+  auto main_light = light_manager_->CreateLight(
+      "MainLight", Lighting::LightType::Directional);
+  if (!main_light) {
+    return false;
+  }
+
+  // Set light properties (same as old Light class settings)
+  main_light->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
+  main_light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+  main_light->SetDirection(0.0f, 0.0f, 1.0f);
+  main_light->SetColor(1.0f, 1.0f, 1.0f); // White light
+  main_light->SetIntensity(1.0f);
 
   {
     shader_loader_ = std::make_shared<ResourceLoader::ShaderLoader>();
@@ -68,8 +77,8 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
     shader_loader_->SetVSEntryPoint("TextureVertexShader");
     shader_loader_->SetPSEntryPoint("TexturePixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"textureVS.hlsl",
-                                                    L"texturePS.hlsl"))) {
+    if (CHECK(shader_loader_->CreateVSAndPSFromFile(
+            L"shader/textureVS.hlsl", L"shader/texturePS.hlsl"))) {
       MessageBox(hwnd, L"Could not initialize Texture Shader.", L"Error",
                  MB_OK);
       return false;
@@ -77,24 +86,24 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
     shader_loader_->SetVSEntryPoint("LightVertexShader");
     shader_loader_->SetPSEntryPoint("LightPixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"lightVS.hlsl",
-                                                    L"lightPS.hlsl"))) {
+    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"shader/lightVS.hlsl",
+                                                    L"shader/lightPS.hlsl"))) {
       MessageBox(hwnd, L"Could not initialize Light Shader.", L"Error", MB_OK);
       return false;
     }
 
     shader_loader_->SetVSEntryPoint("FontVertexShader");
     shader_loader_->SetPSEntryPoint("FontPixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"fontVS.hlsl",
-                                                    L"fontPS.hlsl"))) {
+    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"shader/fontVS.hlsl",
+                                                    L"shader/fontPS.hlsl"))) {
       MessageBox(hwnd, L"Could not initialize Font Shader.", L"Error", MB_OK);
       return false;
     }
 
     shader_loader_->SetVSEntryPoint("PbrVertexShader");
     shader_loader_->SetPSEntryPoint("PbrPixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"pbrVS.hlsl",
-                                                    L"pbrPS.hlsl"))) {
+    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"shader/pbrVS.hlsl",
+                                                    L"shader/pbrPS.hlsl"))) {
       MessageBox(hwnd, L"Could not initialize PBR Shader.", L"Error", MB_OK);
       return false;
     }
@@ -106,10 +115,11 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
       return false;
     }
     bitmap_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"textureVS.hlsl")
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/textureVS.hlsl")
             .Get()));
     bitmap_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"texturePS.hlsl").Get()));
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/texturePS.hlsl")
+            .Get()));
 
     bitmap_ = std::make_shared<ScreenQuad>(d3d12_device_, bitmap_material);
     if (!bitmap_) {
@@ -128,9 +138,11 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
     ModelMaterial *model_material = model_->GetMaterial();
     model_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"lightVS.hlsl").Get()));
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/lightVS.hlsl")
+            .Get()));
     model_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"lightPS.hlsl").Get()));
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/lightPS.hlsl")
+            .Get()));
 
     WCHAR *texture_filename_arr[3] = {L"data/stone01.dds", L"data/dirt01.dds",
                                       L"data/alpha01.dds"};
@@ -147,9 +159,11 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
     TextMaterial *text_material = text_->GetMaterial();
     text_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"fontVS.hlsl").Get()));
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/fontVS.hlsl")
+            .Get()));
     text_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"fontPS.hlsl").Get()));
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/fontPS.hlsl")
+            .Get()));
 
     WCHAR *font_texture[1] = {L"data/font.dds"};
     if (CHECK(text_->LoadFont(L"data/fontdata.txt", font_texture))) {
@@ -171,9 +185,11 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
     PBRMaterial *pbr_material = pbr_model_->GetMaterial();
     pbr_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"pbrVS.hlsl").Get()));
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/pbrVS.hlsl")
+            .Get()));
     pbr_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"pbrPS.hlsl").Get()));
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/pbrPS.hlsl")
+            .Get()));
 
     WCHAR *pbr_textures[3] = {L"data/pbr/pbr_albedo.tga",
                               L"data/pbr/pbr_normal.tga",
@@ -199,7 +215,7 @@ void Graphics::Shutdown() {
   pbr_model_.reset();
 
   shader_loader_.reset();
-  light_.reset();
+  light_manager_.reset();
   camera_.reset();
   fps_.reset();
 
@@ -322,9 +338,13 @@ bool Graphics::Render() {
     return false;
   }
 
-  if (CHECK(model_->GetMaterial()->UpdateLightConstant(
-          light_->GetAmbientColor(), light_->GetDiffuseColor(),
-          light_->GetDirection()))) {
+  // Use unified light system - get primary light from manager
+  auto main_light = light_manager_->GetPrimaryLight();
+  if (!main_light) {
+    return false;
+  }
+
+  if (CHECK(model_->GetMaterial()->UpdateFromLight(main_light.get()))) {
     return false;
   }
 
@@ -352,7 +372,9 @@ bool Graphics::Render() {
     if (CHECK(pbr_material->UpdateCameraConstant(camera_position))) {
       return false;
     }
-    if (CHECK(pbr_material->UpdateLightConstant(pbr_light_direction_))) {
+
+    // Use unified light system for PBR as well
+    if (CHECK(pbr_material->UpdateFromLight(main_light.get()))) {
       return false;
     }
   }

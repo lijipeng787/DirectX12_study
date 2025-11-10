@@ -1,11 +1,14 @@
-#ifndef HEADER_GRAPHICSCLASS_H
-#define HEADER_GRAPHICSCLASS_H
+#pragma once
 
 #include <DirectXMath.h>
 #include <Windows.h>
 #include <memory>
 
 #include "ShaderLoader.h"
+
+namespace Lighting {
+class LightManager;
+}
 
 constexpr bool FULL_SCREEN = false;
 constexpr bool VSYNC_ENABLED = true;
@@ -25,30 +28,28 @@ class CPUUsageTracker;
 
 class Graphics {
 public:
-  Graphics() {}
+  Graphics() = default;
 
   Graphics(const Graphics &rhs) = delete;
 
-  Graphics operator=(const Graphics &rhs) = delete;
+  auto operator=(const Graphics &rhs) -> Graphics = delete;
 
   ~Graphics() {}
 
-public:
-  bool Initialize(int, int, HWND);
+  auto Initialize(int, int, HWND) -> bool;
 
   void Shutdown();
 
-  bool Frame(float delta_seconds, Input *input);
+  auto Frame(float delta_seconds, Input *input) -> bool;
 
 private:
-  bool Render();
+  auto Render() -> bool;
 
   void UpdateCameraFromInput(float delta_seconds, Input *input);
 
-private:
   std::shared_ptr<DirectX12Device> d3d12_device_ = nullptr;
 
-  std::shared_ptr<Light> light_ = nullptr;
+  std::shared_ptr<Lighting::LightManager> light_manager_ = nullptr;
 
   std::shared_ptr<Camera> camera_ = nullptr;
 
@@ -59,15 +60,12 @@ private:
   std::shared_ptr<Text> text_ = nullptr;
 
   std::shared_ptr<Model> model_ = nullptr;
+
   std::shared_ptr<PBRModel> pbr_model_ = nullptr;
 
   std::shared_ptr<Fps> fps_ = nullptr;
 
   std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
 
-  DirectX::XMFLOAT3 pbr_light_direction_ = DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f);
-
   float camera_move_speed_ = 5.0f;
 };
-
-#endif //! HEADER_GRAPHICSCLASS_H

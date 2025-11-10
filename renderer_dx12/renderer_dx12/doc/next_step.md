@@ -41,12 +41,39 @@
 ## 验收标准
 
 - ✅ 完成以上任务后，可在不依赖单例的情况下初始化渲染设备并渲染 ScreenQuad。
-- ⏳ 初始化失败的回滚与详细日志仍需增强，需补齐错误码输出与资源清理路径。
-- ✅ Off-screen 渲染目标可动态生成并绑定自定义材质，支持不同尺寸/格式的试验。
-- ⏳ Frame 资源/命令调度仍待实现，完成后需扩充验收标准。
+- ✅ 初始化阶段已具备详细日志（`DxgiResourceManager`、`LogInitializationFailure`），错误回滚通过 `ResetDeviceState` 实现。
+- ✅ Off-screen 渲染目标可动态生成并绑定自定义材质，支持不同尺寸/格式的试验（`CreateRenderTarget` + `RenderTargetDescriptor`）。
+- ✅ Frame 资源环已完成（`FrameResource` 结构 + per-frame allocator + fence），支持稳定的双缓冲渲染。
+- ⏳ 窗口 Resize 与资源热重建仍待实现，需补齐 OnResize 接口与交换链重建逻辑。
 
 ## 后续重点方向
 
-1. `DirectX12Device`：扩展 per-frame 资源环（覆盖常量缓冲/资源回收），并进一步加强运行期日志。
-2. `Graphics` 及示例渲染：演示多 RenderTarget/材质注入/自定义 CBV 的使用模式。
-3. 动态配置：实现窗口 Resize、MSAA/HDR 切换的资源重建流程。
+### 阶段 6：窗口与配置热重建（高优先级）
+
+- **任务 6.1**：实现 `OnResize` 接口，监听窗口尺寸变更事件。
+- **任务 6.2**：扩展 `DirectX12Device::ReinitializeSwapChain`，安全释放并重建交换链、RTV、深度缓冲。
+- **任务 6.3**：更新 `viewport_` 与 `scissor_rect_`，重新计算投影矩阵与正交矩阵。
+- **任务 6.4**：提供 MSAA/HDR 切换接口，通过配置结构体触发资源重建。
+- **验收标准**：窗口拖拽改变尺寸后，渲染内容无撕裂且正确缩放，无资源泄漏。
+
+### 阶段 7：性能调试工具集成
+
+- **任务 7.1**：在 `DirectX12DeviceConfig` 中添加 `enable_pix_markers` 与 `enable_gpu_validation` 开关。
+- **任务 7.2**：封装 PIX 事件标记宏，在关键渲染 Pass 添加标记（如 `BeginEvent("DrawPBRModel")`）。
+- **任务 7.3**：引入帧时间统计，输出平均 FPS 与 GPU 时间戳到 Debug 输出或文件日志。
+- **任务 7.4**：补充 GPU 验证层错误捕获，在调试构建中默认启用。
+- **验收标准**：通过 PIX 工具可清晰查看各 Pass 耗时，GPU 验证层可捕获资源屏障错误。
+
+### 阶段 8：多 Pass 渲染示例
+
+- **任务 8.1**：设计延迟渲染管线（GBuffer Pass + Lighting Pass），演示多离屏目标协作。
+- **任务 8.2**：提供后处理 Pass 示例（如 Bloom、Tone Mapping），展示 `ScreenQuad` 与离屏纹理的复用。
+- **任务 8.3**：编写使用文档，说明如何组合多个 `RenderTargetHandle` 与自定义材质。
+- **验收标准**：延迟渲染管线稳定运行，后处理效果正确，代码注释清晰易懂。
+
+### 阶段 9：Shader 热重载（中优先级）
+
+- **任务 9.1**：扩展 `ShaderLoader`，添加文件监听功能（Windows API `FindFirstChangeNotification`）。
+- **任务 9.2**：实现 PSO 与根签名的运行时重建，确保资源绑定兼容性。
+- **任务 9.3**：提供热重载失败回滚机制，避免崩溃或渲染错误。
+- **验收标准**：修改 HLSL 文件后，无需重启程序即可看到效果更新，失败时恢复旧版本 Shader。
