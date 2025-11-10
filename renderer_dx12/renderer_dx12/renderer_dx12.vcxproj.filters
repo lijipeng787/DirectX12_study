@@ -98,6 +98,15 @@
     <ClInclude Include="BumpMappingScene.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="SpecularMapMaterial.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SpecularMapModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SpecularMappingScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -175,6 +184,15 @@
     <ClCompile Include="BumpMappingScene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SpecularMapMaterial.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SpecularMapModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SpecularMappingScene.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="fontPS.hlsl">
@@ -202,6 +220,9 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="shader\bumpMap.hlsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shader\specMap.hlsl">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

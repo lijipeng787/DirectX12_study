@@ -26,6 +26,7 @@ class PBRModel;
 class Fps;
 class CPUUsageTracker;
 class BumpMappingScene;
+class SpecularMappingScene;
 
 class Graphics {
 public:
@@ -69,6 +70,8 @@ private:
   std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
 
   std::shared_ptr<BumpMappingScene> bump_mapping_scene_ = nullptr;
+  
+  std::shared_ptr<SpecularMappingScene> specular_mapping_scene_ = nullptr;
 
   float camera_move_speed_ = 5.0f;
 };

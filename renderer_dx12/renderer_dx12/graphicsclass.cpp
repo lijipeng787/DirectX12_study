@@ -2,14 +2,15 @@
 
 #include "graphicsclass.h"
 
-#include "CPUUsageTracker.h"
 #include "BumpMappingScene.h"
+#include "CPUUsageTracker.h"
 #include "Camera.h"
 #include "DirectX12Device.h"
 #include "Fps.h"
 #include "Input.h"
 #include "LightManager.h"
 #include "PBRModel.h"
+#include "SpecularMappingScene.h"
 
 #include "ScreenQuad.h"
 #include "modelclass.h"
@@ -104,8 +105,17 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     shader_loader_->SetVSEntryPoint("PbrVertexShader");
     shader_loader_->SetPSEntryPoint("PbrPixelShader");
     if (!shader_loader_->CreateVSAndPSFromFile(L"shader/pbrVS.hlsl",
-                                                    L"shader/pbrPS.hlsl")) {
+                                               L"shader/pbrPS.hlsl")) {
       MessageBox(hwnd, L"Could not initialize PBR Shader.", L"Error", MB_OK);
+      return false;
+    }
+
+    shader_loader_->SetVSEntryPoint("SpecMapVertexShader");
+    shader_loader_->SetPSEntryPoint("SpecMapPixelShader");
+    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/specMap.hlsl",
+                                               L"shader/specMap.hlsl")) {
+      MessageBox(hwnd, L"Could not initialize Specular Map Shader.", L"Error",
+                 MB_OK);
       return false;
     }
   }
@@ -215,6 +225,20 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
   }
 
+  {
+    specular_mapping_scene_ = std::make_shared<SpecularMappingScene>(
+        d3d12_device_, shader_loader_, light_manager_, camera_);
+    if (!specular_mapping_scene_) {
+      return false;
+    }
+
+    if (!specular_mapping_scene_->Initialize()) {
+      MessageBox(hwnd, L"Could not initialize specular mapping scene.", L"Error",
+                 MB_OK);
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -227,6 +251,11 @@ void Graphics::Shutdown() {
   if (bump_mapping_scene_) {
     bump_mapping_scene_->Shutdown();
     bump_mapping_scene_.reset();
+  }
+
+  if (specular_mapping_scene_) {
+    specular_mapping_scene_->Shutdown();
+    specular_mapping_scene_.reset();
   }
 
   bitmap_.reset();
@@ -261,6 +290,10 @@ bool Graphics::Frame(float delta_seconds, Input *input) {
 
   if (bump_mapping_scene_) {
     bump_mapping_scene_->Update(delta_seconds);
+  }
+
+  if (specular_mapping_scene_) {
+    specular_mapping_scene_->Update(delta_seconds);
   }
 
   UpdateCameraFromInput(delta_seconds, input);
@@ -485,6 +518,13 @@ bool Graphics::Render() {
 
   {
     d3d12_device_->BeginPopulateGraphicsCommandList();
+
+    if (specular_mapping_scene_) {
+      if (!specular_mapping_scene_->Render(view_matrix, projection_matrix,
+                                           main_light.get())) {
+        return false;
+      }
+    }
 
     if (bump_mapping_scene_) {
       if (!bump_mapping_scene_->Render(view_matrix, projection_matrix,

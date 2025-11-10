@@ -154,6 +154,9 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="ScreenQuad.h" />
+    <ClInclude Include="SpecularMapMaterial.h" />
+    <ClInclude Include="SpecularMapModel.h" />
+    <ClInclude Include="SpecularMappingScene.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CPUUsageTracker.h" />
     <ClInclude Include="d3dx12.h" />
@@ -184,6 +187,9 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="ScreenQuad.cpp" />
+    <ClCompile Include="SpecularMapMaterial.cpp" />
+    <ClCompile Include="SpecularMapModel.cpp" />
+    <ClCompile Include="SpecularMappingScene.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CPUUsageTracker.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
@@ -211,6 +217,9 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\bumpMap.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shader\specMap.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="shaders\fontPS.hlsl">
