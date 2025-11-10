@@ -566,7 +566,7 @@ bool DirectX12Device::ExecuteDefaultGraphicsCommandList() {
     return false;
   }
 
-  if (CHECK(WaitForPreviousFrame())) {
+  if (!WaitForPreviousFrame()) {
     return false;
   }
 

@@ -148,6 +148,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BumpMapMaterial.h" />
+    <ClInclude Include="BumpMapModel.h" />
+    <ClInclude Include="BumpMappingScene.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="ScreenQuad.h" />
@@ -175,6 +178,9 @@
     <ClInclude Include="TypeDefine.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BumpMapMaterial.cpp" />
+    <ClCompile Include="BumpMapModel.cpp" />
+    <ClCompile Include="BumpMappingScene.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="ScreenQuad.cpp" />
@@ -204,6 +210,9 @@
     <ClCompile Include="TypeDefine.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="shader\bumpMap.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="shaders\fontPS.hlsl">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

@@ -38,13 +38,23 @@
 - ✅ 暴露 `VertexBufferView`/`IndexBufferView` 的更新接口，方便实验不同顶点布局。
 - ✅ 整理常量缓冲接口，允许自定义布局或绑定外部 CBV 资源。
 
+## 任务 6：统一光照系统重构（2025-11-10 完成）
+
+- ✅ 设计并实现 `Lighting::SceneLight` 统一光源类，支持方向光/点光源/聚光灯三种类型。
+- ✅ 实现 `Lighting::LightManager` 多光源管理器，支持动态添加/删除/查询光源（最多8个）。
+- ✅ 移除 `Graphics` 类中的冗余字段（`light_` 和 `pbr_light_direction_`），统一使用 `LightManager`。
+- ✅ 为 `ModelMaterial` 和 `PBRMaterial` 添加 `UpdateFromLight(SceneLight*)` 接口。
+- ✅ 确保 Cube（Blinn-Phong）和 PBR Sphere 共用同一光源，验证光照一致性。
+
 ## 验收标准
 
 - ✅ 完成以上任务后，可在不依赖单例的情况下初始化渲染设备并渲染 ScreenQuad。
 - ✅ 初始化阶段已具备详细日志（`DxgiResourceManager`、`LogInitializationFailure`），错误回滚通过 `ResetDeviceState` 实现。
 - ✅ Off-screen 渲染目标可动态生成并绑定自定义材质，支持不同尺寸/格式的试验（`CreateRenderTarget` + `RenderTargetDescriptor`）。
 - ✅ Frame 资源环已完成（`FrameResource` 结构 + per-frame allocator + fence），支持稳定的双缓冲渲染。
+- ✅ 统一光照系统运作良好，Cube 和 PBR Sphere 共用同一光源，验证通过。
 - ⏳ 窗口 Resize 与资源热重建仍待实现，需补齐 OnResize 接口与交换链重建逻辑。
+- ⏳ 多光源场景实战验证待完成，需测试 2-3 光源场景与 Shader 适配。
 
 ## 后续重点方向
 
@@ -77,3 +87,11 @@
 - **任务 9.2**：实现 PSO 与根签名的运行时重建，确保资源绑定兼容性。
 - **任务 9.3**：提供热重载失败回滚机制，避免崩溃或渲染错误。
 - **验收标准**：修改 HLSL 文件后，无需重启程序即可看到效果更新，失败时恢复旧版本 Shader。
+
+### 阶段 10：多光源场景实战验证（中优先级）
+
+- **任务 10.1**：在 `Graphics::Initialize` 中创建 2-3 个不同类型的光源（主方向光 + 点光源 + 补光）。
+- **任务 10.2**：扩展 Shader（`lightPS.hlsl` 和 `pbrPS.hlsl`），支持多光源数组的常量缓冲传递。
+- **任务 10.3**：修改材质类的 `UpdateFromLight`，支持传递多光源数据到 GPU。
+- **任务 10.4**：在场景中验证多光源效果，确保光照累加正确、无性能问题。
+- **验收标准**：场景中可见多个光源的综合照明效果，帧率稳定，光照计算正确。

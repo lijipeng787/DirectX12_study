@@ -9,7 +9,7 @@ using namespace std;
 
 bool BitmapFont::Initialize(WCHAR *font_filename) {
 
-  if (CHECK(LoadFontData(font_filename))) {
+  if (!LoadFontData(font_filename)) {
     return false;
   }
 

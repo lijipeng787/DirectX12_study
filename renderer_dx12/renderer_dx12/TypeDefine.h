@@ -27,7 +27,9 @@ void StringToWCHAR(std::string s, WCHAR *wchar);
 
 } // namespace ResourceLoader
 
-#define CHECK(return_value) ((return_value == false) ? true : false)
+// CHECK macro removed - use direct logical negation (!) instead
+// Old implementation was confusing: CHECK(x) meant "x failed"
+// Now use: if (!function()) { return false; }
 
 #define CBSIZE(constant_buffer) ((sizeof(constant_buffer) + 255) & ~255)
 

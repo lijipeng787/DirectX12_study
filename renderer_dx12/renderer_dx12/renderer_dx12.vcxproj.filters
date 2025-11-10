@@ -89,6 +89,15 @@
     <ClInclude Include="PBRModel.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="BumpMapMaterial.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BumpMapModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BumpMappingScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -157,6 +166,15 @@
     <ClCompile Include="PBRModel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="BumpMapMaterial.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BumpMapModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BumpMappingScene.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="fontPS.hlsl">
@@ -181,6 +199,9 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="pbrPS.hlsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shader\bumpMap.hlsl">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

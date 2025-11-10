@@ -3,6 +3,7 @@
 #include "graphicsclass.h"
 
 #include "CPUUsageTracker.h"
+#include "BumpMappingScene.h"
 #include "Camera.h"
 #include "DirectX12Device.h"
 #include "Fps.h"
@@ -77,8 +78,8 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
     shader_loader_->SetVSEntryPoint("TextureVertexShader");
     shader_loader_->SetPSEntryPoint("TexturePixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(
-            L"shader/textureVS.hlsl", L"shader/texturePS.hlsl"))) {
+    if (!shader_loader_->CreateVSAndPSFromFile(
+            L"shader/textureVS.hlsl", L"shader/texturePS.hlsl")) {
       MessageBox(hwnd, L"Could not initialize Texture Shader.", L"Error",
                  MB_OK);
       return false;
@@ -86,24 +87,24 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
     shader_loader_->SetVSEntryPoint("LightVertexShader");
     shader_loader_->SetPSEntryPoint("LightPixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"shader/lightVS.hlsl",
-                                                    L"shader/lightPS.hlsl"))) {
+    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/lightVS.hlsl",
+                                                    L"shader/lightPS.hlsl")) {
       MessageBox(hwnd, L"Could not initialize Light Shader.", L"Error", MB_OK);
       return false;
     }
 
     shader_loader_->SetVSEntryPoint("FontVertexShader");
     shader_loader_->SetPSEntryPoint("FontPixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"shader/fontVS.hlsl",
-                                                    L"shader/fontPS.hlsl"))) {
+    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/fontVS.hlsl",
+                                                    L"shader/fontPS.hlsl")) {
       MessageBox(hwnd, L"Could not initialize Font Shader.", L"Error", MB_OK);
       return false;
     }
 
     shader_loader_->SetVSEntryPoint("PbrVertexShader");
     shader_loader_->SetPSEntryPoint("PbrPixelShader");
-    if (CHECK(shader_loader_->CreateVSAndPSFromFile(L"shader/pbrVS.hlsl",
-                                                    L"shader/pbrPS.hlsl"))) {
+    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/pbrVS.hlsl",
+                                                    L"shader/pbrPS.hlsl")) {
       MessageBox(hwnd, L"Could not initialize PBR Shader.", L"Error", MB_OK);
       return false;
     }
@@ -125,7 +126,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     if (!bitmap_) {
       return false;
     }
-    if (CHECK(bitmap_->Initialize(screenWidth, screenHeight, 255, 255))) {
+    if (!bitmap_->Initialize(screenWidth, screenHeight, 255, 255)) {
       MessageBox(hwnd, L"Could not initialize Bitmap.", L"Error", MB_OK);
       return false;
     }
@@ -146,7 +147,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
     WCHAR *texture_filename_arr[3] = {L"data/stone01.dds", L"data/dirt01.dds",
                                       L"data/alpha01.dds"};
-    if (CHECK(model_->Initialize(L"data/cube.txt", texture_filename_arr))) {
+    if (!model_->Initialize(L"data/cube.txt", texture_filename_arr)) {
       MessageBox(hwnd, L"Could not initialize Model.", L"Error", MB_OK);
       return false;
     }
@@ -166,14 +167,14 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
             .Get()));
 
     WCHAR *font_texture[1] = {L"data/font.dds"};
-    if (CHECK(text_->LoadFont(L"data/fontdata.txt", font_texture))) {
+    if (!text_->LoadFont(L"data/fontdata.txt", font_texture)) {
       MessageBox(hwnd, L"Could not initialize Font data.", L"Error", MB_OK);
       return false;
     }
 
     DirectX::XMMATRIX base_matrix = {};
     camera_->GetViewMatrix(base_matrix);
-    if (CHECK(text_->Initialize(screenWidth, screenHeight, base_matrix))) {
+    if (!text_->Initialize(screenWidth, screenHeight, base_matrix)) {
       return false;
     }
   }
@@ -194,8 +195,22 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     WCHAR *pbr_textures[3] = {L"data/pbr/pbr_albedo.tga",
                               L"data/pbr/pbr_normal.tga",
                               L"data/pbr/pbr_roughmetal.tga"};
-    if (CHECK(pbr_model_->Initialize(L"data/pbr/sphere.txt", pbr_textures))) {
+    if (!pbr_model_->Initialize(L"data/pbr/sphere.txt", pbr_textures)) {
       MessageBox(hwnd, L"Could not initialize PBR Model.", L"Error", MB_OK);
+      return false;
+    }
+  }
+
+  {
+    bump_mapping_scene_ = std::make_shared<BumpMappingScene>(
+        d3d12_device_, shader_loader_, light_manager_, camera_);
+    if (!bump_mapping_scene_) {
+      return false;
+    }
+
+    if (!bump_mapping_scene_->Initialize()) {
+      MessageBox(hwnd, L"Could not initialize bump mapping scene.", L"Error",
+                 MB_OK);
       return false;
     }
   }
@@ -207,6 +222,11 @@ void Graphics::Shutdown() {
 
   if (d3d12_device_) {
     d3d12_device_->WaitForGpuIdle();
+  }
+
+  if (bump_mapping_scene_) {
+    bump_mapping_scene_->Shutdown();
+    bump_mapping_scene_.reset();
   }
 
   bitmap_.reset();
@@ -230,13 +250,17 @@ void Graphics::Shutdown() {
 bool Graphics::Frame(float delta_seconds, Input *input) {
 
   cpu_usage_tracker_->Update();
-  if (CHECK(text_->SetCpu(cpu_usage_tracker_->GetCpuPercentage()))) {
+  if (!text_->SetCpu(cpu_usage_tracker_->GetCpuPercentage())) {
     return false;
   }
 
   fps_->Frame();
-  if (CHECK(text_->SetFps(fps_->GetFps()))) {
+  if (!text_->SetFps(fps_->GetFps())) {
     return false;
+  }
+
+  if (bump_mapping_scene_) {
+    bump_mapping_scene_->Update(delta_seconds);
   }
 
   UpdateCameraFromInput(delta_seconds, input);
@@ -308,22 +332,22 @@ bool Graphics::Render() {
     rotation -= DirectX::XM_2PI;
   }
 
-  DirectX::XMMATRIX rotate_world = {};
-  d3d12_device_->GetWorldMatrix(rotate_world);
-  rotate_world = DirectX::XMMatrixRotationY(rotation);
-  rotate_world = DirectX::XMMatrixTranspose(rotate_world);
+  DirectX::XMMATRIX world_matrix = {};
+  d3d12_device_->GetWorldMatrix(world_matrix);
 
-  DirectX::XMMATRIX font_world = {};
-  d3d12_device_->GetWorldMatrix(font_world);
-  font_world = DirectX::XMMatrixTranspose(font_world);
+  DirectX::XMMATRIX rotate_world =
+      DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation));
 
-  DirectX::XMMATRIX projection = {};
-  d3d12_device_->GetProjectionMatrix(projection);
-  projection = DirectX::XMMatrixTranspose(projection);
+  DirectX::XMMATRIX font_world = DirectX::XMMatrixTranspose(world_matrix);
 
-  DirectX::XMMATRIX view = {};
-  camera_->GetViewMatrix(view);
-  view = DirectX::XMMatrixTranspose(view);
+  DirectX::XMMATRIX projection_matrix = {};
+  d3d12_device_->GetProjectionMatrix(projection_matrix);
+  DirectX::XMMATRIX projection =
+      DirectX::XMMatrixTranspose(projection_matrix);
+
+  DirectX::XMMATRIX view_matrix = {};
+  camera_->GetViewMatrix(view_matrix);
+  DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(view_matrix);
 
   DirectX::XMMATRIX orthogonality = {};
   d3d12_device_->GetOrthoMatrix(orthogonality);
@@ -333,8 +357,8 @@ bool Graphics::Render() {
                                 DirectX::XMMatrixTranslation(3.0f, 0.0f, 0.0f);
   pbr_world = DirectX::XMMatrixTranspose(pbr_world);
 
-  if (CHECK(model_->GetMaterial()->UpdateMatrixConstant(rotate_world, view,
-                                                        projection))) {
+  if (!model_->GetMaterial()->UpdateMatrixConstant(rotate_world, view,
+                                                        projection)) {
     return false;
   }
 
@@ -344,37 +368,36 @@ bool Graphics::Render() {
     return false;
   }
 
-  if (CHECK(model_->GetMaterial()->UpdateFromLight(main_light.get()))) {
+  if (!model_->GetMaterial()->UpdateFromLight(main_light.get())) {
     return false;
   }
 
-  if (CHECK(model_->GetMaterial()->UpdateFogConstant(3.0f, 6.0f))) {
+  if (!model_->GetMaterial()->UpdateFogConstant(3.0f, 6.0f)) {
     return false;
   }
 
-  if (CHECK(text_->GetMaterial()->UpdateMatrixConstant(font_world, view,
-                                                       orthogonality))) {
+  if (!text_->GetMaterial()->UpdateMatrixConstant(font_world, view,
+                                                       orthogonality)) {
     return false;
   }
 
   DirectX::XMFLOAT4 pixel_color(1.0f, 0.0f, 0.0f, 0.0f);
-  if (CHECK(text_->GetMaterial()->UpdateLightConstant(pixel_color))) {
+  if (!text_->GetMaterial()->UpdateLightConstant(pixel_color)) {
     return false;
   }
 
   if (pbr_model_) {
     auto camera_position = camera_->GetPosition();
     auto pbr_material = pbr_model_->GetMaterial();
-    if (CHECK(
-            pbr_material->UpdateMatrixConstant(pbr_world, view, projection))) {
+    if (!pbr_material->UpdateMatrixConstant(pbr_world, view, projection)) {
       return false;
     }
-    if (CHECK(pbr_material->UpdateCameraConstant(camera_position))) {
+    if (!pbr_material->UpdateCameraConstant(camera_position)) {
       return false;
     }
 
     // Use unified light system for PBR as well
-    if (CHECK(pbr_material->UpdateFromLight(main_light.get()))) {
+    if (!pbr_material->UpdateFromLight(main_light.get())) {
       return false;
     }
   }
@@ -394,10 +417,10 @@ bool Graphics::Render() {
   auto light_constant = model_->GetMaterial()->GetLightConstantBuffer();
   auto fog_constant = model_->GetMaterial()->GetFogConstantBuffer();
 
-  if (CHECK(d3d12_device_->ResetCommandAllocator())) {
+  if (!d3d12_device_->ResetCommandAllocator()) {
     return false;
   }
-  if (CHECK(d3d12_device_->ResetCommandList())) {
+  if (!d3d12_device_->ResetCommandList()) {
     return false;
   }
 
@@ -462,6 +485,13 @@ bool Graphics::Render() {
 
   {
     d3d12_device_->BeginPopulateGraphicsCommandList();
+
+    if (bump_mapping_scene_) {
+      if (!bump_mapping_scene_->Render(view_matrix, projection_matrix,
+                                       main_light.get())) {
+        return false;
+      }
+    }
 
     if (pbr_model_) {
       auto pbr_material = pbr_model_->GetMaterial();
@@ -568,7 +598,7 @@ bool Graphics::Render() {
     d3d12_device_->EndPopulateGraphicsCommandList();
   }
 
-  if (CHECK(d3d12_device_->ExecuteDefaultGraphicsCommandList())) {
+  if (!d3d12_device_->ExecuteDefaultGraphicsCommandList()) {
     return false;
   }
 

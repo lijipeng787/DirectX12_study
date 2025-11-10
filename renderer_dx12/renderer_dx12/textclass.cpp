@@ -47,8 +47,8 @@ bool Text::SetFps(int fps) {
     green = 0.0f;
     blue = 0.0f;
   }
-  if (CHECK(UpdateSentenceVertexBuffer(sentence_vector_.at(1), fpsString, 20,
-                                       20, red, green, blue))) {
+  if (!UpdateSentenceVertexBuffer(sentence_vector_.at(1), fpsString, 20,
+                                       20, red, green, blue)) {
     return false;
   }
 
@@ -66,8 +66,8 @@ bool Text::SetCpu(int cpu_percentage_value) {
   lstrcatW(cpuString, tempString);
   lstrcatW(cpuString, L"%");
 
-  if (CHECK(UpdateSentenceVertexBuffer(sentence_vector_.at(0), cpuString, 20,
-                                       40, 0.0f, 1.0f, 0.0f))) {
+  if (!UpdateSentenceVertexBuffer(sentence_vector_.at(0), cpuString, 20,
+                                       40, 0.0f, 1.0f, 0.0f)) {
     return false;
   }
 
@@ -83,28 +83,28 @@ bool Text::Initialize(int screen_width, int screen_height,
   base_view_matrix_ = base_view_matrix;
 
   SentenceType *sentence1 = nullptr;
-  if (CHECK(InitializeSentence(&sentence1, 16))) {
+  if (!InitializeSentence(&sentence1, 16)) {
     return false;
   }
 
-  if (CHECK(UpdateSentenceVertexBuffer(sentence1, L"Hello", 100, 100, 1.0f,
-                                       1.0f, 1.0f))) {
+  if (!UpdateSentenceVertexBuffer(sentence1, L"Hello", 100, 100, 1.0f,
+                                       1.0f, 1.0f)) {
     return false;
   }
   sentence_vector_.push_back(sentence1);
 
   SentenceType *sentence2 = nullptr;
-  if (CHECK(InitializeSentence(&sentence2, 16))) {
+  if (!InitializeSentence(&sentence2, 16)) {
     return false;
   }
 
-  if (CHECK(UpdateSentenceVertexBuffer(sentence2, L"World", 100, 200, 1.0f,
-                                       1.0f, 0.0f))) {
+  if (!UpdateSentenceVertexBuffer(sentence2, L"World", 100, 200, 1.0f,
+                                       1.0f, 0.0f)) {
     return false;
   }
   sentence_vector_.push_back(sentence2);
 
-  if (CHECK(material_.Initialize())) {
+  if (!material_.Initialize()) {
     return false;
   }
 
@@ -118,10 +118,10 @@ bool Text::LoadFont(WCHAR *font_data, WCHAR **font_texture) {
     return false;
   }
 
-  if (CHECK(font_->Initialize(font_data))) {
+  if (!font_->Initialize(font_data)) {
     return false;
   }
-  if (CHECK(LoadTexture(font_texture))) {
+  if (!LoadTexture(font_texture)) {
     return false;
   }
 
@@ -293,7 +293,7 @@ bool Text::LoadTexture(WCHAR **filename_arr) {
   if (!texture_container_) {
     return false;
   }
-  if (CHECK(texture_container_->LoadTexturesByNameArray(1, filename_arr))) {
+  if (!texture_container_->LoadTexturesByNameArray(1, filename_arr)) {
     return false;
   }
 
@@ -404,15 +404,15 @@ TextMaterial::~TextMaterial() {}
 
 bool TextMaterial::Initialize() {
 
-  if (CHECK(InitializeRootSignature())) {
+  if (!InitializeRootSignature()) {
     return false;
   }
 
-  if (CHECK(InitializeGraphicsPipelineState())) {
+  if (!InitializeGraphicsPipelineState()) {
     return false;
   }
 
-  if (CHECK(InitializeConstantBuffer())) {
+  if (!InitializeConstantBuffer()) {
     return false;
   }
 

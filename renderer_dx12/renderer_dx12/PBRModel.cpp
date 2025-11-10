@@ -17,21 +17,21 @@ PBRModel::PBRModel(std::shared_ptr<DirectX12Device> device)
 PBRModel::~PBRModel() { ReleaseModel(); }
 
 bool PBRModel::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) {
-  if (CHECK(LoadModel(model_filename))) {
+  if (!LoadModel(model_filename)) {
     return false;
   }
 
   CalculateModelVectors();
 
-  if (CHECK(InitializeBuffers())) {
+  if (!InitializeBuffers()) {
     return false;
   }
 
-  if (CHECK(LoadTexture(texture_filename_arr))) {
+  if (!LoadTexture(texture_filename_arr)) {
     return false;
   }
 
-  if (CHECK(material_.Initialize())) {
+  if (!material_.Initialize()) {
     return false;
   }
 

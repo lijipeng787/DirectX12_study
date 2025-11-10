@@ -21,16 +21,16 @@ ModelMaterial::ModelMaterial(std::shared_ptr<DirectX12Device> device)
 
 bool Model::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) {
 
-  if (CHECK(LoadModel(model_filename))) {
+  if (!LoadModel(model_filename)) {
     return false;
   }
-  if (CHECK(InitializeBuffers())) {
+  if (!InitializeBuffers()) {
     return false;
   }
-  if (CHECK(LoadTexture(texture_filename_arr))) {
+  if (!LoadTexture(texture_filename_arr)) {
     return false;
   }
-  if (CHECK(material_.Initialize())) {
+  if (!material_.Initialize()) {
     return false;
   }
 
@@ -201,10 +201,10 @@ bool ModelMaterial::Initialize() {
     return false;
   }
 
-  if (CHECK(InitializeRootSignature())) {
+  if (!InitializeRootSignature()) {
     return false;
   }
-  if (CHECK(InitializeGraphicsPipelineState())) {
+  if (!InitializeGraphicsPipelineState()) {
     return false;
   }
 

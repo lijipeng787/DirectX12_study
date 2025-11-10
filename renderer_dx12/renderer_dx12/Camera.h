@@ -8,11 +8,10 @@ public:
 
   Camera(const Camera &rhs) = delete;
 
-  Camera &operator=(const Camera &rhs) = delete;
+  auto operator=(const Camera &rhs) -> Camera & = delete;
 
   ~Camera() {}
 
-public:
   void SetPosition(float x, float y, float z) {
     position_x_ = x;
     position_y_ = y;
@@ -25,12 +24,12 @@ public:
     rotation_z_ = z;
   }
 
-  DirectX::XMFLOAT3 GetPosition() const {
-    return DirectX::XMFLOAT3(position_x_, position_y_, position_z_);
+  auto GetPosition() const -> DirectX::XMFLOAT3 {
+    return {position_x_, position_y_, position_z_};
   }
 
-  DirectX::XMFLOAT3 GetRotation() const {
-    return DirectX::XMFLOAT3(rotation_x_, rotation_y_, rotation_z_);
+  auto GetRotation() const -> DirectX::XMFLOAT3 {
+    return {rotation_x_, rotation_y_, rotation_z_};
   }
 
   void Update();

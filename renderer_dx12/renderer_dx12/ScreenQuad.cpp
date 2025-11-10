@@ -30,10 +30,10 @@ bool ScreenQuad::Initialize(UINT screen_width, UINT screen_height,
     return false;
   }
 
-  if (CHECK(InitializeBuffers())) {
+  if (!InitializeBuffers()) {
     return false;
   }
-  if (!material_->IsInitialized() && CHECK(material_->Initialize())) {
+  if (!material_->IsInitialized() && !material_->Initialize()) {
     return false;
   }
 
@@ -342,11 +342,11 @@ bool ScreenQuadMaterial::Initialize() {
 
   ZeroMemory(&matrix_constant_data_, sizeof(MatrixBufferType));
 
-  if (CHECK(InitializeRootSignature())) {
+  if (!InitializeRootSignature()) {
     return false;
   }
 
-  if (CHECK(InitializeGraphicsPipelineState())) {
+  if (!InitializeGraphicsPipelineState()) {
     return false;
   }
   initialized_ = true;
