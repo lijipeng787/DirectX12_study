@@ -207,21 +207,21 @@ bool ScreenQuad::InitializeBuffers() {
   queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
   queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-  ID3D12CommandQueue *command_queue = nullptr;
+  Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
   if (FAILED(device->CreateCommandQueue(&queue_desc,
                                         IID_PPV_ARGS(&command_queue)))) {
     return false;
   }
 
-  ID3D12CommandAllocator *command_allocator = nullptr;
+  Microsoft::WRL::ComPtr<ID3D12CommandAllocator> command_allocator;
   if (FAILED(device->CreateCommandAllocator(
           D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&command_allocator)))) {
     return false;
   }
 
-  ID3D12GraphicsCommandList *command_list = nullptr;
+  Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
   if (FAILED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                       command_allocator, nullptr,
+                                       command_allocator.Get(), nullptr,
                                        IID_PPV_ARGS(&command_list)))) {
     return false;
   }
@@ -238,11 +238,11 @@ bool ScreenQuad::InitializeBuffers() {
     return false;
   }
 
-  if (FAILED(command_list->Reset(command_allocator, nullptr))) {
+  if (FAILED(command_list->Reset(command_allocator.Get(), nullptr))) {
     return false;
   }
 
-  UpdateSubresources(command_list, index_buffer_.Get(),
+  UpdateSubresources(command_list.Get(), index_buffer_.Get(),
                      upload_index_buffer.Get(), 0, 0, 1, &init_data);
 
   command_list->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
@@ -254,7 +254,7 @@ bool ScreenQuad::InitializeBuffers() {
     return false;
   }
 
-  ID3D12Fence *fence = nullptr;
+  Microsoft::WRL::ComPtr<ID3D12Fence> fence;
   if (FAILED(device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                  IID_PPV_ARGS(&fence)))) {
     return false;
@@ -265,10 +265,10 @@ bool ScreenQuad::InitializeBuffers() {
     return false;
   }
 
-  ID3D12CommandList *ppCommandLists[] = {command_list};
+  ID3D12CommandList *ppCommandLists[] = {command_list.Get()};
   command_queue->ExecuteCommandLists(1, ppCommandLists);
 
-  if (FAILED(command_queue->Signal(fence, 2))) {
+  if (FAILED(command_queue->Signal(fence.Get(), 2))) {
     return false;
   }
 
@@ -279,10 +279,6 @@ bool ScreenQuad::InitializeBuffers() {
     WaitForSingleObject(fence_event, INFINITE);
   }
 
-  command_list->Release();
-  command_allocator->Release();
-  command_queue->Release();
-  fence->Release();
   CloseHandle(fence_event);
 
   index_buffer_view_.BufferLocation = index_buffer_->GetGPUVirtualAddress();

@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <memory>
+#include <wrl/client.h>
 
 struct handle_closer {
   void operator()(HANDLE h) {
@@ -732,7 +733,7 @@ static HRESULT CreateD3DResources(
   case D3D12_RESOURCE_DIMENSION_TEXTURE1D: {
     ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
 
-    ID3D12Resource *tex = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> tex;
     hr = d3dDevice->CreateCommittedResource(
         &HeapProps, D3D12_HEAP_FLAG_NONE, &ResourceDesc,
         D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&tex));
@@ -753,13 +754,12 @@ static HRESULT CreateD3DResources(
         SRVDesc.Texture1D.MipLevels = (!mipCount) ? -1 : ResourceDesc.MipLevels;
       }
 
-      d3dDevice->CreateShaderResourceView(tex, &SRVDesc, textureView);
+      d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
 
       if (texture != nullptr) {
-        *texture = tex;
+        *texture = tex.Detach();
       } else {
         tex->SetName(L"DDSTextureLoader");
-        tex->Release();
       }
     }
   } break;
@@ -767,7 +767,7 @@ static HRESULT CreateD3DResources(
   case D3D12_RESOURCE_DIMENSION_TEXTURE2D: {
     ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
-    ID3D12Resource *tex = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> tex;
     hr = d3dDevice->CreateCommittedResource(
         &HeapProps, D3D12_HEAP_FLAG_NONE, &ResourceDesc,
         D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&tex));
@@ -802,13 +802,12 @@ static HRESULT CreateD3DResources(
         SRVDesc.Texture2D.MostDetailedMip = 0;
       }
 
-      d3dDevice->CreateShaderResourceView(tex, &SRVDesc, textureView);
+      d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
 
       if (texture != nullptr) {
-        *texture = tex;
+        *texture = tex.Detach();
       } else {
         tex->SetName(L"DDSTextureLoader");
-        tex->Release();
       }
     }
   } break;
@@ -817,7 +816,7 @@ static HRESULT CreateD3DResources(
     ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
     ResourceDesc.DepthOrArraySize = static_cast<UINT>(depth);
 
-    ID3D12Resource *tex = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> tex;
     hr = d3dDevice->CreateCommittedResource(
         &HeapProps, D3D12_HEAP_FLAG_NONE, &ResourceDesc,
         D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&tex));
@@ -832,13 +831,12 @@ static HRESULT CreateD3DResources(
       SRVDesc.Texture3D.MipLevels = (!mipCount) ? -1 : ResourceDesc.MipLevels;
       SRVDesc.Texture3D.MostDetailedMip = 0;
 
-      d3dDevice->CreateShaderResourceView(tex, &SRVDesc, textureView);
+      d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
 
       if (texture != nullptr) {
-        *texture = tex;
+        *texture = tex.Detach();
       } else {
         tex->SetName(L"DDSTextureLoader");
-        tex->Release();
       }
     }
   } break;
@@ -1057,7 +1055,7 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
         auto upload_data_size =
             GetRequiredIntermediateSize(*texture, 0, subresourceCount);
 
-        ID3D12Resource *upload_resource = nullptr;
+        Microsoft::WRL::ComPtr<ID3D12Resource> upload_resource;
         if (FAILED(d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
@@ -1071,22 +1069,22 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
         queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-        ID3D12CommandQueue *command_queue = nullptr;
+        Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
         if (FAILED(d3dDevice->CreateCommandQueue(
                 &queue_desc, IID_PPV_ARGS(&command_queue)))) {
           return false;
         }
 
-        ID3D12CommandAllocator *command_allocator = nullptr;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> command_allocator;
         if (FAILED(d3dDevice->CreateCommandAllocator(
                 D3D12_COMMAND_LIST_TYPE_DIRECT,
                 IID_PPV_ARGS(&command_allocator)))) {
           return E_UNEXPECTED;
         }
-        ID3D12GraphicsCommandList *command_list = nullptr;
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
         if (FAILED(d3dDevice->CreateCommandList(
-                0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator, nullptr,
-                IID_PPV_ARGS(&command_list)))) {
+                0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator.Get(),
+                nullptr, IID_PPV_ARGS(&command_list)))) {
           return E_UNEXPECTED;
         }
 
@@ -1098,7 +1096,7 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
           return false;
         }
 
-        if (FAILED(command_list->Reset(command_allocator, nullptr))) {
+        if (FAILED(command_list->Reset(command_allocator.Get(), nullptr))) {
           return false;
         }
 
@@ -1106,8 +1104,8 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
                                       &CD3DX12_RESOURCE_BARRIER::Transition(
                                           *texture, D3D12_RESOURCE_STATE_COMMON,
                                           D3D12_RESOURCE_STATE_COPY_DEST));
-        UpdateSubresources(command_list, *texture, upload_resource, 0, 0,
-                           subresourceCount, initData.get());
+        UpdateSubresources(command_list.Get(), *texture, upload_resource.Get(),
+                           0, 0, subresourceCount, initData.get());
         command_list->ResourceBarrier(
             1, &CD3DX12_RESOURCE_BARRIER::Transition(
                    *texture, D3D12_RESOURCE_STATE_COPY_DEST,
@@ -1117,7 +1115,7 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
           return E_UNEXPECTED;
         }
 
-        ID3D12Fence *fence = nullptr;
+        Microsoft::WRL::ComPtr<ID3D12Fence> fence;
         if (FAILED(d3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                           IID_PPV_ARGS(&fence)))) {
           return E_UNEXPECTED;
@@ -1128,10 +1126,10 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
           return E_UNEXPECTED;
         }
 
-        ID3D12CommandList *cl[] = {command_list};
+        ID3D12CommandList *cl[] = {command_list.Get()};
         command_queue->ExecuteCommandLists(1, cl);
 
-        if (FAILED(command_queue->Signal(fence, 1))) {
+        if (FAILED(command_queue->Signal(fence.Get(), 1))) {
           return E_UNEXPECTED;
         }
 
@@ -1142,10 +1140,6 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
           WaitForSingleObject(fence_event, INFINITE);
         }
 
-        command_list->Release();
-        command_allocator->Release();
-        command_queue->Release();
-        upload_resource->Release();
       }
     }
   }

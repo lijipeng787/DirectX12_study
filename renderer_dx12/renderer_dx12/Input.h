@@ -7,67 +7,68 @@
 #define DIRECTINPUT_VERSION 0x0800
 
 #include <dinput.h>
+#include <wrl/client.h>
 
 class Input {
 public:
-  Input() {}
+  Input() = default;
 
   Input(const Input &rhs) = delete;
 
-  Input &operator=(const Input &rhs) = delete;
+  auto operator=(const Input &rhs) -> Input & = delete;
 
   ~Input() {}
 
 public:
-  bool Initialize(HINSTANCE hinstance, HWND hwnd, int screen_width,
-                  int screen_height);
+  auto Initialize(HINSTANCE hinstance, HWND hwnd, int screen_width,
+                  int screen_height) -> bool;
 
   void Shutdown();
 
-  bool Update();
+  auto Update() -> bool;
 
   void GetMouseLocation(int &mouse_x, int &mouse_y) {
     mouse_x = mouse_x_;
     mouse_y = mouse_y_;
   }
 
-  bool IsEscapePressed();
+  auto IsEscapePressed() -> bool;
 
-  bool IsLeftPressed();
+  auto IsLeftPressed() -> bool;
 
-  bool IsRightPressed();
+  auto IsRightPressed() -> bool;
 
-  bool IsUpPressed();
+  auto IsUpPressed() -> bool;
 
-  bool IsDownPressed();
+  auto IsDownPressed() -> bool;
 
-  bool IsWPressed();
+  auto IsWPressed() -> bool;
 
-  bool IsSPressed();
+  auto IsSPressed() -> bool;
 
-  bool IsAPressed();
+  auto IsAPressed() -> bool;
 
-  bool IsDPressed();
+  auto IsDPressed() -> bool;
 
-  bool IsZPressed();
+  auto IsZPressed() -> bool;
 
-  bool IsPageUpPressed();
+  auto IsPageUpPressed() -> bool;
 
-  bool IsPageDownPressed();
+  auto IsPageDownPressed() -> bool;
 
 private:
   void ProcessInput();
 
-  bool ReadKeyboard();
+  auto ReadKeyboard() -> bool;
 
-  bool ReadMouse();
+  auto ReadMouse() -> bool;
 
 private:
-  IDirectInput8 *directInput_ = nullptr;
+  Microsoft::WRL::ComPtr<IDirectInput8> directInput_;
 
-  IDirectInputDevice8 *keyboard_ = nullptr;
+  Microsoft::WRL::ComPtr<IDirectInputDevice8> keyboard_;
 
-  IDirectInputDevice8 *mouse_ = nullptr;
+  Microsoft::WRL::ComPtr<IDirectInputDevice8> mouse_;
 
   int screen_width_ = {};
 

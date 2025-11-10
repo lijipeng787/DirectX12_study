@@ -15,13 +15,14 @@ bool Input::Initialize(HINSTANCE hinstance, HWND hwnd, int screen_width,
 
   // Initialize the main direct input interface.
   if (FAILED(DirectInput8Create(hinstance, DIRECTINPUT_VERSION,
-                                IID_IDirectInput8, (void **)&directInput_,
-                                NULL))) {
+                                IID_IDirectInput8,
+                                (void **)directInput_.GetAddressOf(), NULL))) {
     return false;
   }
 
   // Initialize the direct input interface for the keyboard.
-  if (FAILED(directInput_->CreateDevice(GUID_SysKeyboard, &keyboard_, NULL))) {
+  if (FAILED(directInput_->CreateDevice(GUID_SysKeyboard,
+                                        keyboard_.GetAddressOf(), NULL))) {
     return false;
   }
 
@@ -43,7 +44,8 @@ bool Input::Initialize(HINSTANCE hinstance, HWND hwnd, int screen_width,
   }
 
   // Initialize the direct input interface for the mouse.
-  if (FAILED(directInput_->CreateDevice(GUID_SysMouse, &mouse_, NULL))) {
+  if (FAILED(directInput_->CreateDevice(GUID_SysMouse, mouse_.GetAddressOf(),
+                                        NULL))) {
     return false;
   }
 
@@ -70,22 +72,14 @@ void Input::Shutdown() {
   // Release the mouse.
   if (mouse_) {
     mouse_->Unacquire();
-    mouse_->Release();
-    mouse_ = nullptr;
   }
 
   // Release the keyboard.
   if (keyboard_) {
     keyboard_->Unacquire();
-    keyboard_->Release();
-    keyboard_ = nullptr;
   }
 
-  // Release the main interface to direct input.
-  if (directInput_) {
-    directInput_->Release();
-    directInput_ = nullptr;
-  }
+  // DirectInput COM interfaces will be released automatically by ComPtr
 }
 
 bool Input::Update() {
