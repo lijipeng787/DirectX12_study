@@ -27,6 +27,7 @@ private:
     DirectX::XMFLOAT4X4 world_;
     DirectX::XMFLOAT4X4 view_;
     DirectX::XMFLOAT4X4 projection_;
+    DirectX::XMFLOAT4X4 normal_; // Add normal matrix for correct lighting with non-uniform scaling
   };
 
   struct LightType {

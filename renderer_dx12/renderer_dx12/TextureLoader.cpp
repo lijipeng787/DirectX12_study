@@ -132,7 +132,7 @@ bool CreateTextureFromTga(ID3D12Device *device, const std::wstring &file_path,
   ResourceSharedPtr texture_resource = nullptr;
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-          D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_COPY_DEST,
+          D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_COMMON,
           nullptr, IID_PPV_ARGS(&texture_resource)))) {
     return false;
   }
@@ -177,12 +177,18 @@ bool CreateTextureFromTga(ID3D12Device *device, const std::wstring &file_path,
     return false;
   }
 
+  auto to_copy = CD3DX12_RESOURCE_BARRIER::Transition(
+      texture_resource.Get(), D3D12_RESOURCE_STATE_COMMON,
+      D3D12_RESOURCE_STATE_COPY_DEST);
+  command_list->ResourceBarrier(1, &to_copy);
+
   UpdateSubresources(command_list.Get(), texture_resource.Get(),
                      upload_resource.Get(), 0, 0, 1, &subresource_data);
-  auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+
+  auto to_shader = CD3DX12_RESOURCE_BARRIER::Transition(
       texture_resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
       D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-  command_list->ResourceBarrier(1, &barrier);
+  command_list->ResourceBarrier(1, &to_shader);
 
   if (FAILED(command_list->Close())) {
     return false;

@@ -3,6 +3,7 @@ cbuffer MatrixBuffer
 	matrix worldMatrix;
 	matrix viewMatrix;
 	matrix projectionMatrix;
+    matrix normalMatrix;
 };
 
 cbuffer FogBuffer
@@ -39,10 +40,9 @@ PixelInputType LightVertexShader(VertexInputType input)
     
 	output.tex = input.tex;
 	
-	// Transform normal to world space
-	// NOTE: Direct multiplication only works for orthogonal/uniform-scale matrices
-	// For non-uniform scaling, use inverse-transpose of world matrix
-	output.normal = mul(input.normal, (float3x3)worldMatrix);
+	// Transform normal to world space using the normal matrix (inverse-transpose of world)
+	// This correctly handles non-uniform scaling.
+	output.normal = mul(input.normal, (float3x3)normalMatrix);
 	
 	output.normal = normalize(output.normal);
     

@@ -327,9 +327,21 @@ bool ModelMaterial::UpdateMatrixConstant(const XMMATRIX &world,
           0, nullptr, reinterpret_cast<void **>(&data_begin)))) {
     return false;
   } else {
+    // The 'world' matrix passed in is already transposed. Transpose it back to get the original.
+    XMMATRIX original_world = XMMatrixTranspose(world);
+    
+    // Calculate the inverse of the original world matrix.
+    XMMATRIX inv_world = XMMatrixInverse(nullptr, original_world);
+
+    // The normal matrix sent to the shader should be the inverse of the world matrix.
+    // The shader's mul(vector, matrix) will effectively transpose it, resulting in the correct
+    // inverse-transpose transformation for the normal.
+    XMMATRIX normal_matrix = inv_world;
+
     XMStoreFloat4x4(&matrix_constant_data_.world_, world);
     XMStoreFloat4x4(&matrix_constant_data_.view_, view);
     XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
+    XMStoreFloat4x4(&matrix_constant_data_.normal_, normal_matrix);
     memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
     matrix_constant_buffer_->Unmap(0, nullptr);
   }

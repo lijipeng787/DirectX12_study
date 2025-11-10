@@ -75,7 +75,7 @@ public:
 
   Text &operator=(const Text &rhs) = delete;
 
-  virtual ~Text() { /* TODO: deallocate sentence vector memory */ }
+  virtual ~Text();
 
 private:
   struct SentenceType {
@@ -140,6 +140,8 @@ private:
   bool InitializeSentence(SentenceType **sentence, int max_length);
 
   bool LoadTexture(WCHAR **filename_arr);
+
+  void ReleaseSentences();
 
 private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;

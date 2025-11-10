@@ -13,6 +13,8 @@ using namespace DirectX;
 Text::Text(std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)), material_(device_) {}
 
+Text::~Text() { ReleaseSentences(); }
+
 TextMaterial::TextMaterial(std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)) {}
 
@@ -77,6 +79,8 @@ bool Text::SetCpu(int cpu_percentage_value) {
 bool Text::Initialize(int screen_width, int screen_height,
                       const DirectX::XMMATRIX &base_view_matrix) {
 
+  ReleaseSentences();
+
   screen_width_ = screen_width;
   screen_height_ = screen_height;
 
@@ -84,22 +88,26 @@ bool Text::Initialize(int screen_width, int screen_height,
 
   SentenceType *sentence1 = nullptr;
   if (!InitializeSentence(&sentence1, 16)) {
+    delete sentence1;
     return false;
   }
 
   if (!UpdateSentenceVertexBuffer(sentence1, L"Hello", 100, 100, 1.0f,
                                        1.0f, 1.0f)) {
+    delete sentence1;
     return false;
   }
   sentence_vector_.push_back(sentence1);
 
   SentenceType *sentence2 = nullptr;
   if (!InitializeSentence(&sentence2, 16)) {
+    delete sentence2;
     return false;
   }
 
   if (!UpdateSentenceVertexBuffer(sentence2, L"World", 100, 200, 1.0f,
                                        1.0f, 0.0f)) {
+    delete sentence2;
     return false;
   }
   sentence_vector_.push_back(sentence2);
@@ -414,6 +422,13 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
   vertices = nullptr;
 
   return true;
+}
+
+void Text::ReleaseSentences() {
+  for (auto sentence : sentence_vector_) {
+    delete sentence;
+  }
+  sentence_vector_.clear();
 }
 
 TextMaterial::~TextMaterial() {}

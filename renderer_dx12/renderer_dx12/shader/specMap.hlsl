@@ -70,8 +70,13 @@ float4 SpecMapPixelShader(PixelInputType input) : SV_TARGET
     float4 bumpMap = shaderTextures[1].Sample(SampleType, input.tex);
     bumpMap = bumpMap * 2.0f - 1.0f;
 
-    float3 bumpNormal =
-        normalize(input.normal + bumpMap.x * input.tangent + bumpMap.y * input.binormal);
+    // Correctly transform the tangent-space normal from the bump map to world space
+    // using the TBN (Tangent, Binormal, Normal) matrix.
+    float3 bumpNormal = normalize(
+        bumpMap.x * input.tangent + 
+        bumpMap.y * input.binormal + 
+        bumpMap.z * input.normal
+    );
 
     float3 lightDir = normalize(-lightDirection);
     float lightIntensity = saturate(dot(bumpNormal, lightDir));
