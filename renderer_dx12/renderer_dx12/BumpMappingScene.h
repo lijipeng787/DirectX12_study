@@ -37,6 +37,8 @@ public:
   auto Render(const DirectX::XMMATRIX &view, const DirectX::XMMATRIX &projection,
               const Lighting::SceneLight *scene_light) -> bool;
 
+  void SetRotationAngle(float radians);
+
 private:
   auto EnsureShadersLoaded() -> bool;
 
@@ -51,8 +53,7 @@ private:
   bool shaders_loaded_ = false;
 
   float rotation_radians_ = 0.0f;
-  float rotation_speed_ = DirectX::XM_PI * 0.25f;
 
-  DirectX::XMFLOAT3 position_ = {-4.0f, 0.0f, 0.0f};
+  DirectX::XMFLOAT3 position_ = {-2.0f, 0.0f, 0.0f};
 };
 

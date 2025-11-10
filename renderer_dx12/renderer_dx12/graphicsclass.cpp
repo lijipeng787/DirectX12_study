@@ -296,6 +296,19 @@ bool Graphics::Frame(float delta_seconds, Input *input) {
     specular_mapping_scene_->Update(delta_seconds);
   }
 
+  shared_rotation_angle_ += shared_rotation_speed_ * delta_seconds;
+  if (shared_rotation_angle_ > DirectX::XM_2PI) {
+    shared_rotation_angle_ -= DirectX::XM_2PI;
+  }
+
+  if (bump_mapping_scene_) {
+    bump_mapping_scene_->SetRotationAngle(shared_rotation_angle_);
+  }
+
+  if (specular_mapping_scene_) {
+    specular_mapping_scene_->SetRotationAngle(shared_rotation_angle_);
+  }
+
   UpdateCameraFromInput(delta_seconds, input);
 
   camera_->Update();
@@ -359,17 +372,14 @@ void Graphics::UpdateCameraFromInput(float delta_seconds, Input *input) {
 
 bool Graphics::Render() {
 
-  static float rotation = 0.0f;
-  rotation += (DirectX::XM_PI * 0.01f);
-  if (rotation > DirectX::XM_2PI) {
-    rotation -= DirectX::XM_2PI;
-  }
-
   DirectX::XMMATRIX world_matrix = {};
   d3d12_device_->GetWorldMatrix(world_matrix);
 
+  float rotation = shared_rotation_angle_;
+
   DirectX::XMMATRIX rotate_world =
-      DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation));
+      DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation) *
+                                 DirectX::XMMatrixTranslation(2.0f, 0.0f, 0.0f));
 
   DirectX::XMMATRIX font_world = DirectX::XMMatrixTranspose(world_matrix);
 
@@ -386,8 +396,8 @@ bool Graphics::Render() {
   d3d12_device_->GetOrthoMatrix(orthogonality);
   orthogonality = DirectX::XMMatrixTranspose(orthogonality);
 
-  DirectX::XMMATRIX pbr_world = DirectX::XMMatrixRotationY(rotation * 0.5f) *
-                                DirectX::XMMatrixTranslation(3.0f, 0.0f, 0.0f);
+  DirectX::XMMATRIX pbr_world = DirectX::XMMatrixRotationY(rotation) *
+                                DirectX::XMMatrixTranslation(6.0f, 0.0f, 0.0f);
   pbr_world = DirectX::XMMatrixTranspose(pbr_world);
 
   if (!model_->GetMaterial()->UpdateMatrixConstant(rotate_world, view,

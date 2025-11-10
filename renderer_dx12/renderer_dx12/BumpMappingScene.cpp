@@ -57,12 +57,7 @@ void BumpMappingScene::Shutdown() {
   shaders_loaded_ = false;
 }
 
-void BumpMappingScene::Update(float delta_seconds) {
-  rotation_radians_ += rotation_speed_ * delta_seconds;
-  if (rotation_radians_ > XM_2PI) {
-    rotation_radians_ -= XM_2PI;
-  }
-}
+void BumpMappingScene::Update(float /*delta_seconds*/) {}
 
 auto BumpMappingScene::Render(const XMMATRIX &view, const XMMATRIX &projection,
                               const SceneLight *scene_light) -> bool {
@@ -132,6 +127,10 @@ auto BumpMappingScene::Render(const XMMATRIX &view, const XMMATRIX &projection,
   device_->Draw(model_->GetIndexCount());
 
   return true;
+}
+
+void BumpMappingScene::SetRotationAngle(float radians) {
+  rotation_radians_ = radians;
 }
 
 auto BumpMappingScene::EnsureShadersLoaded() -> bool {

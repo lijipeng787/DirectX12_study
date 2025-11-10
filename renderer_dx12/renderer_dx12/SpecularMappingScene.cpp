@@ -58,12 +58,7 @@ void SpecularMappingScene::Shutdown() {
   shaders_loaded_ = false;
 }
 
-void SpecularMappingScene::Update(float delta_seconds) {
-  rotation_radians_ += rotation_speed_ * delta_seconds;
-  if (rotation_radians_ > XM_2PI) {
-    rotation_radians_ -= XM_2PI;
-  }
-}
+void SpecularMappingScene::Update(float /*delta_seconds*/) {}
 
 auto SpecularMappingScene::Render(const XMMATRIX &view,
                                   const XMMATRIX &projection,
@@ -142,6 +137,10 @@ auto SpecularMappingScene::Render(const XMMATRIX &view,
   device_->Draw(model_->GetIndexCount());
 
   return true;
+}
+
+void SpecularMappingScene::SetRotationAngle(float radians) {
+  rotation_radians_ = radians;
 }
 
 auto SpecularMappingScene::EnsureShadersLoaded() -> bool {

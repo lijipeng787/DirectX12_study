@@ -70,8 +70,11 @@ private:
   std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
 
   std::shared_ptr<BumpMappingScene> bump_mapping_scene_ = nullptr;
-  
   std::shared_ptr<SpecularMappingScene> specular_mapping_scene_ = nullptr;
 
   float camera_move_speed_ = 5.0f;
+
+  float shared_rotation_angle_ = 0.0f;
+  
+  float shared_rotation_speed_ = DirectX::XM_PI * 0.25f;
 };
