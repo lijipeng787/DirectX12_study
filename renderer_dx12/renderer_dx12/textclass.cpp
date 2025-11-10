@@ -155,7 +155,7 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
           D3D12_HEAP_FLAG_NONE,
           &CD3DX12_RESOURCE_DESC::Buffer(sizeof(VertexType) *
                                          (*sentence)->vertex_count_),
-          D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+          D3D12_RESOURCE_STATE_COMMON, nullptr,
           IID_PPV_ARGS(&(*sentence)->vertex_buffer_)))) {
     return false;
   }
@@ -165,6 +165,7 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
   (*sentence)->vertex_buffer_view_.SizeInBytes =
       sizeof(VertexType) * (*sentence)->vertex_count_;
   (*sentence)->vertex_buffer_view_.StrideInBytes = sizeof(VertexType);
+  (*sentence)->vertex_buffer_state_ = D3D12_RESOURCE_STATE_COMMON;
 
   auto device = device_->GetD3d12Device();
 
@@ -184,7 +185,7 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
           D3D12_HEAP_FLAG_NONE,
           &CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint16_t) *
                                          (*sentence)->index_count_),
-          D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+          D3D12_RESOURCE_STATE_COMMON, nullptr,
           IID_PPV_ARGS(&(*sentence)->index_buffer_)))) {
     return false;
   }
@@ -228,13 +229,22 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
     return false;
   }
 
+  if ((*sentence)->index_buffer_state_ != D3D12_RESOURCE_STATE_COPY_DEST) {
+    auto to_copy = CD3DX12_RESOURCE_BARRIER::Transition(
+        (*sentence)->index_buffer_.Get(), (*sentence)->index_buffer_state_,
+        D3D12_RESOURCE_STATE_COPY_DEST);
+    command_list->ResourceBarrier(1, &to_copy);
+    (*sentence)->index_buffer_state_ = D3D12_RESOURCE_STATE_COPY_DEST;
+  }
+
   UpdateSubresources(command_list.Get(), (*sentence)->index_buffer_.Get(),
                      upload_index_buffer.Get(), 0, 0, 1, &init_data);
 
-  command_list->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                       (*sentence)->index_buffer_.Get(),
-                                       D3D12_RESOURCE_STATE_COPY_DEST,
-                                       D3D12_RESOURCE_STATE_INDEX_BUFFER));
+  auto to_index = CD3DX12_RESOURCE_BARRIER::Transition(
+      (*sentence)->index_buffer_.Get(), (*sentence)->index_buffer_state_,
+      D3D12_RESOURCE_STATE_INDEX_BUFFER);
+  command_list->ResourceBarrier(1, &to_index);
+  (*sentence)->index_buffer_state_ = D3D12_RESOURCE_STATE_INDEX_BUFFER;
 
   if (FAILED(command_list->Close())) {
     return false;
@@ -272,6 +282,7 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
   (*sentence)->index_buffer_view_.SizeInBytes =
       sizeof(uint16_t) * (*sentence)->index_count_;
   (*sentence)->index_buffer_view_.Format = DXGI_FORMAT_R16_UINT;
+  (*sentence)->index_buffer_state_ = D3D12_RESOURCE_STATE_INDEX_BUFFER;
 
   delete[] indices;
   indices = nullptr;
@@ -349,13 +360,23 @@ bool Text::UpdateSentenceVertexBuffer(SentenceType *sentence, WCHAR *text,
     return false;
   }
 
+  if (sentence->vertex_buffer_state_ != D3D12_RESOURCE_STATE_COPY_DEST) {
+    auto to_copy = CD3DX12_RESOURCE_BARRIER::Transition(
+        sentence->vertex_buffer_.Get(), sentence->vertex_buffer_state_,
+        D3D12_RESOURCE_STATE_COPY_DEST);
+    command_list->ResourceBarrier(1, &to_copy);
+    sentence->vertex_buffer_state_ = D3D12_RESOURCE_STATE_COPY_DEST;
+  }
+
   UpdateSubresources(command_list, sentence->vertex_buffer_.Get(),
                      upload_vertex_buffer.Get(), 0, 0, 1, &init_data);
 
-  command_list->ResourceBarrier(
-      1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             sentence->vertex_buffer_.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
-             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+  auto to_vertex = CD3DX12_RESOURCE_BARRIER::Transition(
+      sentence->vertex_buffer_.Get(), sentence->vertex_buffer_state_,
+      D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+  command_list->ResourceBarrier(1, &to_vertex);
+  sentence->vertex_buffer_state_ =
+      D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 
   if (FAILED(command_list->Close())) {
     return false;

@@ -198,7 +198,7 @@ bool ScreenQuad::InitializeBuffers() {
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
           D3D12_HEAP_FLAG_NONE,
           &CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint16_t) * index_count_),
-          D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+          D3D12_RESOURCE_STATE_COMMON, nullptr,
           IID_PPV_ARGS(&index_buffer_)))) {
     return false;
   }
@@ -242,13 +242,18 @@ bool ScreenQuad::InitializeBuffers() {
     return false;
   }
 
+  auto to_copy = CD3DX12_RESOURCE_BARRIER::Transition(
+      index_buffer_.Get(), D3D12_RESOURCE_STATE_COMMON,
+      D3D12_RESOURCE_STATE_COPY_DEST);
+  command_list->ResourceBarrier(1, &to_copy);
+
   UpdateSubresources(command_list.Get(), index_buffer_.Get(),
                      upload_index_buffer.Get(), 0, 0, 1, &init_data);
 
-  command_list->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                       index_buffer_.Get(),
-                                       D3D12_RESOURCE_STATE_COPY_DEST,
-                                       D3D12_RESOURCE_STATE_INDEX_BUFFER));
+  auto to_index = CD3DX12_RESOURCE_BARRIER::Transition(
+      index_buffer_.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
+      D3D12_RESOURCE_STATE_INDEX_BUFFER);
+  command_list->ResourceBarrier(1, &to_index);
 
   if (FAILED(command_list->Close())) {
     return false;

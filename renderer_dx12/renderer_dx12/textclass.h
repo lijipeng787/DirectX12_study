@@ -87,6 +87,11 @@ private:
 
     D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
+    D3D12_RESOURCE_STATES vertex_buffer_state_ =
+        D3D12_RESOURCE_STATE_COMMON;
+    D3D12_RESOURCE_STATES index_buffer_state_ =
+        D3D12_RESOURCE_STATE_COMMON;
+
     int vertex_count_ = 0, index_count_ = 0, max_length_ = 0;
     float red_ = 0.0f, green_ = 0.0f, blue_ = 0.0f;
   };
