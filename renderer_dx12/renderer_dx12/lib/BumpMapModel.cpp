@@ -4,11 +4,130 @@
 
 #include <cmath>
 #include <fstream>
+#include <vector>
 
 #include "DirectX12Device.h"
 
 using namespace DirectX;
 using namespace ResourceLoader;
+
+namespace {
+
+bool CreateBufferOnGpu(const std::shared_ptr<DirectX12Device> &device,
+                       size_t buffer_size, const void *source_data,
+                       D3D12_RESOURCE_STATES final_state,
+                       ResourceSharedPtr &default_buffer) {
+  if (!device || buffer_size == 0 || source_data == nullptr) {
+    return false;
+  }
+
+  auto d3d_device = device->GetD3d12Device();
+  if (!d3d_device) {
+    return false;
+  }
+
+  ResourceSharedPtr upload_buffer = nullptr;
+
+  if (FAILED(d3d_device->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+          &CD3DX12_RESOURCE_DESC::Buffer(buffer_size),
+          D3D12_RESOURCE_STATE_COMMON, nullptr,
+          IID_PPV_ARGS(&default_buffer)))) {
+    return false;
+  }
+
+  if (FAILED(d3d_device->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+          &CD3DX12_RESOURCE_DESC::Buffer(buffer_size),
+          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+          IID_PPV_ARGS(&upload_buffer)))) {
+    return false;
+  }
+
+  UINT8 *mapped_data = nullptr;
+  if (FAILED(upload_buffer->Map(
+          0, nullptr, reinterpret_cast<void **>(&mapped_data)))) {
+    return false;
+  }
+  memcpy(mapped_data, source_data, buffer_size);
+  upload_buffer->Unmap(0, nullptr);
+
+  Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
+  D3D12_COMMAND_QUEUE_DESC queue_desc = {};
+  queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+  queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+  if (FAILED(d3d_device->CreateCommandQueue(&queue_desc,
+                                            IID_PPV_ARGS(&command_queue)))) {
+    return false;
+  }
+
+  Microsoft::WRL::ComPtr<ID3D12CommandAllocator> command_allocator;
+  if (FAILED(d3d_device->CreateCommandAllocator(
+          D3D12_COMMAND_LIST_TYPE_DIRECT,
+          IID_PPV_ARGS(&command_allocator)))) {
+    return false;
+  }
+
+  Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
+  if (FAILED(d3d_device->CreateCommandList(
+          0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator.Get(), nullptr,
+          IID_PPV_ARGS(&command_list)))) {
+    return false;
+  }
+
+  auto to_copy_dest = CD3DX12_RESOURCE_BARRIER::Transition(
+      default_buffer.Get(), D3D12_RESOURCE_STATE_COMMON,
+      D3D12_RESOURCE_STATE_COPY_DEST);
+  command_list->ResourceBarrier(1, &to_copy_dest);
+
+  D3D12_SUBRESOURCE_DATA subresource = {};
+  subresource.pData = source_data;
+  subresource.RowPitch = buffer_size;
+  subresource.SlicePitch = buffer_size;
+
+  UpdateSubresources(command_list.Get(), default_buffer.Get(),
+                     upload_buffer.Get(), 0, 0, 1, &subresource);
+
+  auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+      default_buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, final_state);
+  command_list->ResourceBarrier(1, &barrier);
+
+  if (FAILED(command_list->Close())) {
+    return false;
+  }
+
+  ID3D12CommandList *lists[] = {command_list.Get()};
+  command_queue->ExecuteCommandLists(1, lists);
+
+  Microsoft::WRL::ComPtr<ID3D12Fence> fence;
+  if (FAILED(d3d_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+                                     IID_PPV_ARGS(&fence)))) {
+    return false;
+  }
+
+  HANDLE event_handle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+  if (!event_handle) {
+    return false;
+  }
+
+  if (FAILED(command_queue->Signal(fence.Get(), 1))) {
+    CloseHandle(event_handle);
+    return false;
+  }
+
+  if (fence->GetCompletedValue() < 1) {
+    if (FAILED(fence->SetEventOnCompletion(1, event_handle))) {
+      CloseHandle(event_handle);
+      return false;
+    }
+    WaitForSingleObject(event_handle, INFINITE);
+  }
+
+  CloseHandle(event_handle);
+  return true;
+}
+
+} // namespace
 
 BumpMapModel::BumpMapModel(std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)), material_(device_) {}
@@ -103,12 +222,8 @@ auto BumpMapModel::InitializeBuffers() -> bool {
     return false;
   }
 
-  auto vertices = std::make_unique<VertexType[]>(vertex_count_);
-  auto indices = std::make_unique<uint16_t[]>(index_count_);
-
-  if (!vertices || !indices) {
-    return false;
-  }
+  std::vector<VertexType> vertices(vertex_count_);
+  std::vector<uint16_t> indices(index_count_);
 
   for (UINT i = 0; i < vertex_count_; ++i) {
     vertices[i].position =
@@ -125,46 +240,22 @@ auto BumpMapModel::InitializeBuffers() -> bool {
     indices[i] = static_cast<uint16_t>(i);
   }
 
-  auto device = device_->GetD3d12Device();
-
-  if (FAILED(device->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(VertexType) * vertex_count_),
-          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-          IID_PPV_ARGS(&vertex_buffer_)))) {
+  const size_t vertex_buffer_size = sizeof(VertexType) * vertex_count_;
+  if (!CreateBufferOnGpu(device_, vertex_buffer_size, vertices.data(),
+                         D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+                         vertex_buffer_)) {
     return false;
   }
-
-  UINT8 *vertex_data_begin = nullptr;
-  CD3DX12_RANGE read_range(0, 0);
-  if (FAILED(vertex_buffer_->Map(
-          0, &read_range, reinterpret_cast<void **>(&vertex_data_begin)))) {
-    return false;
-  }
-  memcpy(vertex_data_begin, vertices.get(), sizeof(VertexType) * vertex_count_);
-  vertex_buffer_->Unmap(0, nullptr);
 
   vertex_buffer_view_.BufferLocation = vertex_buffer_->GetGPUVirtualAddress();
   vertex_buffer_view_.StrideInBytes = sizeof(VertexType);
   vertex_buffer_view_.SizeInBytes = sizeof(VertexType) * vertex_count_;
 
-  if (FAILED(device->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint16_t) * index_count_),
-          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-          IID_PPV_ARGS(&index_buffer_)))) {
+  const size_t index_buffer_size = sizeof(uint16_t) * index_count_;
+  if (!CreateBufferOnGpu(device_, index_buffer_size, indices.data(),
+                         D3D12_RESOURCE_STATE_INDEX_BUFFER, index_buffer_)) {
     return false;
   }
-
-  UINT8 *index_data_begin = nullptr;
-  if (FAILED(index_buffer_->Map(
-          0, &read_range, reinterpret_cast<void **>(&index_data_begin)))) {
-    return false;
-  }
-  memcpy(index_data_begin, indices.get(), sizeof(uint16_t) * index_count_);
-  index_buffer_->Unmap(0, nullptr);
 
   index_buffer_view_.BufferLocation = index_buffer_->GetGPUVirtualAddress();
   index_buffer_view_.Format = DXGI_FORMAT_R16_UINT;
