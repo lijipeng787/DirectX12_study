@@ -14,6 +14,7 @@ public:
   explicit BumpMapModel(std::shared_ptr<DirectX12Device> device);
 
   BumpMapModel(const BumpMapModel &rhs) = delete;
+
   auto operator=(const BumpMapModel &rhs) -> BumpMapModel & = delete;
 
   ~BumpMapModel();
@@ -63,31 +64,39 @@ private:
   };
 
   auto LoadModel(WCHAR *filename) -> bool;
-  void ReleaseModel();
+
+  auto ReleaseModel() -> void;
 
   auto InitializeBuffers() -> bool;
+
   auto LoadTextures(WCHAR **texture_filename_arr, unsigned int texture_count)
       -> bool;
 
   void CalculateModelVectors();
+
   void CalculateTangentBinormal(const TempVertexType &vertex1,
                                 const TempVertexType &vertex2,
                                 const TempVertexType &vertex3,
                                 VectorType &tangent, VectorType &binormal);
+
   void CalculateNormal(const VectorType &tangent, const VectorType &binormal,
                        VectorType &normal);
 
 private:
   std::shared_ptr<DirectX12Device> device_;
+
   BumpMapMaterial material_;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
+  
   ResourceSharedPtr index_buffer_ = nullptr;
 
   D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
+  
   D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
   UINT vertex_count_ = 0;
+  
   UINT index_count_ = 0;
 
   ModelType *model_data_ = nullptr;

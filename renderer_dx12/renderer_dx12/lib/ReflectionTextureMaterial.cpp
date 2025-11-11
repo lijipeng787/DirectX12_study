@@ -10,7 +10,7 @@ ReflectionTextureMaterial::ReflectionTextureMaterial(
     std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)) {}
 
-bool ReflectionTextureMaterial::Initialize() {
+auto ReflectionTextureMaterial::Initialize() -> bool {
   if (!device_) {
     return false;
   }
@@ -23,7 +23,7 @@ bool ReflectionTextureMaterial::Initialize() {
   if (FAILED(d3d_device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(MatrixBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(MatrixBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&matrix_constant_buffer_)))) {
     return false;
@@ -40,13 +40,15 @@ bool ReflectionTextureMaterial::Initialize() {
   return true;
 }
 
-ResourceSharedPtr
-ReflectionTextureMaterial::GetMatrixConstantBuffer() const {
+auto ReflectionTextureMaterial::GetMatrixConstantBuffer() const
+    -> ResourceSharedPtr {
   return matrix_constant_buffer_;
 }
 
-bool ReflectionTextureMaterial::UpdateMatrixConstant(
-    const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection) {
+auto ReflectionTextureMaterial::UpdateMatrixConstant(const XMMATRIX &world,
+                                                     const XMMATRIX &view,
+                                                     const XMMATRIX &projection)
+    -> bool {
   if (!matrix_constant_buffer_) {
     return false;
   }
@@ -57,17 +59,17 @@ bool ReflectionTextureMaterial::UpdateMatrixConstant(
     return false;
   }
 
-  XMStoreFloat4x4(&matrix_data_.world, world);
-  XMStoreFloat4x4(&matrix_data_.view, view);
-  XMStoreFloat4x4(&matrix_data_.projection, projection);
+  XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+  XMStoreFloat4x4(&matrix_constant_data_.view_, view);
+  XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
 
-  memcpy(mapped_data, &matrix_data_, sizeof(MatrixBufferType));
+  memcpy(mapped_data, &matrix_constant_data_, sizeof(MatrixBufferType));
   matrix_constant_buffer_->Unmap(0, nullptr);
 
   return true;
 }
 
-bool ReflectionTextureMaterial::InitializeRootSignature() {
+auto ReflectionTextureMaterial::InitializeRootSignature() -> bool {
   if (!device_) {
     return false;
   }
@@ -121,7 +123,7 @@ bool ReflectionTextureMaterial::InitializeRootSignature() {
   return true;
 }
 
-bool ReflectionTextureMaterial::InitializeGraphicsPipelineState() {
+auto ReflectionTextureMaterial::InitializeGraphicsPipelineState() -> bool {
   if (!device_) {
     return false;
   }

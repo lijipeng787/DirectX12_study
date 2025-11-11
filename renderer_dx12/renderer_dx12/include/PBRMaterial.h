@@ -46,29 +46,28 @@ private:
   auto InitializeGraphicsPipelineState() -> bool;
 
   struct MatrixBufferType {
-    DirectX::XMFLOAT4X4 world;
-    DirectX::XMFLOAT4X4 view;
-    DirectX::XMFLOAT4X4 projection;
-    DirectX::XMFLOAT4X4 normalMatrix; // Inverse-transpose of world matrix for
-                                      // correct normal transformation
+    DirectX::XMFLOAT4X4 world_;
+    DirectX::XMFLOAT4X4 view_;
+    DirectX::XMFLOAT4X4 projection_;
+    DirectX::XMFLOAT4X4 normal_;
   };
 
   struct CameraBufferType {
-    DirectX::XMFLOAT4 camera_position;
+    DirectX::XMFLOAT4 camera_position_;
   };
 
   struct LightBufferType {
-    DirectX::XMFLOAT4 light_direction;
+    DirectX::XMFLOAT4 light_direction_;
   };
 
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   ResourceSharedPtr matrix_constant_buffer_ = nullptr;
-  MatrixBufferType matrix_data_ = {};
+  MatrixBufferType matrix_constant_data_ = {};
 
   ResourceSharedPtr camera_constant_buffer_ = nullptr;
-  CameraBufferType camera_data_ = {};
+  CameraBufferType camera_constant_data_ = {};
 
   ResourceSharedPtr light_constant_buffer_ = nullptr;
-  LightBufferType light_data_ = {};
+  LightBufferType light_constant_data_ = {};
 };

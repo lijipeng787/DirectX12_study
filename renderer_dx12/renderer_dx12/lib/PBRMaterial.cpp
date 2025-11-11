@@ -18,7 +18,7 @@ auto PBRMaterial::Initialize() -> bool {
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(MatrixBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(MatrixBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&matrix_constant_buffer_)))) {
     return false;
@@ -27,7 +27,7 @@ auto PBRMaterial::Initialize() -> bool {
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(CameraBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(CameraBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&camera_constant_buffer_)))) {
     return false;
@@ -36,7 +36,7 @@ auto PBRMaterial::Initialize() -> bool {
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(LightBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(LightBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&light_constant_buffer_)))) {
     return false;
@@ -62,18 +62,16 @@ auto PBRMaterial::UpdateMatrixConstant(const XMMATRIX &world,
     return false;
   }
 
-  XMStoreFloat4x4(&matrix_data_.world, world);
-  XMStoreFloat4x4(&matrix_data_.view, view);
-  XMStoreFloat4x4(&matrix_data_.projection, projection);
+  const auto original_world = XMMatrixTranspose(world);
+  const auto inverse_world = XMMatrixInverse(nullptr, original_world);
+  const auto normal_matrix = inverse_world;
 
-  // Calculate normal matrix: inverse-transpose of world matrix
-  // This ensures correct normal transformation even with non-uniform scaling
-  XMVECTOR det;
-  XMMATRIX worldInverse = XMMatrixInverse(&det, world);
-  XMMATRIX normalMatrix = XMMatrixTranspose(worldInverse);
-  XMStoreFloat4x4(&matrix_data_.normalMatrix, normalMatrix);
+  XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+  XMStoreFloat4x4(&matrix_constant_data_.view_, view);
+  XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
+  XMStoreFloat4x4(&matrix_constant_data_.normal_, normal_matrix);
 
-  memcpy(data_begin, &matrix_data_, sizeof(MatrixBufferType));
+  memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
   matrix_constant_buffer_->Unmap(0, nullptr);
 
   return true;
@@ -87,9 +85,9 @@ auto PBRMaterial::UpdateCameraConstant(const XMFLOAT3 &camera_position)
     return false;
   }
 
-  camera_data_.camera_position =
+  camera_constant_data_.camera_position_ =
       XMFLOAT4(camera_position.x, camera_position.y, camera_position.z, 1.0f);
-  memcpy(data_begin, &camera_data_, sizeof(CameraBufferType));
+  memcpy(data_begin, &camera_constant_data_, sizeof(CameraBufferType));
   camera_constant_buffer_->Unmap(0, nullptr);
 
   return true;
@@ -102,9 +100,9 @@ auto PBRMaterial::UpdateLightConstant(const XMFLOAT3 &light_direction) -> bool {
     return false;
   }
 
-  light_data_.light_direction =
+  light_constant_data_.light_direction_ =
       XMFLOAT4(light_direction.x, light_direction.y, light_direction.z, 0.0f);
-  memcpy(data_begin, &light_data_, sizeof(LightBufferType));
+  memcpy(data_begin, &light_constant_data_, sizeof(LightBufferType));
   light_constant_buffer_->Unmap(0, nullptr);
 
   return true;

@@ -16,6 +16,7 @@ public:
   explicit BumpMapMaterial(std::shared_ptr<DirectX12Device> device);
 
   BumpMapMaterial(const BumpMapMaterial &rhs) = delete;
+
   auto operator=(const BumpMapMaterial &rhs) -> BumpMapMaterial & = delete;
 
   ~BumpMapMaterial() override = default;
@@ -23,6 +24,7 @@ public:
   auto Initialize() -> bool override;
 
   auto GetMatrixConstantBuffer() const -> ResourceSharedPtr;
+
   auto GetLightConstantBuffer() const -> ResourceSharedPtr;
 
   auto UpdateMatrixConstant(const DirectX::XMMATRIX &world,
@@ -36,27 +38,27 @@ public:
 
 private:
   auto InitializeRootSignature() -> bool;
+
   auto InitializeGraphicsPipelineState() -> bool;
 
-private:
   struct MatrixBufferType {
-    DirectX::XMFLOAT4X4 world;
-    DirectX::XMFLOAT4X4 view;
-    DirectX::XMFLOAT4X4 projection;
+    DirectX::XMFLOAT4X4 world_;
+    DirectX::XMFLOAT4X4 view_;
+    DirectX::XMFLOAT4X4 projection_;
   };
 
   struct LightBufferType {
-    DirectX::XMFLOAT4 diffuse_color;
-    DirectX::XMFLOAT3 light_direction;
-    float padding;
+    DirectX::XMFLOAT4 diffuse_color_;
+    DirectX::XMFLOAT3 light_direction_;
+    float padding_;
   };
 
   std::shared_ptr<DirectX12Device> device_;
 
   ResourceSharedPtr matrix_constant_buffer_ = nullptr;
-  MatrixBufferType matrix_data_ = {};
+  MatrixBufferType matrix_constant_data_ = {};
 
   ResourceSharedPtr light_constant_buffer_ = nullptr;
-  LightBufferType light_data_ = {};
+  LightBufferType light_constant_data_ = {};
 };
 

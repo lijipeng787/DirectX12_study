@@ -13,6 +13,7 @@ public:
   explicit PBRModel(std::shared_ptr<DirectX12Device> device);
 
   PBRModel(const PBRModel &rhs) = delete;
+
   PBRModel &operator=(const PBRModel &rhs) = delete;
 
   ~PBRModel();
@@ -82,12 +83,15 @@ private:
   PBRMaterial material_;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
+
   D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
 
   ResourceSharedPtr index_buffer_ = nullptr;
+  
   D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
   UINT vertex_count_ = 0;
+  
   UINT index_count_ = 0;
 
   ModelType *model_data_ = nullptr;

@@ -49,7 +49,3 @@ void Effect::Material::SetPSOByName(std::string name,
   unsigned int index = pso_cotainer_.size() - 1;
   pso_index_cotainer_.insert(make_pair(name, index));
 }
-
-Effect::Material::Material() {}
-
-Effect::Material::~Material() {}

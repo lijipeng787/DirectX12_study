@@ -12,13 +12,13 @@ typedef std::unordered_map<std::string, unsigned int> PSOIndexCotainer;
 
 class Material {
 public:
-  Material();
+  Material() = default;
 
   Material(const Material &rhs) = delete;
 
   Material &operator=(const Material &rhs) = delete;
 
-  virtual ~Material();
+  virtual ~Material() = default;
 
 public:
   virtual bool Initialize() = 0;

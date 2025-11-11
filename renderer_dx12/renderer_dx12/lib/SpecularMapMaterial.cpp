@@ -21,7 +21,7 @@ auto SpecularMapMaterial::Initialize() -> bool {
   if (FAILED(d3d_device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(MatrixBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(MatrixBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&matrix_constant_buffer_)))) {
     return false;
@@ -30,7 +30,7 @@ auto SpecularMapMaterial::Initialize() -> bool {
   if (FAILED(d3d_device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(CameraBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(CameraBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&camera_constant_buffer_)))) {
     return false;
@@ -39,7 +39,7 @@ auto SpecularMapMaterial::Initialize() -> bool {
   if (FAILED(d3d_device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(LightBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(LightBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&light_constant_buffer_)))) {
     return false;
@@ -82,11 +82,11 @@ auto SpecularMapMaterial::UpdateMatrixConstant(const XMMATRIX &world,
     return false;
   }
 
-  XMStoreFloat4x4(&matrix_data_.world, world);
-  XMStoreFloat4x4(&matrix_data_.view, view);
-  XMStoreFloat4x4(&matrix_data_.projection, projection);
+  XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+  XMStoreFloat4x4(&matrix_constant_data_.view_, view);
+  XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
 
-  memcpy(data_begin, &matrix_data_, sizeof(MatrixBufferType));
+  memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
   matrix_constant_buffer_->Unmap(0, nullptr);
 
   return true;
@@ -104,10 +104,10 @@ auto SpecularMapMaterial::UpdateCameraConstant(
     return false;
   }
 
-  camera_data_.camera_position = camera_position;
-  camera_data_.padding = 0.0f;
+  camera_constant_data_.camera_position_ = camera_position;
+  camera_constant_data_.padding_ = 0.0f;
 
-  memcpy(data_begin, &camera_data_, sizeof(CameraBufferType));
+  memcpy(data_begin, &camera_constant_data_, sizeof(CameraBufferType));
   camera_constant_buffer_->Unmap(0, nullptr);
 
   return true;
@@ -126,12 +126,12 @@ auto SpecularMapMaterial::UpdateLightConstant(
     return false;
   }
 
-  light_data_.diffuse_color = diffuse_color;
-  light_data_.specular_color = specular_color;
-  light_data_.light_direction = light_direction;
-  light_data_.specular_power = specular_power;
+  light_constant_data_.diffuse_color_ = diffuse_color;
+  light_constant_data_.specular_color_ = specular_color;
+  light_constant_data_.light_direction_ = light_direction;
+  light_constant_data_.specular_power_ = specular_power;
 
-  memcpy(data_begin, &light_data_, sizeof(LightBufferType));
+  memcpy(data_begin, &light_constant_data_, sizeof(LightBufferType));
   light_constant_buffer_->Unmap(0, nullptr);
 
   return true;

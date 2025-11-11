@@ -217,6 +217,7 @@ public:
                              UINT StartInstanceLocation = 0);
 
   bool WaitForPreviousFrame();
+  
   bool WaitForGpuIdle();
 
   DescriptorHeapPtr GetOffScreenTextureHeapView() {

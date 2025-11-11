@@ -5,7 +5,7 @@
 
 class BitmapFont {
 public:
-  BitmapFont() {}
+  BitmapFont() = default;
 
   BitmapFont(const BitmapFont &rhs) = delete;
 

@@ -14,7 +14,7 @@ auto ModelMaterial::Initialize() -> bool {
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(MatrixBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(MatrixBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&matrix_constant_buffer_)))) {
     return false;
@@ -23,7 +23,7 @@ auto ModelMaterial::Initialize() -> bool {
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(LightType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(LightType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&light_constant_buffer_)))) {
     return false;
@@ -32,7 +32,7 @@ auto ModelMaterial::Initialize() -> bool {
   if (FAILED(device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(FogBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(FogBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&fog_constant_buffer_)))) {
     return false;

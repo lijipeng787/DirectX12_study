@@ -10,7 +10,7 @@ public:
 
   auto operator=(const Camera &rhs) -> Camera & = delete;
 
-  ~Camera() {}
+  ~Camera() = default;
 
   void SetPosition(float x, float y, float z) {
     position_x_ = x;
@@ -56,5 +56,6 @@ private:
   DirectX::XMMATRIX view_matrix_ = DirectX::XMMatrixIdentity();
 
   DirectX::XMMATRIX view_matrix_2d_ = DirectX::XMMatrixIdentity();
+  
   DirectX::XMMATRIX reflection_view_matrix_ = DirectX::XMMatrixIdentity();
 };

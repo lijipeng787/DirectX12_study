@@ -20,7 +20,7 @@ ReflectionScene::ReflectionScene(
       shader_loader_(std::move(shader_loader)),
       camera_(std::move(camera)) {}
 
-bool ReflectionScene::EnsureShadersLoaded() {
+auto ReflectionScene::EnsureShadersLoaded() -> bool {
   if (shaders_loaded_) {
     return true;
   }
@@ -43,7 +43,7 @@ bool ReflectionScene::EnsureShadersLoaded() {
   return true;
 }
 
-bool ReflectionScene::Initialize() {
+auto ReflectionScene::Initialize() -> bool {
   if (!device_ || !shader_loader_ || !camera_) {
     return false;
   }
@@ -122,7 +122,7 @@ bool ReflectionScene::Initialize() {
   return true;
 }
 
-void ReflectionScene::Shutdown() {
+auto ReflectionScene::Shutdown() -> void {
   cube_model_.reset();
   floor_model_.reset();
   cube_material_.reset();
@@ -132,30 +132,30 @@ void ReflectionScene::Shutdown() {
   shaders_loaded_ = false;
 }
 
-void ReflectionScene::Update(float delta_seconds) {
+auto ReflectionScene::Update(float delta_seconds) -> void {
   rotation_radians_ += rotation_speed_ * delta_seconds;
   if (rotation_radians_ > XM_2PI) {
     rotation_radians_ -= XM_2PI;
   }
 }
 
-bool ReflectionScene::RenderReflectionMap(const XMMATRIX &projection) {
+auto ReflectionScene::RenderReflectionMap(const XMMATRIX &projection) -> bool {
   return RenderReflectionTexture(projection);
 }
 
-bool ReflectionScene::Render(const XMMATRIX &view,
-                             const XMMATRIX &projection) {
+auto ReflectionScene::Render(const XMMATRIX &view,
+                             const XMMATRIX &projection) -> bool {
   if (!device_ || !cube_model_ || !floor_model_ || !cube_material_ ||
       !floor_material_) {
     return false;
   }
 
-  XMMATRIX world = XMMatrixRotationY(rotation_radians_) *
-                   XMMatrixTranslation(cube_position_.x, cube_position_.y,
-                                       cube_position_.z);
-  XMMATRIX world_t = XMMatrixTranspose(world);
-  XMMATRIX view_t = XMMatrixTranspose(view);
-  XMMATRIX projection_t = XMMatrixTranspose(projection);
+  const XMMATRIX world = XMMatrixRotationY(rotation_radians_) *
+                         XMMatrixTranslation(cube_position_.x, cube_position_.y,
+                                             cube_position_.z);
+  const XMMATRIX world_t = XMMatrixTranspose(world);
+  const XMMATRIX view_t = XMMatrixTranspose(view);
+  const XMMATRIX projection_t = XMMatrixTranspose(projection);
 
   if (!cube_material_->UpdateMatrixConstant(world_t, view_t, projection_t)) {
     return false;
@@ -187,9 +187,10 @@ bool ReflectionScene::Render(const XMMATRIX &view,
   device_->BindIndexBuffer(&cube_model_->GetIndexBufferView());
   device_->Draw(cube_model_->GetIndexCount());
 
-  XMMATRIX floor_world = XMMatrixScaling(floor_scale_, 1.0f, floor_scale_) *
-                         XMMatrixTranslation(0.0f, reflection_plane_height_, 0.0f);
-  XMMATRIX floor_world_t = XMMatrixTranspose(floor_world);
+  const XMMATRIX floor_world =
+      XMMatrixScaling(floor_scale_, 1.0f, floor_scale_) *
+      XMMatrixTranslation(0.0f, reflection_plane_height_, 0.0f);
+  const XMMATRIX floor_world_t = XMMatrixTranspose(floor_world);
   if (!floor_material_->UpdateMatrixConstant(floor_world_t, view_t,
                                              projection_t)) {
     return false;
@@ -198,7 +199,7 @@ bool ReflectionScene::Render(const XMMATRIX &view,
   camera_->UpdateReflection(reflection_plane_height_);
   XMMATRIX reflection_view;
   camera_->GetReflectionViewMatrix(reflection_view);
-  XMMATRIX reflection_t = XMMatrixTranspose(reflection_view);
+  const XMMATRIX reflection_t = XMMatrixTranspose(reflection_view);
   if (!floor_material_->UpdateReflectionConstant(reflection_t)) {
     return false;
   }
@@ -234,7 +235,8 @@ bool ReflectionScene::Render(const XMMATRIX &view,
   return true;
 }
 
-bool ReflectionScene::RenderReflectionTexture(const XMMATRIX &projection) {
+auto ReflectionScene::RenderReflectionTexture(const XMMATRIX &projection)
+    -> bool {
   if (!render_texture_ || !cube_model_ || !cube_material_) {
     return false;
   }
@@ -248,12 +250,12 @@ bool ReflectionScene::RenderReflectionTexture(const XMMATRIX &projection) {
   XMMATRIX reflection_view;
   camera_->GetReflectionViewMatrix(reflection_view);
 
-  XMMATRIX world = XMMatrixRotationY(rotation_radians_) *
-                   XMMatrixTranslation(cube_position_.x, cube_position_.y,
-                                       cube_position_.z);
-  XMMATRIX world_t = XMMatrixTranspose(world);
-  XMMATRIX view_t = XMMatrixTranspose(reflection_view);
-  XMMATRIX projection_t = XMMatrixTranspose(projection);
+  const XMMATRIX world = XMMatrixRotationY(rotation_radians_) *
+                         XMMatrixTranslation(cube_position_.x, cube_position_.y,
+                                             cube_position_.z);
+  const XMMATRIX world_t = XMMatrixTranspose(world);
+  const XMMATRIX view_t = XMMatrixTranspose(reflection_view);
+  const XMMATRIX projection_t = XMMatrixTranspose(projection);
 
   if (!cube_material_->UpdateMatrixConstant(world_t, view_t, projection_t)) {
     render_texture_->EndRender();
@@ -292,7 +294,7 @@ bool ReflectionScene::RenderReflectionTexture(const XMMATRIX &projection) {
   return true;
 }
 
-bool ReflectionScene::BuildFloorDescriptorHeap() {
+auto ReflectionScene::BuildFloorDescriptorHeap() -> bool {
   if (!device_ || !floor_model_ || !render_texture_) {
     return false;
   }

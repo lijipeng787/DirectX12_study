@@ -10,7 +10,7 @@ ReflectionFloorMaterial::ReflectionFloorMaterial(
     std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)) {}
 
-bool ReflectionFloorMaterial::Initialize() {
+auto ReflectionFloorMaterial::Initialize() -> bool {
   if (!device_) {
     return false;
   }
@@ -23,7 +23,7 @@ bool ReflectionFloorMaterial::Initialize() {
   if (FAILED(d3d_device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(MatrixBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(MatrixBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&matrix_constant_buffer_)))) {
     return false;
@@ -32,7 +32,7 @@ bool ReflectionFloorMaterial::Initialize() {
   if (FAILED(d3d_device->CreateCommittedResource(
           &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
           D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(ReflectionBufferType)),
+          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(ReflectionBufferType)),
           D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
           IID_PPV_ARGS(&reflection_constant_buffer_)))) {
     return false;
@@ -49,18 +49,20 @@ bool ReflectionFloorMaterial::Initialize() {
   return true;
 }
 
-ResourceSharedPtr
-ReflectionFloorMaterial::GetMatrixConstantBuffer() const {
+auto ReflectionFloorMaterial::GetMatrixConstantBuffer() const
+    -> ResourceSharedPtr {
   return matrix_constant_buffer_;
 }
 
-ResourceSharedPtr
-ReflectionFloorMaterial::GetReflectionConstantBuffer() const {
+auto ReflectionFloorMaterial::GetReflectionConstantBuffer() const
+    -> ResourceSharedPtr {
   return reflection_constant_buffer_;
 }
 
-bool ReflectionFloorMaterial::UpdateMatrixConstant(
-    const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection) {
+auto ReflectionFloorMaterial::UpdateMatrixConstant(const XMMATRIX &world,
+                                                   const XMMATRIX &view,
+                                                   const XMMATRIX &projection)
+    -> bool {
   if (!matrix_constant_buffer_) {
     return false;
   }
@@ -71,18 +73,18 @@ bool ReflectionFloorMaterial::UpdateMatrixConstant(
     return false;
   }
 
-  XMStoreFloat4x4(&matrix_data_.world, world);
-  XMStoreFloat4x4(&matrix_data_.view, view);
-  XMStoreFloat4x4(&matrix_data_.projection, projection);
+  XMStoreFloat4x4(&matrix_constant_data_.world_, world);
+  XMStoreFloat4x4(&matrix_constant_data_.view_, view);
+  XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
 
-  memcpy(mapped_data, &matrix_data_, sizeof(MatrixBufferType));
+  memcpy(mapped_data, &matrix_constant_data_, sizeof(MatrixBufferType));
   matrix_constant_buffer_->Unmap(0, nullptr);
 
   return true;
 }
 
-bool ReflectionFloorMaterial::UpdateReflectionConstant(
-    const XMMATRIX &reflection) {
+auto ReflectionFloorMaterial::UpdateReflectionConstant(
+    const XMMATRIX &reflection) -> bool {
   if (!reflection_constant_buffer_) {
     return false;
   }
@@ -93,14 +95,14 @@ bool ReflectionFloorMaterial::UpdateReflectionConstant(
     return false;
   }
 
-  XMStoreFloat4x4(&reflection_data_.reflection, reflection);
-  memcpy(mapped_data, &reflection_data_, sizeof(ReflectionBufferType));
+  XMStoreFloat4x4(&reflection_constant_data_.reflection_, reflection);
+  memcpy(mapped_data, &reflection_constant_data_, sizeof(ReflectionBufferType));
   reflection_constant_buffer_->Unmap(0, nullptr);
 
   return true;
 }
 
-bool ReflectionFloorMaterial::InitializeRootSignature() {
+auto ReflectionFloorMaterial::InitializeRootSignature() -> bool {
   if (!device_) {
     return false;
   }
@@ -156,7 +158,7 @@ bool ReflectionFloorMaterial::InitializeRootSignature() {
   return true;
 }
 
-bool ReflectionFloorMaterial::InitializeGraphicsPipelineState() {
+auto ReflectionFloorMaterial::InitializeGraphicsPipelineState() -> bool {
   if (!device_) {
     return false;
   }

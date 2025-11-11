@@ -13,6 +13,7 @@ public:
       : device_(std::move(device)) {}
 
   ScreenQuadMaterial(const ScreenQuadMaterial &rhs) = delete;
+  
   auto operator=(const ScreenQuadMaterial &rhs) -> ScreenQuadMaterial & = delete;
 
   ~ScreenQuadMaterial() override = default;

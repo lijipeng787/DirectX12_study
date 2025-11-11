@@ -12,33 +12,34 @@ public:
   explicit ReflectionTextureMaterial(std::shared_ptr<DirectX12Device> device);
 
   ReflectionTextureMaterial(const ReflectionTextureMaterial &rhs) = delete;
-  ReflectionTextureMaterial &
-  operator=(const ReflectionTextureMaterial &rhs) = delete;
+
+  auto operator=(const ReflectionTextureMaterial &rhs) -> ReflectionTextureMaterial & = delete;
 
   ~ReflectionTextureMaterial() override = default;
 
-  bool Initialize() override;
+  auto Initialize() -> bool override;
 
-  ResourceSharedPtr GetMatrixConstantBuffer() const;
+  auto GetMatrixConstantBuffer() const -> ResourceSharedPtr;
 
-  bool UpdateMatrixConstant(const DirectX::XMMATRIX &world,
+  auto UpdateMatrixConstant(const DirectX::XMMATRIX &world,
                             const DirectX::XMMATRIX &view,
-                            const DirectX::XMMATRIX &projection);
+                            const DirectX::XMMATRIX &projection) -> bool;
 
 private:
-  bool InitializeRootSignature();
+  auto InitializeRootSignature() -> bool;
 
-  bool InitializeGraphicsPipelineState();
+  auto InitializeGraphicsPipelineState() -> bool;
 
 private:
   struct MatrixBufferType {
-    DirectX::XMFLOAT4X4 world;
-    DirectX::XMFLOAT4X4 view;
-    DirectX::XMFLOAT4X4 projection;
+    DirectX::XMFLOAT4X4 world_;
+    DirectX::XMFLOAT4X4 view_;
+    DirectX::XMFLOAT4X4 projection_;
   };
 
   std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   ResourceSharedPtr matrix_constant_buffer_ = nullptr;
-  MatrixBufferType matrix_data_ = {};
+  MatrixBufferType matrix_constant_data_ = {};
 };
 

@@ -25,11 +25,13 @@ public:
                    std::shared_ptr<Camera> camera);
 
   BumpMappingScene(const BumpMappingScene &rhs) = delete;
+
   auto operator=(const BumpMappingScene &rhs) -> BumpMappingScene & = delete;
 
   ~BumpMappingScene() = default;
 
   auto Initialize() -> bool;
+  
   void Shutdown();
 
   void Update(float delta_seconds);
@@ -44,8 +46,11 @@ private:
 
 private:
   std::shared_ptr<DirectX12Device> device_;
+
   std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader_;
+
   std::shared_ptr<Lighting::LightManager> light_manager_;
+
   std::shared_ptr<Camera> camera_;
 
   std::shared_ptr<BumpMapModel> model_ = nullptr;

@@ -26,47 +26,59 @@ public:
                   std::shared_ptr<Camera> camera);
 
   ReflectionScene(const ReflectionScene &rhs) = delete;
-  ReflectionScene &operator=(const ReflectionScene &rhs) = delete;
+
+  auto operator=(const ReflectionScene &rhs) -> ReflectionScene & = delete;
 
   ~ReflectionScene() = default;
 
-  bool Initialize();
+  auto Initialize() -> bool;
 
-  void Shutdown();
+  auto Shutdown() -> void;
 
-  void Update(float delta_seconds);
+  auto Update(float delta_seconds) -> void;
 
-  bool RenderReflectionMap(const DirectX::XMMATRIX &projection);
+  auto RenderReflectionMap(const DirectX::XMMATRIX &projection) -> bool;
 
-  bool Render(const DirectX::XMMATRIX &view, const DirectX::XMMATRIX &projection);
+  auto Render(const DirectX::XMMATRIX &view, const DirectX::XMMATRIX &projection) -> bool;
 
-  void SetRotationAngle(float radians) { rotation_radians_ = radians; }
+  auto SetRotationAngle(float radians) -> void { rotation_radians_ = radians; }
 
 private:
-  bool EnsureShadersLoaded();
+  auto EnsureShadersLoaded() -> bool;
 
-  bool RenderReflectionTexture(const DirectX::XMMATRIX &projection);
+  auto RenderReflectionTexture(const DirectX::XMMATRIX &projection) -> bool;
 
-  bool BuildFloorDescriptorHeap();
+  auto BuildFloorDescriptorHeap() -> bool;
 
 private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader_ = nullptr;
+  
   std::shared_ptr<Camera> camera_ = nullptr;
 
   std::unique_ptr<RenderTexture> render_texture_ = nullptr;
+  
   std::shared_ptr<ReflectionModel> cube_model_ = nullptr;
+  
   std::shared_ptr<ReflectionModel> floor_model_ = nullptr;
+  
   std::shared_ptr<ReflectionTextureMaterial> cube_material_ = nullptr;
+  
   std::shared_ptr<ReflectionFloorMaterial> floor_material_ = nullptr;
 
   DescriptorHeapPtr floor_descriptor_heap_ = nullptr;
 
   bool shaders_loaded_ = false;
+
   float rotation_radians_ = 0.0f;
+  
   float rotation_speed_ = DirectX::XM_PI * 0.25f;
+  
   float reflection_plane_height_ = -1.5f;
+  
   DirectX::XMFLOAT3 cube_position_ = {0.0f, 2.0f, 0.0f};
+  
   float floor_scale_ = 3.0f;
 };
 
