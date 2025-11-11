@@ -8,11 +8,17 @@
 
 - ~~**光照系统设计存在概念混淆（严重问题）**~~：✅ **已解决** - 已完成统一光照系统重构，详见"已完成的改进"章节。
 
+- **反射渲染管线已实现**：新增 `ReflectionScene` 类，实现实时反射技术，包括 `ReflectionModel`、`ReflectionTextureMaterial`、`ReflectionFloorMaterial` 等完整支持类，使用 `RenderTexture` 进行离屏反射纹理生成。反射着色器（`reflection.hlsl`）支持世界坐标变换到反射空间的完整管线。当前已与 BumpMapping 和 SpecularMapping 场景并列为三大主要渲染技术验证场景。
+
 - **帧资源体系进展良好**：已完成 per-frame command allocator 与 fence 生命周期管理（`FrameResource` 结构），`WaitForPreviousFrame` 与 `WaitForGpuIdle` 同步机制运作正常。常量缓冲目前由各材质类独立管理，暂无统一资源池，但对于实验性架构已基本满足需求。建议：补充多 Pass 渲染示例与资源复用模式文档。
-- **命令队列基本完备**：Direct 和 Copy 队列已稳定运行，compute 队列暂未引入但接口预留清晰。对于当前 PBR/Texture/Font 渲染管线已足够，无紧急需求。建议：如后续引入计算着色器实验，再按需扩展。
+
+- **命令队列基本完备**：Direct 和 Copy 队列已稳定运行，compute 队列暂未引入但接口预留清晰。对于当前 PBR/Texture/Font/Reflection 渲染管线已足够，无紧急需求。建议：如后续引入计算着色器实验，再按需扩展。
+
 - **窗口/配置热重建缺失**：未支持 Resize、MSAA、HDR 等动态更新，实验新技术时需要重启程序。这是当前最大的可用性瓶颈。建议：优先实现窗口 Resize 与交换链重建逻辑。
+
 - **日志与错误处理持续改善**：初始化阶段的 `DxgiResourceManager` 日志详细且规范，`LogInitializationFailure` 覆盖主要失败路径。运行期缺少性能统计与 GPU 事件追踪。建议：引入可选的 PIX 标记与帧时间统计输出。
-- **离屏渲染与材质系统设计优秀**：`RenderTargetDescriptor`、`CreateRenderTarget`、`ScreenQuad` 材质注入、外部 CBV 支持等均已落地，灵活性高。当前 `default_offscreen_handle_` 机制运作良好，支持多目标实验。建议：补充 UAV/DSV 创建接口与使用示例。
+
+- **离屏渲染与材质系统设计优秀**：`RenderTargetDescriptor`、`CreateRenderTarget`、`ScreenQuad` 材质注入、外部 CBV 支持等均已落地，灵活性高。当前 `default_offscreen_handle_` 机制运作良好，支持多目标实验。`RenderTexture` 类为反射场景提供了专用的离屏渲染支持。建议：补充 UAV/DSV 创建接口与使用示例。
 
 ## 已完成的改进
 
@@ -27,6 +33,13 @@
   - 移除 `Graphics` 类中的冗余字段（`light_` 和 `pbr_light_direction_`），统一使用 `LightManager`
   - 为 `ModelMaterial` 和 `PBRMaterial` 添加 `UpdateFromLight(SceneLight*)` 接口，从统一光源按需提取参数
   - Cube（Blinn-Phong）和 PBR Sphere 现在共用同一个光源，保证光照一致性，符合 DRY 原则
+- ✅ **实时反射渲染管线（2025-11-11 完成）**：
+  - 实现完整的 `ReflectionScene` 类，支持实时反射渲染实验
+  - 新增 `ReflectionModel`、`ReflectionTextureMaterial`、`ReflectionFloorMaterial` 专用材质与模型类
+  - 添加 `RenderTexture` 类，提供离屏反射纹理生成功能
+  - 实现反射着色器（`reflection.hlsl`），支持世界坐标到反射空间的完整变换
+  - 集成反射场景到主渲染循环，与 BumpMapping、SpecularMapping 场景并列为三大技术验证场景
+  - 反射平面高度可配置（`reflection_plane_height_`），支持不同反射场景实验
 
 ## 待推进事项
 
@@ -58,13 +71,15 @@
 
 ## 总体结论
 
-核心框架已完成关键里程碑：单例拆除、初始化模块化、帧资源环管理、离屏渲染抽象、材质解耦等均已落地并稳定运行。当前架构在"可实验性"维度表现优秀，支持 PBR、Texture、Font 等多种材质的灵活组合与离屏渲染实验。
+核心框架已完成关键里程碑：单例拆除、初始化模块化、帧资源环管理、离屏渲染抽象、材质解耦、统一光照系统、实时反射渲染等均已落地并稳定运行。当前架构在"可实验性"维度表现优秀，支持 PBR、BumpMapping、SpecularMapping、Reflection 等多种渲染技术的灵活组合与离屏渲染实验。
 
 **主要优势**：
 - 资源管理清晰，`ComPtr` 与 `DxgiResourceManager` 减少内存泄漏风险
 - 帧同步机制健壮，`WaitForPreviousFrame` 与 `WaitForGpuIdle` 运作良好
 - 离屏渲染与材质注入灵活度高，易于扩展新渲染技术
 - **统一光照系统架构优秀**：`SceneLight` + `LightManager` 提供清晰的光源管理，`UpdateFromLight` 接口实现材质解耦，为多光源实验奠定基础
+- **场景系统模块化**：三大渲染技术场景（BumpMapping、SpecularMapping、Reflection）架构一致，便于快速实验新渲染技术
+- **实时反射技术验证**：通过 `RenderTexture` + 反射着色器实现完整的反射渲染管线，为后续高级渲染技术奠定基础
 
 **核心短板**：
 - 窗口热重建缺失，限制快速迭代能力（当前最高优先级）
@@ -78,3 +93,7 @@
 3. **长期**：根据实际实验需求评估 RenderGraph 与计算队列的引入时机
 
 整体架构已具备高可用性基础，后续应专注于提升实验迭代速度与调试便利性，而非过度抽象化。
+
+---
+**最新更新（2025-11-11）**：
+架构评审已更新以反映当前项目状态。新增的实时反射渲染管线验证了架构设计的有效性，三大渲染技术场景（BumpMapping、SpecularMapping、Reflection）的成功实现证明了当前架构在可扩展性和实验性方面的优势。下一步重点应放在窗口热重建功能上，这将显著提升开发效率。

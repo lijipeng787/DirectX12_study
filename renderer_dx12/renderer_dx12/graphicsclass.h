@@ -75,6 +75,7 @@ private:
   std::shared_ptr<ReflectionScene> reflection_scene_ = nullptr;
 
   float camera_move_speed_ = 5.0f;
+  float camera_turn_speed_ = 90.0f;
 
   float shared_rotation_angle_ = 0.0f;
   

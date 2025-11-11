@@ -361,6 +361,27 @@ void Graphics::UpdateCameraFromInput(float delta_seconds, Input *input) {
   XMFLOAT3 camera_position = camera_->GetPosition();
   XMFLOAT3 camera_rotation = camera_->GetRotation();
 
+  float rotation_delta = 0.0f;
+  if (input->IsQPressed()) {
+    rotation_delta -= camera_turn_speed_ * delta_seconds;
+  }
+  if (input->IsEPressed()) {
+    rotation_delta += camera_turn_speed_ * delta_seconds;
+  }
+
+  bool rotation_changed = false;
+  if (rotation_delta != 0.0f) {
+    camera_rotation.y += rotation_delta;
+
+    if (camera_rotation.y > 180.0f) {
+      camera_rotation.y -= 360.0f;
+    } else if (camera_rotation.y < -180.0f) {
+      camera_rotation.y += 360.0f;
+    }
+
+    rotation_changed = true;
+  }
+
   float yaw_radians = camera_rotation.y * XM_PI / 180.0f;
 
   XMVECTOR forward = XMVector3Normalize(
@@ -382,9 +403,19 @@ void Graphics::UpdateCameraFromInput(float delta_seconds, Input *input) {
   if (input->IsAPressed()) {
     movement = XMVectorSubtract(movement, right);
   }
+  if (input->IsRPressed()) {
+    movement = XMVectorAdd(movement, up);
+  }
+  if (input->IsFPressed()) {
+    movement = XMVectorSubtract(movement, up);
+  }
 
   float movement_length_sq = XMVectorGetX(XMVector3LengthSq(movement));
   if (movement_length_sq <= 0.0f) {
+    if (rotation_changed) {
+      camera_->SetRotation(camera_rotation.x, camera_rotation.y,
+                           camera_rotation.z);
+    }
     return;
   }
 
@@ -396,6 +427,10 @@ void Graphics::UpdateCameraFromInput(float delta_seconds, Input *input) {
 
   XMStoreFloat3(&camera_position, position);
   camera_->SetPosition(camera_position.x, camera_position.y, camera_position.z);
+  if (rotation_changed) {
+    camera_->SetRotation(camera_rotation.x, camera_rotation.y,
+                         camera_rotation.z);
+  }
 }
 
 bool Graphics::Render() {

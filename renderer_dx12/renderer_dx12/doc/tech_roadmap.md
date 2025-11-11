@@ -10,6 +10,7 @@
 - **拆分初始化流程**：将设备创建、队列配置、交换链、描述符堆、离屏资源等步骤模块化，构建 RAII 式资源管理与失败回滚机制，并补充详细日志。（✅ 模块化完成，日志系统已完善）
 - **统一资源生命周期管理**：引入智能指针或自定义句柄封装，消除手动 `Release`，为后续自动化测试铺路。（✅ DXGI/D3D12 资源已统一管理）
 - **统一光照系统重构**：引入 `SceneLight` 和 `LightManager`，消除不同材质的光照数据冗余，为多光源实验奠定基础。（✅ **2025-11-10 已完成**）
+- **实时反射渲染技术验证**：实现 `ReflectionScene` 系统，建立完整的反射渲染管线，验证离屏渲染与高级渲染技术的架构设计。（✅ **2025-11-11 已完成**）
 
 ## 阶段 2：帧资源与命令调度（中期）
 
@@ -20,7 +21,7 @@
 
 ## 阶段 3：渲染目标与资源弹性（中期 - 部分完成）
 
-- **RenderTarget 管理器**：支持按需创建/销毁多尺寸、多格式的离屏纹理，提供 SRV/RTV 句柄分配。（✅ 核心功能已完成，`CreateRenderTarget`、`DestroyRenderTarget`、`RenderTargetDescriptor` 运作良好，UAV/DSV 接口待扩展）
+- **RenderTarget 管理器**：支持按需创建/销毁多尺寸、多格式的离屏纹理，提供 SRV/RTV 句柄分配。（✅ 核心功能已完成，`CreateRenderTarget`、`DestroyRenderTarget`、`RenderTargetDescriptor` 运作良好，`RenderTexture` 类为反射场景提供专用支持，UAV/DSV 接口待扩展）
 - **动态重建能力**：实现窗口 Resize、MSAA、HDR 等配置的热更新流程，确保资源可安全回收与重建。（⏳ **高优先级待实现**，当前为架构最大短板）
 - **资源热替换**：支持 Shader、管线状态、根签名的快速重载，便于迭代新技术。（⏳ Shader 热重载中优先级，PSO 重建机制待设计）
 
@@ -59,6 +60,7 @@
 
 - **Q1 目标（2025-11 至 2026-01）**：
   - ✅ 完成统一光照系统重构（SceneLight + LightManager）
+  - ✅ 实现实时反射渲染技术验证（ReflectionScene + RenderTexture）
   - ⏳ 完成窗口 Resize 与资源热重建
   - ⏳ 补充 UAV/DSV 接口
   - ⏳ 集成 PIX 标记系统

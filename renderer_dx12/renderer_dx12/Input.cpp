@@ -218,6 +218,30 @@ bool Input::IsZPressed() {
   return false;
 }
 
+bool Input::IsRPressed() {
+  if (keyboard_state_[DIK_R] & 0x80)
+    return true;
+  return false;
+}
+
+bool Input::IsFPressed() {
+  if (keyboard_state_[DIK_F] & 0x80)
+    return true;
+  return false;
+}
+
+bool Input::IsQPressed() {
+  if (keyboard_state_[DIK_Q] & 0x80)
+    return true;
+  return false;
+}
+
+bool Input::IsEPressed() {
+  if (keyboard_state_[DIK_E] & 0x80)
+    return true;
+  return false;
+}
+
 bool Input::IsPageUpPressed() {
   if (keyboard_state_[DIK_PGUP] & 0x80)
     return true;

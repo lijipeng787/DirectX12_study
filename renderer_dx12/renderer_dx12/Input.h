@@ -56,6 +56,14 @@ public:
 
   auto IsPageDownPressed() -> bool;
 
+  auto IsRPressed() -> bool;
+
+  auto IsFPressed() -> bool;
+
+  auto IsQPressed() -> bool;
+
+  auto IsEPressed() -> bool;
+
 private:
   void ProcessInput();
 

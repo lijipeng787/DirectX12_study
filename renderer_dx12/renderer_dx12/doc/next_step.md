@@ -46,6 +46,15 @@
 - ✅ 为 `ModelMaterial` 和 `PBRMaterial` 添加 `UpdateFromLight(SceneLight*)` 接口。
 - ✅ 确保 Cube（Blinn-Phong）和 PBR Sphere 共用同一光源，验证光照一致性。
 
+## 任务 7：实时反射渲染管线（2025-11-11 完成）
+
+- ✅ 实现完整的 `ReflectionScene` 类，支持实时反射渲染技术验证。
+- ✅ 新增专用材质与模型类：`ReflectionModel`、`ReflectionTextureMaterial`、`ReflectionFloorMaterial`。
+- ✅ 实现 `RenderTexture` 类，提供离屏反射纹理生成与管理功能。
+- ✅ 创建反射着色器（`reflection.hlsl`），支持完整的世界坐标到反射空间变换。
+- ✅ 集成反射场景到主渲染循环，与 BumpMapping、SpecularMapping 形成三大技术验证场景。
+- ✅ 添加 `SetRotationAngle` 接口，支持场景间共享旋转角度，统一动画状态管理。
+
 ## 验收标准
 
 - ✅ 完成以上任务后，可在不依赖单例的情况下初始化渲染设备并渲染 ScreenQuad。
@@ -53,6 +62,8 @@
 - ✅ Off-screen 渲染目标可动态生成并绑定自定义材质，支持不同尺寸/格式的试验（`CreateRenderTarget` + `RenderTargetDescriptor`）。
 - ✅ Frame 资源环已完成（`FrameResource` 结构 + per-frame allocator + fence），支持稳定的双缓冲渲染。
 - ✅ 统一光照系统运作良好，Cube 和 PBR Sphere 共用同一光源，验证通过。
+- ✅ 实时反射渲染技术验证完成，`ReflectionScene` + `RenderTexture` + 反射着色器稳定运行。
+- ✅ 三大渲染技术场景（BumpMapping、SpecularMapping、Reflection）架构统一，便于快速扩展新技术。
 - ⏳ 窗口 Resize 与资源热重建仍待实现，需补齐 OnResize 接口与交换链重建逻辑。
 - ⏳ 多光源场景实战验证待完成，需测试 2-3 光源场景与 Shader 适配。
 
