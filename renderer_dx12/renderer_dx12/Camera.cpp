@@ -95,3 +95,19 @@ void Camera::Construct2DViewMatrix() {
   // Finally create the view matrix from the three updated vectors.
   view_matrix_2d_ = XMMatrixLookAtLH(position, lookAt, up);
 }
+
+void Camera::UpdateReflection(float height) {
+  using namespace DirectX;
+
+  XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+  float reflected_y = -position_y_ + (height * 2.0f);
+  XMVECTOR position =
+      XMVectorSet(position_x_, reflected_y, position_z_, 1.0f);
+
+  float yaw = rotation_y_ * 0.0174532925f;
+  XMVECTOR look_at = XMVectorSet(sinf(yaw) + position_x_, reflected_y,
+                                 cosf(yaw) + position_z_, 1.0f);
+
+  reflection_view_matrix_ = XMMatrixLookAtLH(position, look_at, up);
+}

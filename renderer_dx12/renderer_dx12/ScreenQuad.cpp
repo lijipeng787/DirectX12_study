@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 #include "ScreenQuad.h"
 
@@ -40,25 +40,11 @@ bool ScreenQuad::Initialize(UINT screen_width, UINT screen_height,
   return true;
 }
 
-const VertexBufferView &ScreenQuad::GetVertexBufferView() const {
-  return vertex_buffer_view_;
-}
-
-const IndexBufferView &ScreenQuad::GetIndexBufferView() const {
-  return index_buffer_view_;
-}
-
-void ScreenQuad::SetVertexBufferView(const VertexBufferView &view) {
-  vertex_buffer_view_ = view;
-}
-
 void ScreenQuad::SetIndexBufferView(const IndexBufferView &view) {
   index_buffer_view_ = view;
   index_count_ =
       static_cast<UINT>(index_buffer_view_.SizeInBytes / sizeof(uint16_t));
 }
-
-ScreenQuadMaterial *ScreenQuad::GetMaterial() { return material_.get(); }
 
 std::shared_ptr<ScreenQuadMaterial> ScreenQuad::GetMaterialShared() const {
   return material_;
@@ -133,8 +119,6 @@ bool ScreenQuad::UpdatePosition(int pos_x, int pos_y) {
 
   return true;
 }
-
-const int ScreenQuad::GetIndexCount() { return index_count_; }
 
 bool ScreenQuad::InitializeBuffers() {
   vertex_count_ = 6;
@@ -295,8 +279,6 @@ bool ScreenQuad::InitializeBuffers() {
 
   return true;
 }
-
-ScreenQuadMaterial::~ScreenQuadMaterial() {}
 
 ResourceSharedPtr ScreenQuadMaterial::GetConstantBuffer() const {
   return constant_buffer_;

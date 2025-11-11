@@ -263,6 +263,10 @@ public:
     ortho = ortho_matrix_;
   }
 
+  inline int GetScreenWidth() const { return config_.screen_width; }
+
+  inline int GetScreenHeight() const { return config_.screen_height; }
+
   void inline GetVideoCardInfo(char *card_name, int &memory);
 
   RenderTargetHandle
@@ -271,6 +275,8 @@ public:
   void DestroyRenderTarget(RenderTargetHandle handle);
 
   DescriptorHeapPtr GetRenderTargetSrv(RenderTargetHandle handle) const;
+
+  ResourceSharedPtr GetRenderTargetTexture(RenderTargetHandle handle) const;
 
 private:
   HRESULT EnableDebugLayer();

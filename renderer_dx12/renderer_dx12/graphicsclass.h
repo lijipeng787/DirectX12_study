@@ -27,6 +27,7 @@ class Fps;
 class CPUUsageTracker;
 class BumpMappingScene;
 class SpecularMappingScene;
+class ReflectionScene;
 
 class Graphics {
 public:
@@ -71,6 +72,7 @@ private:
 
   std::shared_ptr<BumpMappingScene> bump_mapping_scene_ = nullptr;
   std::shared_ptr<SpecularMappingScene> specular_mapping_scene_ = nullptr;
+  std::shared_ptr<ReflectionScene> reflection_scene_ = nullptr;
 
   float camera_move_speed_ = 5.0f;
 

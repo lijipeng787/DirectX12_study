@@ -42,6 +42,12 @@ public:
     view = view_matrix_2d_;
   }
 
+  void UpdateReflection(float height);
+
+  void GetReflectionViewMatrix(DirectX::XMMATRIX &view) const {
+    view = reflection_view_matrix_;
+  }
+
 private:
   float position_x_ = 0.0f, position_y_ = 0.0f, position_z_ = 0.0f;
 
@@ -50,4 +56,5 @@ private:
   DirectX::XMMATRIX view_matrix_ = DirectX::XMMatrixIdentity();
 
   DirectX::XMMATRIX view_matrix_2d_ = DirectX::XMMatrixIdentity();
+  DirectX::XMMATRIX reflection_view_matrix_ = DirectX::XMMatrixIdentity();
 };

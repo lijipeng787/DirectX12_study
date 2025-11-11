@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <DirectXMath.h>
 #include <memory>
@@ -15,7 +15,7 @@ public:
 
   ScreenQuadMaterial &operator=(const ScreenQuadMaterial &rhs) = delete;
 
-  virtual ~ScreenQuadMaterial();
+  virtual ~ScreenQuadMaterial() {}
 
 private:
   struct MatrixBufferType {
@@ -77,23 +77,29 @@ public:
   bool Initialize(UINT screen_width, UINT screen_height, UINT bitmap_width,
                   UINT bitmap_height);
 
-  const VertexBufferView &GetVertexBufferView() const;
+  const VertexBufferView& GetVertexBufferView() const {
+      return vertex_buffer_view_;
+  }
 
-  const IndexBufferView &GetIndexBufferView() const;
+  const IndexBufferView& GetIndexBufferView() const {
+      return index_buffer_view_;
+  }
 
-  void SetVertexBufferView(const VertexBufferView &view);
+  void SetVertexBufferView(const VertexBufferView& view) {
+      vertex_buffer_view_ = view;
+  }
 
   void SetIndexBufferView(const IndexBufferView &view);
 
-  ScreenQuadMaterial *GetMaterial();
-
   std::shared_ptr<ScreenQuadMaterial> GetMaterialShared() const;
+
+  ScreenQuadMaterial* ScreenQuad::GetMaterial() { return material_.get(); }
 
   void SetMaterial(std::shared_ptr<ScreenQuadMaterial> material);
 
   bool UpdatePosition(int pos_x, int pos_y);
 
-  const int GetIndexCount();
+  const int GetIndexCount() const { return index_count_; }
 
 private:
   bool InitializeBuffers();

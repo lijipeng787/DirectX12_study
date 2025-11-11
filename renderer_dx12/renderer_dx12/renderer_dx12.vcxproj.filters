@@ -107,6 +107,21 @@
     <ClInclude Include="SpecularMappingScene.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ReflectionFloorMaterial.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ReflectionModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ReflectionScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ReflectionTextureMaterial.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTexture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -193,6 +208,21 @@
     <ClCompile Include="SpecularMappingScene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ReflectionFloorMaterial.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ReflectionModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ReflectionScene.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ReflectionTextureMaterial.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTexture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="fontPS.hlsl">
@@ -223,6 +253,9 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="shader\specMap.hlsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shader\reflection.hlsl">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

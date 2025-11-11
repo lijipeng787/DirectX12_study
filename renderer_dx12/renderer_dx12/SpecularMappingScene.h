@@ -55,6 +55,6 @@ private:
 
   float rotation_radians_ = 0.0f;
 
-  DirectX::XMFLOAT3 position_ = {-6.0f, 0.0f, 0.0f};
+  DirectX::XMFLOAT3 position_ = {6.0f, 1.5f, 6.0f};
 };
 

@@ -152,6 +152,11 @@
     <ClInclude Include="BumpMapModel.h" />
     <ClInclude Include="BumpMappingScene.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="ReflectionFloorMaterial.h" />
+    <ClInclude Include="ReflectionModel.h" />
+    <ClInclude Include="ReflectionScene.h" />
+    <ClInclude Include="ReflectionTextureMaterial.h" />
+    <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="ScreenQuad.h" />
     <ClInclude Include="SpecularMapMaterial.h" />
@@ -185,6 +190,11 @@
     <ClCompile Include="BumpMapModel.cpp" />
     <ClCompile Include="BumpMappingScene.cpp" />
     <ClCompile Include="Material.cpp" />
+    <ClCompile Include="ReflectionFloorMaterial.cpp" />
+    <ClCompile Include="ReflectionModel.cpp" />
+    <ClCompile Include="ReflectionScene.cpp" />
+    <ClCompile Include="ReflectionTextureMaterial.cpp" />
+    <ClCompile Include="RenderTexture.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="ScreenQuad.cpp" />
     <ClCompile Include="SpecularMapMaterial.cpp" />
@@ -217,6 +227,9 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\bumpMap.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="shader\reflection.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="shader\specMap.hlsl">

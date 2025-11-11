@@ -478,6 +478,15 @@ auto DirectX12Device::GetRenderTargetSrv(RenderTargetHandle handle) const
   return it->second.srv;
 }
 
+auto DirectX12Device::GetRenderTargetTexture(RenderTargetHandle handle) const
+    -> ResourceSharedPtr {
+  auto resource = GetRenderTargetResource(handle);
+  if (!resource) {
+    return nullptr;
+  }
+  return resource->texture;
+}
+
 auto DirectX12Device::ResolveRenderTargetHandle(RenderTargetHandle handle) const
     -> RenderTargetHandle {
   if (handle == kInvalidRenderTargetHandle) {

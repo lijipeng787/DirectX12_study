@@ -11,6 +11,7 @@
 #include "LightManager.h"
 #include "PBRModel.h"
 #include "SpecularMappingScene.h"
+#include "ReflectionScene.h"
 
 #include "ScreenQuad.h"
 #include "modelclass.h"
@@ -239,6 +240,20 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
   }
 
+  {
+    reflection_scene_ = std::make_shared<ReflectionScene>(
+        d3d12_device_, shader_loader_, camera_);
+    if (!reflection_scene_) {
+      return false;
+    }
+
+    if (!reflection_scene_->Initialize()) {
+      MessageBox(hwnd, L"Could not initialize reflection scene.", L"Error",
+                 MB_OK);
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -256,6 +271,11 @@ void Graphics::Shutdown() {
   if (specular_mapping_scene_) {
     specular_mapping_scene_->Shutdown();
     specular_mapping_scene_.reset();
+  }
+
+  if (reflection_scene_) {
+    reflection_scene_->Shutdown();
+    reflection_scene_.reset();
   }
 
   bitmap_.reset();
@@ -296,6 +316,10 @@ bool Graphics::Frame(float delta_seconds, Input *input) {
     specular_mapping_scene_->Update(delta_seconds);
   }
 
+  if (reflection_scene_) {
+    reflection_scene_->Update(delta_seconds);
+  }
+
   shared_rotation_angle_ += shared_rotation_speed_ * delta_seconds;
   if (shared_rotation_angle_ > DirectX::XM_2PI) {
     shared_rotation_angle_ -= DirectX::XM_2PI;
@@ -307,6 +331,10 @@ bool Graphics::Frame(float delta_seconds, Input *input) {
 
   if (specular_mapping_scene_) {
     specular_mapping_scene_->SetRotationAngle(shared_rotation_angle_);
+  }
+
+  if (reflection_scene_) {
+    reflection_scene_->SetRotationAngle(shared_rotation_angle_);
   }
 
   UpdateCameraFromInput(delta_seconds, input);
@@ -379,7 +407,7 @@ bool Graphics::Render() {
 
   DirectX::XMMATRIX rotate_world =
       DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation) *
-                                 DirectX::XMMatrixTranslation(2.0f, 0.0f, 0.0f));
+                                 DirectX::XMMatrixTranslation(-6.0f, 1.5f, -6.0f));
 
   DirectX::XMMATRIX font_world = DirectX::XMMatrixTranspose(world_matrix);
 
@@ -397,7 +425,7 @@ bool Graphics::Render() {
   orthogonality = DirectX::XMMatrixTranspose(orthogonality);
 
   DirectX::XMMATRIX pbr_world = DirectX::XMMatrixRotationY(rotation) *
-                                DirectX::XMMatrixTranslation(6.0f, 0.0f, 0.0f);
+                                DirectX::XMMatrixTranslation(6.0f, 1.5f, -6.0f);
   pbr_world = DirectX::XMMatrixTranspose(pbr_world);
 
   if (!model_->GetMaterial()->UpdateMatrixConstant(rotate_world, view,
@@ -526,8 +554,20 @@ bool Graphics::Render() {
     d3d12_device_->EndDrawToOffScreen();
   }
 
+  if (reflection_scene_) {
+    if (!reflection_scene_->RenderReflectionMap(projection_matrix)) {
+      return false;
+    }
+  }
+
   {
     d3d12_device_->BeginPopulateGraphicsCommandList();
+
+    if (reflection_scene_) {
+      if (!reflection_scene_->Render(view_matrix, projection_matrix)) {
+        return false;
+      }
+    }
 
     if (specular_mapping_scene_) {
       if (!specular_mapping_scene_->Render(view_matrix, projection_matrix,

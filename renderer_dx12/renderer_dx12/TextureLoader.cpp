@@ -316,4 +316,11 @@ bool TextureLoader::LoadTexturesByNameArray(unsigned int num_textures,
 
   return true;
 }
+
+ResourceSharedPtr TextureLoader::GetTextureResource(size_t index) const {
+  if (index >= texture_container_.size()) {
+    return nullptr;
+  }
+  return texture_container_[index];
+}
 } // namespace ResourceLoader

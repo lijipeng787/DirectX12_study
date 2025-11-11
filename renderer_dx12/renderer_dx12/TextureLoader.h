@@ -34,6 +34,8 @@ public:
   bool LoadTexturesByNameArray(unsigned int num_textures,
                                WCHAR **texture_filename_arr);
 
+  ResourceSharedPtr GetTextureResource(size_t index) const;
+
 private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
