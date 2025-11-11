@@ -1,71 +1,13 @@
-#ifndef _TEXTCLASS_H_
-#define _TEXTCLASS_H_
+#pragma once
 
 #include <DirectXMath.h>
 #include <memory>
 
-#include "Material.h"
+#include "TextMaterial.h"
 #include "TextureLoader.h"
 
 class BitmapFont;
 class DirectX12Device;
-
-class TextMaterial : public Effect::Material {
-public:
-  explicit TextMaterial(std::shared_ptr<DirectX12Device> device);
-
-  TextMaterial(const TextMaterial &rhs) = delete;
-
-  TextMaterial &operator=(const TextMaterial &rhs) = delete;
-
-  virtual ~TextMaterial();
-
-private:
-  struct ConstantBufferType {
-    DirectX::XMFLOAT4X4 world_;
-    DirectX::XMFLOAT4X4 base_view_;
-    DirectX::XMFLOAT4X4 orthonality_;
-  };
-
-  struct PixelBufferType {
-    DirectX::XMFLOAT4 pixel_color_;
-  };
-
-public:
-  virtual bool Initialize() override;
-
-  ResourceSharedPtr GetMatrixConstantBuffer() const {
-    return matrix_constant_buffer_;
-  }
-
-  ResourceSharedPtr GetPixelConstantBuffer() const {
-    return pixel_color_constant_buffer_;
-  }
-
-  bool UpdateMatrixConstant(const DirectX::XMMATRIX &world,
-                            const DirectX::XMMATRIX &base_view,
-                            const DirectX::XMMATRIX &orthonality);
-
-  bool UpdateLightConstant(const DirectX::XMFLOAT4 &pixel_color);
-
-private:
-  bool InitializeConstantBuffer();
-
-  bool InitializeRootSignature();
-
-  bool InitializeGraphicsPipelineState();
-
-private:
-  std::shared_ptr<DirectX12Device> device_ = nullptr;
-
-  ResourceSharedPtr matrix_constant_buffer_ = nullptr;
-
-  ConstantBufferType matrix_constant_data_ = {};
-
-  ResourceSharedPtr pixel_color_constant_buffer_ = nullptr;
-
-  PixelBufferType pixel_color_constant_data_ = {};
-};
 
 class Text {
 public:
@@ -158,5 +100,3 @@ private:
 
   std::vector<SentenceType *> sentence_vector_ = {};
 };
-
-#endif

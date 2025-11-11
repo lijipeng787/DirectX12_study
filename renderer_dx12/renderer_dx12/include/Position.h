@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef APPLICATION_HEADER_POSITION_H
-
-#define APPLICATION_HEADER_POSITION_H
-
 class Position {
 public:
   Position() {}
@@ -73,4 +69,3 @@ private:
   float look_up_speed_ = {}, look_down_speed_ = {};
 };
 
-#endif // !APPLICATION_HEADER_POSITION_H

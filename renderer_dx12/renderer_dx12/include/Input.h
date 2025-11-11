@@ -1,5 +1,4 @@
-#ifndef _INPUTCLASS_H_
-#define _INPUTCLASS_H_
+#pragma once
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -92,5 +91,3 @@ private:
 
   int mouse_x_ = 0, mouse_y_ = 0;
 };
-
-#endif

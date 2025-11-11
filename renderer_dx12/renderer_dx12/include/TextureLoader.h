@@ -1,5 +1,4 @@
-#ifndef HEADER_TEXTURECLASS_H
-#define HEADER_TEXTURECLASS_H
+#pragma once
 
 #include <memory>
 #include <unordered_map>
@@ -49,4 +48,3 @@ private:
 };
 } // namespace ResourceLoader
 
-#endif // !HEADER_TEXTURECLASS_H

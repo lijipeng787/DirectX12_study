@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "systemclass.h"
+#include "System.h"
 
 #include "Input.h"
 #include "Timer.h"
-#include "graphicsclass.h"
+#include "Graphics.h"
 
 bool System::Initialize() {
   int screenWidth, screenHeight;

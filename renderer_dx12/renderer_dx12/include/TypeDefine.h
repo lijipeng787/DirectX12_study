@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef _TYPEDEFINE_H_
-#define _TYPEDEFINE_H_
-
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <string>
@@ -73,4 +70,3 @@ typedef D3D12_SHADER_BYTECODE PixelShaderByteCode;
 
 typedef D3D12_INDEX_BUFFER_VIEW IndexBufferView;
 
-#endif // !_TYPEDEFINE_H_

@@ -1,5 +1,4 @@
-#ifndef _TIMERCLASS_H_
-#define _TIMERCLASS_H_
+#pragma once
 
 #include <windows.h>
 
@@ -29,5 +28,3 @@ private:
 
   float frame_time_ = 0.0f;
 };
-
-#endif

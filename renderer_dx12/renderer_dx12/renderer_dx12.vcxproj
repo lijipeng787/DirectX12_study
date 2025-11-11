@@ -89,6 +89,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -105,6 +106,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -122,6 +124,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -139,6 +142,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,82 +152,88 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="BumpMapMaterial.h" />
-    <ClInclude Include="BumpMapModel.h" />
-    <ClInclude Include="BumpMappingScene.h" />
-    <ClInclude Include="Material.h" />
-    <ClInclude Include="ReflectionFloorMaterial.h" />
-    <ClInclude Include="ReflectionModel.h" />
-    <ClInclude Include="ReflectionScene.h" />
-    <ClInclude Include="ReflectionTextureMaterial.h" />
-    <ClInclude Include="RenderTexture.h" />
-    <ClInclude Include="ShaderLoader.h" />
-    <ClInclude Include="ScreenQuad.h" />
-    <ClInclude Include="SpecularMapMaterial.h" />
-    <ClInclude Include="SpecularMapModel.h" />
-    <ClInclude Include="SpecularMappingScene.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="CPUUsageTracker.h" />
-    <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="dds.h" />
-    <ClInclude Include="DDSTextureLoader.h" />
-    <ClInclude Include="DirectX12Device.h" />
-    <ClInclude Include="Font.h" />
-    <ClInclude Include="Fps.h" />
-    <ClInclude Include="graphicsclass.h" />
-    <ClInclude Include="Input.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="modelclass.h" />
-    <ClInclude Include="PBRMaterial.h" />
-    <ClInclude Include="PBRModel.h" />
-    <ClInclude Include="Position.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="systemclass.h" />
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="textclass.h" />
-    <ClInclude Include="TextureLoader.h" />
-    <ClInclude Include="Timer.h" />
-    <ClInclude Include="TypeDefine.h" />
+    <ClInclude Include="include\BumpMapMaterial.h" />
+    <ClInclude Include="include\BumpMapModel.h" />
+    <ClInclude Include="include\BumpMappingScene.h" />
+    <ClInclude Include="include\Material.h" />
+    <ClInclude Include="include\ModelMaterial.h" />
+    <ClInclude Include="include\ReflectionFloorMaterial.h" />
+    <ClInclude Include="include\ReflectionModel.h" />
+    <ClInclude Include="include\ReflectionScene.h" />
+    <ClInclude Include="include\ReflectionTextureMaterial.h" />
+    <ClInclude Include="include\RenderTexture.h" />
+    <ClInclude Include="include\ScreenQuadMaterial.h" />
+    <ClInclude Include="include\ShaderLoader.h" />
+    <ClInclude Include="include\ScreenQuad.h" />
+    <ClInclude Include="include\SpecularMapMaterial.h" />
+    <ClInclude Include="include\SpecularMapModel.h" />
+    <ClInclude Include="include\SpecularMappingScene.h" />
+    <ClInclude Include="include\Camera.h" />
+    <ClInclude Include="include\CPUUsageTracker.h" />
+    <ClInclude Include="include\d3dx12.h" />
+    <ClInclude Include="include\dds.h" />
+    <ClInclude Include="include\DDSTextureLoader.h" />
+    <ClInclude Include="include\DirectX12Device.h" />
+    <ClInclude Include="include\Font.h" />
+    <ClInclude Include="include\Fps.h" />
+    <ClInclude Include="include\Graphics.h" />
+    <ClInclude Include="include\Input.h" />
+    <ClInclude Include="include\Light.h" />
+    <ClInclude Include="include\Model.h" />
+    <ClInclude Include="include\PBRMaterial.h" />
+    <ClInclude Include="include\PBRModel.h" />
+    <ClInclude Include="include\Position.h" />
+    <ClInclude Include="include\stdafx.h" />
+    <ClInclude Include="include\System.h" />
+    <ClInclude Include="include\targetver.h" />
+    <ClInclude Include="include\Text.h" />
+    <ClInclude Include="include\TextMaterial.h" />
+    <ClInclude Include="include\TextureLoader.h" />
+    <ClInclude Include="include\Timer.h" />
+    <ClInclude Include="include\TypeDefine.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BumpMapMaterial.cpp" />
-    <ClCompile Include="BumpMapModel.cpp" />
-    <ClCompile Include="BumpMappingScene.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="ReflectionFloorMaterial.cpp" />
-    <ClCompile Include="ReflectionModel.cpp" />
-    <ClCompile Include="ReflectionScene.cpp" />
-    <ClCompile Include="ReflectionTextureMaterial.cpp" />
-    <ClCompile Include="RenderTexture.cpp" />
-    <ClCompile Include="ShaderLoader.cpp" />
-    <ClCompile Include="ScreenQuad.cpp" />
-    <ClCompile Include="SpecularMapMaterial.cpp" />
-    <ClCompile Include="SpecularMapModel.cpp" />
-    <ClCompile Include="SpecularMappingScene.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CPUUsageTracker.cpp" />
-    <ClCompile Include="DDSTextureLoader.cpp" />
-    <ClCompile Include="DirectX12Device.cpp" />
-    <ClCompile Include="Font.cpp" />
-    <ClCompile Include="Fps.cpp" />
-    <ClCompile Include="graphicsclass.cpp" />
-    <ClCompile Include="Input.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="modelclass.cpp" />
-    <ClCompile Include="PBRMaterial.cpp" />
-    <ClCompile Include="PBRModel.cpp" />
-    <ClCompile Include="Position.cpp" />
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="lib\BumpMapMaterial.cpp" />
+    <ClCompile Include="lib\BumpMapModel.cpp" />
+    <ClCompile Include="lib\BumpMappingScene.cpp" />
+    <ClCompile Include="lib\Material.cpp" />
+    <ClCompile Include="lib\ReflectionFloorMaterial.cpp" />
+    <ClCompile Include="lib\ReflectionModel.cpp" />
+    <ClCompile Include="lib\ReflectionScene.cpp" />
+    <ClCompile Include="lib\ReflectionTextureMaterial.cpp" />
+    <ClCompile Include="lib\RenderTexture.cpp" />
+    <ClCompile Include="lib\ShaderLoader.cpp" />
+    <ClCompile Include="lib\ScreenQuad.cpp" />
+    <ClCompile Include="lib\ScreenQuadMaterial.cpp" />
+    <ClCompile Include="lib\SpecularMapMaterial.cpp" />
+    <ClCompile Include="lib\SpecularMapModel.cpp" />
+    <ClCompile Include="lib\SpecularMappingScene.cpp" />
+    <ClCompile Include="lib\Camera.cpp" />
+    <ClCompile Include="lib\CPUUsageTracker.cpp" />
+    <ClCompile Include="lib\DDSTextureLoader.cpp" />
+    <ClCompile Include="lib\DirectX12Device.cpp" />
+    <ClCompile Include="lib\Font.cpp" />
+    <ClCompile Include="lib\Fps.cpp" />
+    <ClCompile Include="lib\Graphics.cpp" />
+    <ClCompile Include="lib\Input.cpp" />
+    <ClCompile Include="lib\main.cpp" />
+    <ClCompile Include="lib\Model.cpp" />
+    <ClCompile Include="lib\ModelMaterial.cpp" />
+    <ClCompile Include="lib\PBRMaterial.cpp" />
+    <ClCompile Include="lib\PBRModel.cpp" />
+    <ClCompile Include="lib\Position.cpp" />
+    <ClCompile Include="lib\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="systemclass.cpp" />
-    <ClCompile Include="textclass.cpp" />
-    <ClCompile Include="TextureLoader.cpp" />
-    <ClCompile Include="Timer.cpp" />
-    <ClCompile Include="TypeDefine.cpp" />
+    <ClCompile Include="lib\System.cpp" />
+    <ClCompile Include="lib\Text.cpp" />
+    <ClCompile Include="lib\TextMaterial.cpp" />
+    <ClCompile Include="lib\TextureLoader.cpp" />
+    <ClCompile Include="lib\Timer.cpp" />
+    <ClCompile Include="lib\TypeDefine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\bumpMap.hlsl">

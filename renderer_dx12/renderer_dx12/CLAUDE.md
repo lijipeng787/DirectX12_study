@@ -22,8 +22,8 @@ Key libraries linked:
 
 ### Core Application Flow
 - **Entry point**: `main.cpp:WinMain` → `System` class initialization
-- **System class** (`systemclass.h/cpp`): Manages window, input, and graphics lifecycle
-- **Graphics class** (`graphicsclass.h/cpp`): Primary rendering coordinator
+- **System class** (`System.h/cpp`): Manages window, input, and graphics lifecycle
+- **Graphics class** (`Graphics.h/cpp`): Primary rendering coordinator
 - **DirectX12Device** (`DirectX12Device.h/cpp`): D3D12 device abstraction and resource management
 
 ### Rendering Architecture

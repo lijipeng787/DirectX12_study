@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef _PBRMODEL_H_
-#define _PBRMODEL_H_
-
 #include <DirectXMath.h>
 #include <memory>
 
@@ -98,4 +95,3 @@ private:
   std::shared_ptr<ResourceLoader::TextureLoader> texture_container_ = nullptr;
 };
 
-#endif // !_PBRMODEL_H_

@@ -14,213 +14,231 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
+    <ClInclude Include="include\stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
+    <ClInclude Include="include\targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="include\Camera.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx12.h">
+    <ClInclude Include="include\d3dx12.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="dds.h">
+    <ClInclude Include="include\dds.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DDSTextureLoader.h">
+    <ClInclude Include="include\DDSTextureLoader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DirectX12Device.h">
+    <ClInclude Include="include\DirectX12Device.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Fps.h">
+    <ClInclude Include="include\Fps.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="graphicsclass.h">
+    <ClInclude Include="include\Graphics.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h">
+    <ClInclude Include="include\Input.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Light.h">
+    <ClInclude Include="include\Light.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="modelclass.h">
+    <ClInclude Include="include\Model.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Position.h">
+    <ClInclude Include="include\ModelMaterial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="systemclass.h">
+    <ClInclude Include="include\Position.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="textclass.h">
+    <ClInclude Include="include\System.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Timer.h">
+    <ClInclude Include="include\Text.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderLoader.h">
+    <ClInclude Include="include\TextMaterial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
+    <ClInclude Include="include\Timer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TypeDefine.h">
+    <ClInclude Include="include\ShaderLoader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TextureLoader.h">
+    <ClInclude Include="include\Material.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Font.h">
+    <ClInclude Include="include\TypeDefine.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ScreenQuad.h">
+    <ClInclude Include="include\TextureLoader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="CPUUsageTracker.h">
+    <ClInclude Include="include\Font.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PBRMaterial.h">
+    <ClInclude Include="include\ScreenQuad.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PBRModel.h">
+    <ClInclude Include="include\ScreenQuadMaterial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="BumpMapMaterial.h">
+    <ClInclude Include="include\CPUUsageTracker.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="BumpMapModel.h">
+    <ClInclude Include="include\PBRMaterial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="BumpMappingScene.h">
+    <ClInclude Include="include\PBRModel.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SpecularMapMaterial.h">
+    <ClInclude Include="include\BumpMapMaterial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SpecularMapModel.h">
+    <ClInclude Include="include\BumpMapModel.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SpecularMappingScene.h">
+    <ClInclude Include="include\BumpMappingScene.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ReflectionFloorMaterial.h">
+    <ClInclude Include="include\SpecularMapMaterial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ReflectionModel.h">
+    <ClInclude Include="include\SpecularMapModel.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ReflectionScene.h">
+    <ClInclude Include="include\SpecularMappingScene.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ReflectionTextureMaterial.h">
+    <ClInclude Include="include\ReflectionFloorMaterial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderTexture.h">
+    <ClInclude Include="include\ReflectionModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ReflectionScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ReflectionTextureMaterial.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RenderTexture.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="lib\stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="lib\Camera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="DDSTextureLoader.cpp">
+    <ClCompile Include="lib\DDSTextureLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="DirectX12Device.cpp">
+    <ClCompile Include="lib\DirectX12Device.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Fps.cpp">
+    <ClCompile Include="lib\Fps.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="graphicsclass.cpp">
+    <ClCompile Include="lib\Graphics.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
+    <ClCompile Include="lib\Input.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="lib\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="modelclass.cpp">
+    <ClCompile Include="lib\Model.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Position.cpp">
+    <ClCompile Include="lib\ModelMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="systemclass.cpp">
+    <ClCompile Include="lib\Position.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="textclass.cpp">
+    <ClCompile Include="lib\System.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Timer.cpp">
+    <ClCompile Include="lib\Text.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderLoader.cpp">
+    <ClCompile Include="lib\TextMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
+    <ClCompile Include="lib\Timer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TextureLoader.cpp">
+    <ClCompile Include="lib\ShaderLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Font.cpp">
+    <ClCompile Include="lib\Material.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TypeDefine.cpp">
+    <ClCompile Include="lib\TextureLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ScreenQuad.cpp">
+    <ClCompile Include="lib\Font.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CPUUsageTracker.cpp">
+    <ClCompile Include="lib\TypeDefine.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PBRMaterial.cpp">
+    <ClCompile Include="lib\ScreenQuad.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PBRModel.cpp">
+    <ClCompile Include="lib\ScreenQuadMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="BumpMapMaterial.cpp">
+    <ClCompile Include="lib\CPUUsageTracker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="BumpMapModel.cpp">
+    <ClCompile Include="lib\PBRMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="BumpMappingScene.cpp">
+    <ClCompile Include="lib\PBRModel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SpecularMapMaterial.cpp">
+    <ClCompile Include="lib\BumpMapMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SpecularMapModel.cpp">
+    <ClCompile Include="lib\BumpMapModel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SpecularMappingScene.cpp">
+    <ClCompile Include="lib\BumpMappingScene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ReflectionFloorMaterial.cpp">
+    <ClCompile Include="lib\SpecularMapMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ReflectionModel.cpp">
+    <ClCompile Include="lib\SpecularMapModel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ReflectionScene.cpp">
+    <ClCompile Include="lib\SpecularMappingScene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ReflectionTextureMaterial.cpp">
+    <ClCompile Include="lib\ReflectionFloorMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RenderTexture.cpp">
+    <ClCompile Include="lib\ReflectionModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\ReflectionScene.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\ReflectionTextureMaterial.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\RenderTexture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

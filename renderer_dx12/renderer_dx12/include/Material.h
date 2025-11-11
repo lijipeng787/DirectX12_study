@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef _MATERIAL_H_
-#define _MATERIAL_H_
-
 #include <unordered_map>
 
 #include "TypeDefine.h"
@@ -65,4 +62,3 @@ private:
 };
 
 } // namespace Effect
-#endif // !_MATERIAL_H_

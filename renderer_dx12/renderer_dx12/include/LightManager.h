@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef _LIGHTMANAGER_H_
-#define _LIGHTMANAGER_H_
-
 #include "SceneLight.h"
 #include <memory>
 #include <string>
@@ -170,4 +167,3 @@ private:
 
 } // namespace Lighting
 
-#endif // !_LIGHTMANAGER_H_

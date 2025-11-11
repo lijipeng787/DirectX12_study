@@ -1,5 +1,4 @@
-#ifndef _LIGHTSHADERCLASS_H_
-#define _LIGHTSHADERCLASS_H_
+#pragma once
 
 #include "TypeDefine.h"
 
@@ -29,7 +28,7 @@ public:
 
   ShaderLoader(const ShaderLoader &rhs) = delete;
 
-  ShaderLoader &operator==(const ShaderLoader &rhs) = delete;
+  ShaderLoader &operator=(const ShaderLoader &rhs) = delete;
 
   ~ShaderLoader() {}
 
@@ -86,4 +85,3 @@ private:
 };
 
 } // namespace ResourceLoader
-#endif

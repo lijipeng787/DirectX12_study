@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "graphicsclass.h"
+#include "Graphics.h"
 
 #include "BumpMappingScene.h"
 #include "CPUUsageTracker.h"
@@ -14,8 +14,8 @@
 #include "ReflectionScene.h"
 
 #include "ScreenQuad.h"
-#include "modelclass.h"
-#include "textclass.h"
+#include "Model.h"
+#include "Text.h"
 
 bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 

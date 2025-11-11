@@ -1,5 +1,4 @@
-#ifndef HEADER_SYSTEMCLASS_H_
-#define HEADER_SYSTEMCLASS_H_
+#pragma once
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -53,5 +52,3 @@ private:
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 static System *g_system_instance = 0;
-
-#endif //! HEADER_SYSTEMCLASS_H

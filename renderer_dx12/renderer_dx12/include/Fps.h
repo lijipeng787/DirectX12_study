@@ -1,5 +1,4 @@
-#ifndef _FPSCLASS_H_
-#define _FPSCLASS_H_
+#pragma once
 
 class Fps {
 public:
@@ -21,5 +20,3 @@ private:
 
   unsigned long start_time_ = 0;
 };
-
-#endif

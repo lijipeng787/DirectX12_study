@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "systemclass.h"
+#include "System.h"
 
 #include <cstdio>
 #include <iostream>

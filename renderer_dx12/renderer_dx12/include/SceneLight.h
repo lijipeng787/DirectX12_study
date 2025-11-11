@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef _SCENELIGHT_H_
-#define _SCENELIGHT_H_
-
 #include <DirectXMath.h>
 #include <string>
 
@@ -192,4 +189,3 @@ private:
 
 } // namespace Lighting
 
-#endif // !_SCENELIGHT_H_

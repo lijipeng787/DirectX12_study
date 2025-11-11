@@ -1,5 +1,4 @@
-#ifndef D3D12CLASS_H
-#define D3D12CLASS_H
+#pragma once
 
 #include <limits>
 #include <sstream>
@@ -407,5 +406,3 @@ private:
   FrameResource &CurrentFrameResource();
   const FrameResource &CurrentFrameResource() const;
 };
-
-#endif
