@@ -78,45 +78,60 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
       return false;
     }
 
-    shader_loader_->SetVSEntryPoint("TextureVertexShader");
-    shader_loader_->SetPSEntryPoint("TexturePixelShader");
-    if (!shader_loader_->CreateVSAndPSFromFile(
-            L"shader/textureVS.hlsl", L"shader/texturePS.hlsl")) {
-      MessageBox(hwnd, L"Could not initialize Texture Shader.", L"Error",
-                 MB_OK);
+    using ResourceLoader::ShaderCompileDesc;
+
+    const auto report_shader_error = [this, hwnd](const wchar_t *fallback) {
+      const auto &error = shader_loader_->GetLastErrorMessage();
+      if (!error.empty()) {
+        MessageBoxA(hwnd, error.c_str(), "Shader Compilation Error", MB_OK);
+      } else if (fallback != nullptr) {
+        MessageBox(hwnd, fallback, L"Error", MB_OK);
+      }
+    };
+
+    ShaderCompileDesc texture_vs{L"shader/textureVS.hlsl",
+                                 "TextureVertexShader", "vs_5_0"};
+    ShaderCompileDesc texture_ps{L"shader/texturePS.hlsl",
+                                 "TexturePixelShader", "ps_5_0"};
+    if (!shader_loader_->CompileVertexAndPixelShaders(texture_vs,
+                                                      texture_ps)) {
+      report_shader_error(L"Could not initialize Texture Shader.");
       return false;
     }
 
-    shader_loader_->SetVSEntryPoint("LightVertexShader");
-    shader_loader_->SetPSEntryPoint("LightPixelShader");
-    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/lightVS.hlsl",
-                                                    L"shader/lightPS.hlsl")) {
-      MessageBox(hwnd, L"Could not initialize Light Shader.", L"Error", MB_OK);
+    ShaderCompileDesc light_vs{L"shader/lightVS.hlsl", "LightVertexShader",
+                               "vs_5_0"};
+    ShaderCompileDesc light_ps{L"shader/lightPS.hlsl", "LightPixelShader",
+                               "ps_5_0"};
+    if (!shader_loader_->CompileVertexAndPixelShaders(light_vs, light_ps)) {
+      report_shader_error(L"Could not initialize Light Shader.");
       return false;
     }
 
-    shader_loader_->SetVSEntryPoint("FontVertexShader");
-    shader_loader_->SetPSEntryPoint("FontPixelShader");
-    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/fontVS.hlsl",
-                                                    L"shader/fontPS.hlsl")) {
-      MessageBox(hwnd, L"Could not initialize Font Shader.", L"Error", MB_OK);
+    ShaderCompileDesc font_vs{L"shader/fontVS.hlsl", "FontVertexShader",
+                              "vs_5_0"};
+    ShaderCompileDesc font_ps{L"shader/fontPS.hlsl", "FontPixelShader",
+                              "ps_5_0"};
+    if (!shader_loader_->CompileVertexAndPixelShaders(font_vs, font_ps)) {
+      report_shader_error(L"Could not initialize Font Shader.");
       return false;
     }
 
-    shader_loader_->SetVSEntryPoint("PbrVertexShader");
-    shader_loader_->SetPSEntryPoint("PbrPixelShader");
-    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/pbrVS.hlsl",
-                                               L"shader/pbrPS.hlsl")) {
-      MessageBox(hwnd, L"Could not initialize PBR Shader.", L"Error", MB_OK);
+    ShaderCompileDesc pbr_vs{L"shader/pbrVS.hlsl", "PbrVertexShader",
+                             "vs_5_0"};
+    ShaderCompileDesc pbr_ps{L"shader/pbrPS.hlsl", "PbrPixelShader",
+                             "ps_5_0"};
+    if (!shader_loader_->CompileVertexAndPixelShaders(pbr_vs, pbr_ps)) {
+      report_shader_error(L"Could not initialize PBR Shader.");
       return false;
     }
 
-    shader_loader_->SetVSEntryPoint("SpecMapVertexShader");
-    shader_loader_->SetPSEntryPoint("SpecMapPixelShader");
-    if (!shader_loader_->CreateVSAndPSFromFile(L"shader/specMap.hlsl",
-                                               L"shader/specMap.hlsl")) {
-      MessageBox(hwnd, L"Could not initialize Specular Map Shader.", L"Error",
-                 MB_OK);
+    ShaderCompileDesc spec_vs{L"shader/specMap.hlsl", "SpecMapVertexShader",
+                              "vs_5_0"};
+    ShaderCompileDesc spec_ps{L"shader/specMap.hlsl", "SpecMapPixelShader",
+                              "ps_5_0"};
+    if (!shader_loader_->CompileVertexAndPixelShaders(spec_vs, spec_ps)) {
+      report_shader_error(L"Could not initialize Specular Map Shader.");
       return false;
     }
   }

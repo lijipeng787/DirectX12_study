@@ -142,11 +142,12 @@ auto BumpMappingScene::EnsureShadersLoaded() -> bool {
     return false;
   }
 
-  shader_loader_->SetVSEntryPoint("BumpMapVertexShader");
-  shader_loader_->SetPSEntryPoint("BumpMapPixelShader");
+  ResourceLoader::ShaderCompileDesc vs_desc{L"shader/bumpMap.hlsl",
+                                            "BumpMapVertexShader", "vs_5_0"};
+  ResourceLoader::ShaderCompileDesc ps_desc{L"shader/bumpMap.hlsl",
+                                            "BumpMapPixelShader", "ps_5_0"};
 
-  if (!shader_loader_->CreateVSAndPSFromFile(L"shader/bumpMap.hlsl",
-                                             L"shader/bumpMap.hlsl")) {
+  if (!shader_loader_->CompileVertexAndPixelShaders(vs_desc, ps_desc)) {
     return false;
   }
 

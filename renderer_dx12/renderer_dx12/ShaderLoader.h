@@ -12,11 +12,16 @@ typedef std::vector<BlobPtr> VSBlobVector;
 
 typedef std::vector<BlobPtr> PSBlobVector;
 
-typedef std::unordered_map<std::string, unsigned int> VSIndexContainer;
-
-typedef std::unordered_map<std::string, unsigned int> PSIndexContainer;
+typedef std::unordered_map<std::string, unsigned int> ShaderIndexContainer;
 
 namespace ResourceLoader {
+
+struct ShaderCompileDesc {
+  std::wstring file_path;
+  std::string entry_point;
+  std::string target;
+  const D3D_SHADER_MACRO *defines = nullptr;
+};
 
 class ShaderLoader {
 public:
@@ -29,24 +34,20 @@ public:
   ~ShaderLoader() {}
 
 public:
-  bool CreateVSAndPSFromFile(WCHAR *vs_shader_filename,
-                             WCHAR *ps_shader_filename);
+  bool CompileVertexAndPixelShaders(const ShaderCompileDesc &vs_desc,
+                                    const ShaderCompileDesc &ps_desc);
 
-  bool CreateVSFromFile(WCHAR *vs_shader_filename);
+  bool CompileVertexShader(const ShaderCompileDesc &desc);
 
-  bool CreatePSFromFile(WCHAR *ps_shader_filename);
-
-  void SetVSEntryPoint(LPCSTR entry_point);
-
-  void SetPSEntryPoint(LPCSTR entry_point);
-
-  void SetVSTargetVersion(LPCSTR target_version);
-
-  void SetPSTargetVersion(LPCSTR target_version);
+  bool CompilePixelShader(const ShaderCompileDesc &desc);
 
   BlobPtr GetVertexShaderBlobByIndex(unsigned int index) const;
 
   BlobPtr GetPixelShaderBlobByIndex(unsigned int index) const;
+
+  BlobPtr GetVertexShaderBlob(const ShaderCompileDesc &desc) const;
+
+  BlobPtr GetPixelShaderBlob(const ShaderCompileDesc &desc) const;
 
   BlobPtr GetVertexShaderBlobByFileName(WCHAR *filename) const;
 
@@ -56,10 +57,24 @@ public:
 
   BlobPtr GetPixelShaderBlobByEntryName(WCHAR *entry_name) const;
 
-private:
-  VSIndexContainer vs_index_container_ = {};
+  const std::string &GetLastErrorMessage() const;
 
-  PSIndexContainer ps_index_container_ = {};
+private:
+  bool ValidateCompileDesc(const ShaderCompileDesc &desc,
+                           bool is_vertex_shader);
+
+  bool CompileShaderInternal(const ShaderCompileDesc &desc,
+                             bool is_vertex_shader);
+
+  std::string BuildShaderKey(const ShaderCompileDesc &desc) const;
+
+  ShaderIndexContainer vs_index_container_ = {};
+
+  ShaderIndexContainer ps_index_container_ = {};
+
+  ShaderIndexContainer vs_file_index_container_ = {};
+
+  ShaderIndexContainer ps_file_index_container_ = {};
 
   VSBlobVector vertex_shader_container = {};
 
@@ -67,13 +82,7 @@ private:
 
   BlobPtr last_compile_error_ = nullptr;
 
-  LPCSTR vs_entry_point_ = {};
-
-  LPCSTR ps_entry_point_ = {};
-
-  LPCSTR vs_target_version_ = "vs_5_0";
-
-  LPCSTR ps_target_version_ = "ps_5_0";
+  std::string last_error_message_;
 };
 
 } // namespace ResourceLoader

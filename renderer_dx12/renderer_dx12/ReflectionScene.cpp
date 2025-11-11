@@ -29,10 +29,13 @@ bool ReflectionScene::EnsureShadersLoaded() {
     return false;
   }
 
-  shader_loader_->SetVSEntryPoint("ReflectionVertexShader");
-  shader_loader_->SetPSEntryPoint("ReflectionPixelShader");
-  if (!shader_loader_->CreateVSAndPSFromFile(L"shader/reflection.hlsl",
-                                             L"shader/reflection.hlsl")) {
+  ResourceLoader::ShaderCompileDesc vs_desc{L"shader/reflection.hlsl",
+                                            "ReflectionVertexShader",
+                                            "vs_5_0"};
+  ResourceLoader::ShaderCompileDesc ps_desc{L"shader/reflection.hlsl",
+                                            "ReflectionPixelShader",
+                                            "ps_5_0"};
+  if (!shader_loader_->CompileVertexAndPixelShaders(vs_desc, ps_desc)) {
     return false;
   }
 

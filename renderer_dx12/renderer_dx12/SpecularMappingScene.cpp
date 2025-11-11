@@ -152,11 +152,12 @@ auto SpecularMappingScene::EnsureShadersLoaded() -> bool {
     return false;
   }
 
-  shader_loader_->SetVSEntryPoint("SpecMapVertexShader");
-  shader_loader_->SetPSEntryPoint("SpecMapPixelShader");
+  ResourceLoader::ShaderCompileDesc vs_desc{L"shader/specMap.hlsl",
+                                            "SpecMapVertexShader", "vs_5_0"};
+  ResourceLoader::ShaderCompileDesc ps_desc{L"shader/specMap.hlsl",
+                                            "SpecMapPixelShader", "ps_5_0"};
 
-  if (!shader_loader_->CreateVSAndPSFromFile(L"shader/specMap.hlsl",
-                                             L"shader/specMap.hlsl")) {
+  if (!shader_loader_->CompileVertexAndPixelShaders(vs_desc, ps_desc)) {
     return false;
   }
 
