@@ -50,6 +50,42 @@ private:
 
   void UpdateCameraFromInput(float delta_seconds, Input *input);
 
+  // Helper methods for better organization
+  auto InitializeShaders(HWND hwnd) -> bool;
+
+  auto InitializeRenderObjects(int screenWidth, int screenHeight, HWND hwnd) -> bool;
+  
+  auto InitializeScenes(HWND hwnd) -> bool;
+
+  // Render pass helpers
+  auto UpdateConstantBuffers(const DirectX::XMMATRIX& view_matrix,
+                            const DirectX::XMMATRIX& projection_matrix) -> bool;
+  
+  auto RenderOffscreenPass() -> bool;
+  
+  auto RenderMainScenePass(const DirectX::XMMATRIX& view_matrix,
+                          const DirectX::XMMATRIX& projection_matrix) -> bool;
+  auto RenderUIPass() -> bool;
+
+  // Resource caching structure
+  struct CachedRenderResources {
+    ID3D12RootSignature* light_root_signature = nullptr;
+    ID3D12PipelineState* light_pso = nullptr;
+    ID3D12Resource* light_matrix_cb = nullptr;
+    ID3D12Resource* light_cb = nullptr;
+    ID3D12Resource* fog_cb = nullptr;
+
+    ID3D12RootSignature* font_root_signature = nullptr;
+    ID3D12PipelineState* font_pso = nullptr;
+    ID3D12Resource* font_matrix_cb = nullptr;
+    ID3D12Resource* font_pixel_cb = nullptr;
+
+    ID3D12RootSignature* offscreen_root_signature = nullptr;
+    ID3D12PipelineState* offscreen_pso = nullptr;
+  };
+
+  CachedRenderResources cached_resources_;
+
   std::shared_ptr<DirectX12Device> d3d12_device_ = nullptr;
 
   std::shared_ptr<Lighting::LightManager> light_manager_ = nullptr;
@@ -71,10 +107,13 @@ private:
   std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
 
   std::shared_ptr<BumpMappingScene> bump_mapping_scene_ = nullptr;
-  std::shared_ptr<SpecularMappingScene> specular_mapping_scene_ = nullptr;
-  std::shared_ptr<ReflectionScene> reflection_scene_ = nullptr;
 
+  std::shared_ptr<SpecularMappingScene> specular_mapping_scene_ = nullptr;
+
+  std::shared_ptr<ReflectionScene> reflection_scene_ = nullptr;
+  
   float camera_move_speed_ = 5.0f;
+
   float camera_turn_speed_ = 90.0f;
 
   float shared_rotation_angle_ = 0.0f;
