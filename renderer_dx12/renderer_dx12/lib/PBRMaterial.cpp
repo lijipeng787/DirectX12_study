@@ -3,6 +3,8 @@
 #include "PBRMaterial.h"
 
 #include "DirectX12Device.h"
+#include "PipelineStateBuilder.h"
+#include "RootSignatureBuilder.h"
 #include "SceneLight.h"
 
 using namespace DirectX;
@@ -13,32 +15,19 @@ PBRMaterial::PBRMaterial(std::shared_ptr<DirectX12Device> device)
 PBRMaterial::~PBRMaterial() {}
 
 auto PBRMaterial::Initialize() -> bool {
-  auto device = device_->GetD3d12Device();
-
-  if (FAILED(device->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(MatrixBufferType)),
-          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-          IID_PPV_ARGS(&matrix_constant_buffer_)))) {
+  if (!device_) {
     return false;
   }
 
-  if (FAILED(device->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(CameraBufferType)),
-          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-          IID_PPV_ARGS(&camera_constant_buffer_)))) {
+  if (!matrix_constant_buffer_.Initialize(device_)) {
     return false;
   }
 
-  if (FAILED(device->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(LightBufferType)),
-          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-          IID_PPV_ARGS(&light_constant_buffer_)))) {
+  if (!camera_constant_buffer_.Initialize(device_)) {
+    return false;
+  }
+
+  if (!light_constant_buffer_.Initialize(device_)) {
     return false;
   }
 
@@ -56,12 +45,6 @@ auto PBRMaterial::Initialize() -> bool {
 auto PBRMaterial::UpdateMatrixConstant(const XMMATRIX &world,
                                        const XMMATRIX &view,
                                        const XMMATRIX &projection) -> bool {
-  UINT8 *data_begin = nullptr;
-  if (FAILED(matrix_constant_buffer_->Map(
-          0, nullptr, reinterpret_cast<void **>(&data_begin)))) {
-    return false;
-  }
-
   const auto original_world = XMMatrixTranspose(world);
   const auto inverse_world = XMMatrixInverse(nullptr, original_world);
   const auto normal_matrix = inverse_world;
@@ -71,41 +54,22 @@ auto PBRMaterial::UpdateMatrixConstant(const XMMATRIX &world,
   XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
   XMStoreFloat4x4(&matrix_constant_data_.normal_, normal_matrix);
 
-  memcpy(data_begin, &matrix_constant_data_, sizeof(MatrixBufferType));
-  matrix_constant_buffer_->Unmap(0, nullptr);
-
-  return true;
+  return matrix_constant_buffer_.Update(matrix_constant_data_);
 }
 
 auto PBRMaterial::UpdateCameraConstant(const XMFLOAT3 &camera_position)
     -> bool {
-  UINT8 *data_begin = nullptr;
-  if (FAILED(camera_constant_buffer_->Map(
-          0, nullptr, reinterpret_cast<void **>(&data_begin)))) {
-    return false;
-  }
-
   camera_constant_data_.camera_position_ =
       XMFLOAT4(camera_position.x, camera_position.y, camera_position.z, 1.0f);
-  memcpy(data_begin, &camera_constant_data_, sizeof(CameraBufferType));
-  camera_constant_buffer_->Unmap(0, nullptr);
 
-  return true;
+  return camera_constant_buffer_.Update(camera_constant_data_);
 }
 
 auto PBRMaterial::UpdateLightConstant(const XMFLOAT3 &light_direction) -> bool {
-  UINT8 *data_begin = nullptr;
-  if (FAILED(light_constant_buffer_->Map(
-          0, nullptr, reinterpret_cast<void **>(&data_begin)))) {
-    return false;
-  }
-
   light_constant_data_.light_direction_ =
       XMFLOAT4(light_direction.x, light_direction.y, light_direction.z, 0.0f);
-  memcpy(data_begin, &light_constant_data_, sizeof(LightBufferType));
-  light_constant_buffer_->Unmap(0, nullptr);
 
-  return true;
+  return light_constant_buffer_.Update(light_constant_data_);
 }
 
 auto PBRMaterial::UpdateFromLight(const Lighting::SceneLight *scene_light)
@@ -122,34 +86,28 @@ auto PBRMaterial::UpdateFromLight(const Lighting::SceneLight *scene_light)
 }
 
 auto PBRMaterial::GetMatrixConstantBuffer() const -> ResourceSharedPtr {
-  return matrix_constant_buffer_;
+  return matrix_constant_buffer_.GetResource();
 }
 
 auto PBRMaterial::GetCameraConstantBuffer() const -> ResourceSharedPtr {
-  return camera_constant_buffer_;
+  return camera_constant_buffer_.GetResource();
 }
 
 auto PBRMaterial::GetLightConstantBuffer() const -> ResourceSharedPtr {
-  return light_constant_buffer_;
+  return light_constant_buffer_.GetResource();
 }
 
 auto PBRMaterial::InitializeRootSignature() -> bool {
-  CD3DX12_DESCRIPTOR_RANGE descriptor_range;
-  descriptor_range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
+  if (!device_) {
+    return false;
+  }
 
-  CD3DX12_ROOT_PARAMETER root_parameters[4];
-  root_parameters[0].InitAsDescriptorTable(1, &descriptor_range,
-                                           D3D12_SHADER_VISIBILITY_PIXEL);
-  root_parameters[1].InitAsConstantBufferView(
-      0, 0,
-      D3D12_SHADER_VISIBILITY_VERTEX); // VS: MatrixBuffer (b0)
-  root_parameters[2].InitAsConstantBufferView(
-      1, 0,
-      D3D12_SHADER_VISIBILITY_VERTEX); // VS: CameraBuffer (b1)
-  root_parameters[3].InitAsConstantBufferView(
-      2, 0,
-      D3D12_SHADER_VISIBILITY_PIXEL); // PS: LightBuffer (b2) - global unique
-                                      // numbering
+  RootSignatureBuilder builder;
+  builder.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0,
+                             D3D12_SHADER_VISIBILITY_PIXEL);
+  builder.AddConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+  builder.AddConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+  builder.AddConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
   D3D12_STATIC_SAMPLER_DESC sampler_desc = {};
   sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -166,25 +124,15 @@ auto PBRMaterial::InitializeRootSignature() -> bool {
   sampler_desc.RegisterSpace = 0;
   sampler_desc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-  CD3DX12_ROOT_SIGNATURE_DESC root_signature_desc(
-      _countof(root_parameters), root_parameters, 1, &sampler_desc,
-      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-          D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-          D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-          D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
-
-  Microsoft::WRL::ComPtr<ID3DBlob> signature;
-  Microsoft::WRL::ComPtr<ID3DBlob> error;
-  if (FAILED(D3D12SerializeRootSignature(
-          &root_signature_desc, D3D_ROOT_SIGNATURE_VERSION_1,
-          signature.GetAddressOf(), error.GetAddressOf()))) {
-    return false;
-  }
+  builder.AddStaticSampler(sampler_desc);
 
   RootSignaturePtr root_signature = nullptr;
-  if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
-          0, signature->GetBufferPointer(), signature->GetBufferSize(),
-          IID_PPV_ARGS(&root_signature)))) {
+  if (!builder.Build(
+          device_, root_signature,
+          D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+              D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+              D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+              D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS)) {
     return false;
   }
 
@@ -193,6 +141,10 @@ auto PBRMaterial::InitializeRootSignature() -> bool {
 }
 
 auto PBRMaterial::InitializeGraphicsPipelineState() -> bool {
+  if (!device_) {
+    return false;
+  }
+
   D3D12_INPUT_ELEMENT_DESC input_layout[] = {
       {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
        D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -208,24 +160,22 @@ auto PBRMaterial::InitializeGraphicsPipelineState() -> bool {
        D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
        0}};
 
-  D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
-  pso_desc.InputLayout = {input_layout, _countof(input_layout)};
-  pso_desc.pRootSignature = GetRootSignature().Get();
-  pso_desc.VS = GetVSByteCode();
-  pso_desc.PS = GetPSByteCode();
-  pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-  pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-  pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-  pso_desc.SampleMask = UINT_MAX;
-  pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-  pso_desc.NumRenderTargets = 1;
-  pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-  pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-  pso_desc.SampleDesc.Count = 1;
+  GraphicsPipelineStateBuilder builder;
+  builder.SetRootSignature(GetRootSignature());
+  builder.SetVertexShader(GetVSByteCode());
+  builder.SetPixelShader(GetPSByteCode());
+  builder.SetInputLayout(input_layout, _countof(input_layout));
+  builder.SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+
+  const DXGI_FORMAT rtv_formats[] = {DXGI_FORMAT_R8G8B8A8_UNORM};
+  builder.SetRenderTargetFormats(_countof(rtv_formats), rtv_formats,
+                                 DXGI_FORMAT_D32_FLOAT);
+  builder.SetRasterizerState(CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT));
+  builder.SetBlendState(CD3DX12_BLEND_DESC(D3D12_DEFAULT));
+  builder.SetDepthStencilState(CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT));
 
   PipelineStateObjectPtr pso = nullptr;
-  if (FAILED(device_->GetD3d12Device()->CreateGraphicsPipelineState(
-          &pso_desc, IID_PPV_ARGS(&pso)))) {
+  if (!builder.Build(device_, pso)) {
     return false;
   }
 
