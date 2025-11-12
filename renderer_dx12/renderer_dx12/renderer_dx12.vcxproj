@@ -155,13 +155,16 @@
     <ClInclude Include="include\BumpMapMaterial.h" />
     <ClInclude Include="include\BumpMapModel.h" />
     <ClInclude Include="include\BumpMappingScene.h" />
+    <ClInclude Include="include\ConstantBuffer.h" />
     <ClInclude Include="include\Material.h" />
     <ClInclude Include="include\ModelMaterial.h" />
+    <ClInclude Include="include\PipelineStateBuilder.h" />
     <ClInclude Include="include\ReflectionFloorMaterial.h" />
     <ClInclude Include="include\ReflectionModel.h" />
     <ClInclude Include="include\ReflectionScene.h" />
     <ClInclude Include="include\ReflectionTextureMaterial.h" />
     <ClInclude Include="include\RenderTexture.h" />
+    <ClInclude Include="include\RootSignatureBuilder.h" />
     <ClInclude Include="include\ScreenQuadMaterial.h" />
     <ClInclude Include="include\ShaderLoader.h" />
     <ClInclude Include="include\ScreenQuad.h" />
@@ -197,6 +200,7 @@
     <ClCompile Include="lib\BumpMapModel.cpp" />
     <ClCompile Include="lib\BumpMappingScene.cpp" />
     <ClCompile Include="lib\Material.cpp" />
+    <ClCompile Include="lib\PipelineStateBuilder.cpp" />
     <ClCompile Include="lib\ReflectionFloorMaterial.cpp" />
     <ClCompile Include="lib\ReflectionModel.cpp" />
     <ClCompile Include="lib\ReflectionScene.cpp" />
@@ -221,6 +225,7 @@
     <ClCompile Include="lib\ModelMaterial.cpp" />
     <ClCompile Include="lib\PBRMaterial.cpp" />
     <ClCompile Include="lib\PBRModel.cpp" />
+    <ClCompile Include="lib\RootSignatureBuilder.cpp" />
     <ClCompile Include="lib\Position.cpp" />
     <ClCompile Include="lib\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

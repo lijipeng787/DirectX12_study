@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <memory>
 
+#include "ConstantBuffer.h"
 #include "Material.h"
 
 class DirectX12Device;
@@ -24,15 +25,15 @@ public:
   auto Initialize() -> bool override;
 
   auto GetMatrixConstantBuffer() const -> ResourceSharedPtr {
-    return matrix_constant_buffer_;
+    return matrix_constant_buffer_.GetResource();
   }
 
   auto GetLightConstantBuffer() const -> ResourceSharedPtr {
-    return light_constant_buffer_;
+    return light_constant_buffer_.GetResource();
   }
 
   auto GetFogConstantBuffer() const -> ResourceSharedPtr {
-    return fog_constant_buffer_;
+    return fog_constant_buffer_.GetResource();
   }
 
   auto UpdateMatrixConstant(const DirectX::XMMATRIX &world,
@@ -69,20 +70,19 @@ private:
     float padding2_;
   };
 
-private:
   auto InitializeRootSignature() -> bool;
+
   auto InitializeGraphicsPipelineState() -> bool;
 
-private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
-  ResourceSharedPtr matrix_constant_buffer_ = nullptr;
+  ConstantBuffer<MatrixBufferType> matrix_constant_buffer_ = {};
   MatrixBufferType matrix_constant_data_ = {};
 
-  ResourceSharedPtr light_constant_buffer_ = nullptr;
+  ConstantBuffer<LightType> light_constant_buffer_ = {};
   LightType light_constant_data_ = {};
 
-  ResourceSharedPtr fog_constant_buffer_ = nullptr;
+  ConstantBuffer<FogBufferType> fog_constant_buffer_ = {};
   FogBufferType fog_constant_data_ = {};
 };
 
