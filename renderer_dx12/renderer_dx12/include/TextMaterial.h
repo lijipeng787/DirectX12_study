@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <memory>
 
+#include "ConstantBuffer.h"
 #include "Material.h"
 
 class DirectX12Device;
@@ -20,11 +21,11 @@ public:
   auto Initialize() -> bool override;
 
   auto GetMatrixConstantBuffer() const -> ResourceSharedPtr {
-    return matrix_constant_buffer_;
+    return matrix_constant_buffer_.GetResource();
   }
 
   auto GetPixelConstantBuffer() const -> ResourceSharedPtr {
-    return pixel_color_constant_buffer_;
+    return pixel_color_constant_buffer_.GetResource();
   }
 
   auto UpdateMatrixConstant(const DirectX::XMMATRIX &world,
@@ -44,18 +45,16 @@ private:
     DirectX::XMFLOAT4 pixel_color_;
   };
 
-private:
   auto InitializeConstantBuffer() -> bool;
   auto InitializeRootSignature() -> bool;
   auto InitializeGraphicsPipelineState() -> bool;
 
-private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
-  ResourceSharedPtr matrix_constant_buffer_ = nullptr;
+  ConstantBuffer<ConstantBufferType> matrix_constant_buffer_;
   ConstantBufferType matrix_constant_data_ = {};
 
-  ResourceSharedPtr pixel_color_constant_buffer_ = nullptr;
+  ConstantBuffer<PixelBufferType> pixel_color_constant_buffer_;
   PixelBufferType pixel_color_constant_data_ = {};
 };
 

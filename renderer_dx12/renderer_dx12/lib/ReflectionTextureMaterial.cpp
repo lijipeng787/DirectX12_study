@@ -3,6 +3,8 @@
 #include "ReflectionTextureMaterial.h"
 
 #include "DirectX12Device.h"
+#include "PipelineStateBuilder.h"
+#include "RootSignatureBuilder.h"
 
 using namespace DirectX;
 
@@ -15,17 +17,7 @@ auto ReflectionTextureMaterial::Initialize() -> bool {
     return false;
   }
 
-  auto d3d_device = device_->GetD3d12Device();
-  if (!d3d_device) {
-    return false;
-  }
-
-  if (FAILED(d3d_device->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(CBSIZE(MatrixBufferType)),
-          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-          IID_PPV_ARGS(&matrix_constant_buffer_)))) {
+  if (!matrix_constant_buffer_.Initialize(device_)) {
     return false;
   }
 
@@ -42,31 +34,18 @@ auto ReflectionTextureMaterial::Initialize() -> bool {
 
 auto ReflectionTextureMaterial::GetMatrixConstantBuffer() const
     -> ResourceSharedPtr {
-  return matrix_constant_buffer_;
+  return matrix_constant_buffer_.GetResource();
 }
 
 auto ReflectionTextureMaterial::UpdateMatrixConstant(const XMMATRIX &world,
                                                      const XMMATRIX &view,
                                                      const XMMATRIX &projection)
     -> bool {
-  if (!matrix_constant_buffer_) {
-    return false;
-  }
-
-  UINT8 *mapped_data = nullptr;
-  if (FAILED(matrix_constant_buffer_->Map(
-          0, nullptr, reinterpret_cast<void **>(&mapped_data)))) {
-    return false;
-  }
-
   XMStoreFloat4x4(&matrix_constant_data_.world_, world);
   XMStoreFloat4x4(&matrix_constant_data_.view_, view);
   XMStoreFloat4x4(&matrix_constant_data_.projection_, projection);
 
-  memcpy(mapped_data, &matrix_constant_data_, sizeof(MatrixBufferType));
-  matrix_constant_buffer_->Unmap(0, nullptr);
-
-  return true;
+  return matrix_constant_buffer_.Update(matrix_constant_data_);
 }
 
 auto ReflectionTextureMaterial::InitializeRootSignature() -> bool {
@@ -74,14 +53,10 @@ auto ReflectionTextureMaterial::InitializeRootSignature() -> bool {
     return false;
   }
 
-  CD3DX12_DESCRIPTOR_RANGE srv_range;
-  srv_range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
-  CD3DX12_ROOT_PARAMETER root_parameters[2];
-  root_parameters[0].InitAsDescriptorTable(1, &srv_range,
-                                           D3D12_SHADER_VISIBILITY_PIXEL);
-  root_parameters[1].InitAsConstantBufferView(
-      0, 0, D3D12_SHADER_VISIBILITY_VERTEX); // Matrix buffer
+  RootSignatureBuilder builder;
+  builder.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0,
+                             D3D12_SHADER_VISIBILITY_PIXEL);
+  builder.AddConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
   D3D12_STATIC_SAMPLER_DESC sampler_desc = {};
   sampler_desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -97,25 +72,15 @@ auto ReflectionTextureMaterial::InitializeRootSignature() -> bool {
   sampler_desc.RegisterSpace = 0;
   sampler_desc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-  CD3DX12_ROOT_SIGNATURE_DESC root_desc(
-      _countof(root_parameters), root_parameters, 1, &sampler_desc,
-      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-          D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-          D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-          D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
-
-  Microsoft::WRL::ComPtr<ID3DBlob> signature;
-  Microsoft::WRL::ComPtr<ID3DBlob> error;
-  if (FAILED(D3D12SerializeRootSignature(&root_desc,
-                                         D3D_ROOT_SIGNATURE_VERSION_1,
-                                         &signature, &error))) {
-    return false;
-  }
+  builder.AddStaticSampler(sampler_desc);
 
   RootSignaturePtr root_signature = nullptr;
-  if (FAILED(device_->GetD3d12Device()->CreateRootSignature(
-          0, signature->GetBufferPointer(), signature->GetBufferSize(),
-          IID_PPV_ARGS(&root_signature)))) {
+  if (!builder.Build(
+          device_, root_signature,
+          D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+              D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+              D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+              D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS)) {
     return false;
   }
 
@@ -134,24 +99,22 @@ auto ReflectionTextureMaterial::InitializeGraphicsPipelineState() -> bool {
       {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
        D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
-  D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
-  pso_desc.InputLayout = {input_desc, _countof(input_desc)};
-  pso_desc.pRootSignature = GetRootSignature().Get();
-  pso_desc.VS = GetVSByteCode();
-  pso_desc.PS = GetPSByteCode();
-  pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-  pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-  pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-  pso_desc.SampleMask = UINT_MAX;
-  pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-  pso_desc.NumRenderTargets = 1;
-  pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-  pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-  pso_desc.SampleDesc.Count = 1;
+  GraphicsPipelineStateBuilder builder;
+  builder.SetRootSignature(GetRootSignature());
+  builder.SetVertexShader(GetVSByteCode());
+  builder.SetPixelShader(GetPSByteCode());
+  builder.SetInputLayout(input_desc, _countof(input_desc));
+  builder.SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+
+  const DXGI_FORMAT rtv_formats[] = {DXGI_FORMAT_R8G8B8A8_UNORM};
+  builder.SetRenderTargetFormats(_countof(rtv_formats), rtv_formats,
+                                 DXGI_FORMAT_D32_FLOAT);
+  builder.SetRasterizerState(CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT));
+  builder.SetBlendState(CD3DX12_BLEND_DESC(D3D12_DEFAULT));
+  builder.SetDepthStencilState(CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT));
 
   PipelineStateObjectPtr pso = nullptr;
-  if (FAILED(device_->GetD3d12Device()->CreateGraphicsPipelineState(
-          &pso_desc, IID_PPV_ARGS(&pso)))) {
+  if (!builder.Build(device_, pso)) {
     return false;
   }
 

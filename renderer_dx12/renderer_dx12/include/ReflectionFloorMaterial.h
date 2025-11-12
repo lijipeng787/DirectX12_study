@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <memory>
 
+#include "ConstantBuffer.h"
 #include "Material.h"
 
 class DirectX12Device;
@@ -29,12 +30,10 @@ public:
 
   auto UpdateReflectionConstant(const DirectX::XMMATRIX &reflection) -> bool;
 
-private:
   auto InitializeRootSignature() -> bool;
 
   auto InitializeGraphicsPipelineState() -> bool;
 
-private:
   struct MatrixBufferType {
     DirectX::XMFLOAT4X4 world_;
     DirectX::XMFLOAT4X4 view_;
@@ -47,8 +46,8 @@ private:
 
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
-  ResourceSharedPtr matrix_constant_buffer_ = nullptr;
-  ResourceSharedPtr reflection_constant_buffer_ = nullptr;
+  ConstantBuffer<MatrixBufferType> matrix_constant_buffer_;
+  ConstantBuffer<ReflectionBufferType> reflection_constant_buffer_;
   
   MatrixBufferType matrix_constant_data_ = {};
   ReflectionBufferType reflection_constant_data_ = {};
