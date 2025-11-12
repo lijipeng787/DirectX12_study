@@ -12,7 +12,7 @@ using namespace DirectX;
 PBRMaterial::PBRMaterial(std::shared_ptr<DirectX12Device> device)
     : device_(std::move(device)) {}
 
-PBRMaterial::~PBRMaterial() {}
+PBRMaterial::~PBRMaterial() = default;
 
 auto PBRMaterial::Initialize() -> bool {
   if (!device_) {

@@ -14,6 +14,7 @@ public:
       : device_(std::move(device)) {}
 
   TextMaterial(const TextMaterial &rhs) = delete;
+  
   auto operator=(const TextMaterial &rhs) -> TextMaterial & = delete;
 
   ~TextMaterial() override;
@@ -46,7 +47,9 @@ private:
   };
 
   auto InitializeConstantBuffer() -> bool;
+  
   auto InitializeRootSignature() -> bool;
+
   auto InitializeGraphicsPipelineState() -> bool;
 
   std::shared_ptr<DirectX12Device> device_ = nullptr;

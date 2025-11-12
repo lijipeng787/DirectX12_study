@@ -134,9 +134,9 @@ ReflectionModel::ReflectionModel(std::shared_ptr<DirectX12Device> device)
 
 ReflectionModel::~ReflectionModel() { ReleaseModel(); }
 
-bool ReflectionModel::Initialize(WCHAR *model_filename,
+auto ReflectionModel::Initialize(WCHAR *model_filename,
                                  WCHAR **texture_filename_arr,
-                                 unsigned int texture_count) {
+                                 unsigned int texture_count) -> bool {
   if (!LoadModel(model_filename)) {
     return false;
   }
@@ -153,21 +153,21 @@ bool ReflectionModel::Initialize(WCHAR *model_filename,
   return true;
 }
 
-DescriptorHeapPtr ReflectionModel::GetShaderResourceView() const {
+auto ReflectionModel::GetShaderResourceView() const -> DescriptorHeapPtr {
   if (!texture_loader_) {
     return nullptr;
   }
   return texture_loader_->GetTexturesDescriptorHeap();
 }
 
-ResourceSharedPtr ReflectionModel::GetTextureResource(size_t index) const {
+auto ReflectionModel::GetTextureResource(size_t index) const -> ResourceSharedPtr {
   if (!texture_loader_) {
     return nullptr;
   }
   return texture_loader_->GetTextureResource(index);
 }
 
-bool ReflectionModel::LoadModel(WCHAR *filename) {
+auto ReflectionModel::LoadModel(WCHAR *filename) -> bool {
   std::ifstream fin;
   fin.open(filename);
   if (fin.fail()) {
@@ -204,7 +204,7 @@ bool ReflectionModel::LoadModel(WCHAR *filename) {
   return true;
 }
 
-bool ReflectionModel::InitializeBuffers() {
+auto ReflectionModel::InitializeBuffers() -> bool {
   if (!device_ || !model_data_) {
     return false;
   }
@@ -246,8 +246,8 @@ bool ReflectionModel::InitializeBuffers() {
   return true;
 }
 
-bool ReflectionModel::LoadTextures(WCHAR **texture_filename_arr,
-                                   unsigned int texture_count) {
+auto ReflectionModel::LoadTextures(WCHAR **texture_filename_arr,
+                                   unsigned int texture_count) -> bool {
   texture_loader_ = std::make_shared<TextureLoader>(device_);
   if (!texture_loader_) {
     return false;

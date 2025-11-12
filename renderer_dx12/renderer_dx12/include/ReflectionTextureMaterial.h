@@ -26,6 +26,7 @@ public:
                             const DirectX::XMMATRIX &view,
                             const DirectX::XMMATRIX &projection) -> bool;
 
+private:
   auto InitializeRootSignature() -> bool;
 
   auto InitializeGraphicsPipelineState() -> bool;

@@ -62,13 +62,16 @@ private:
   };
 
   auto LoadModel(WCHAR *filename) -> bool;
+
   void ReleaseModel();
 
   auto InitializeBuffers() -> bool;
+
   auto LoadTextures(WCHAR **texture_filename_arr, unsigned int texture_count)
       -> bool;
 
   void CalculateModelVectors();
+
   void CalculateTangentBinormal(const TempVertexType &vertex1,
                                 const TempVertexType &vertex2,
                                 const TempVertexType &vertex3,
@@ -81,12 +84,13 @@ private:
   SpecularMapMaterial material_;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
-  ResourceSharedPtr index_buffer_ = nullptr;
-
   D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
+
+  ResourceSharedPtr index_buffer_ = nullptr;
   D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
   UINT vertex_count_ = 0;
+  
   UINT index_count_ = 0;
 
   ModelType *model_data_ = nullptr;

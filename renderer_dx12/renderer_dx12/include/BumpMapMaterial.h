@@ -54,7 +54,7 @@ private:
     float padding_;
   };
 
-  std::shared_ptr<DirectX12Device> device_;
+  std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   ConstantBuffer<MatrixBufferType> matrix_constant_buffer_;
   MatrixBufferType matrix_constant_data_ = {};

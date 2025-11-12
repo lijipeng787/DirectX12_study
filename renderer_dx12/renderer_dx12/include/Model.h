@@ -62,11 +62,9 @@ private:
   ModelMaterial material_;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
-
   D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
 
   ResourceSharedPtr index_buffer_ = nullptr;
-
   D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
   UINT vertex_count_ = 0;

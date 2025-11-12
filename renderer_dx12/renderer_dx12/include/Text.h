@@ -22,15 +22,14 @@ public:
 private:
   struct SentenceType {
     ResourceSharedPtr vertex_buffer_ = nullptr;
-
     D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
 
     ResourceSharedPtr index_buffer_ = nullptr;
-
     D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
     D3D12_RESOURCE_STATES vertex_buffer_state_ =
         D3D12_RESOURCE_STATE_COMMON;
+        
     D3D12_RESOURCE_STATES index_buffer_state_ =
         D3D12_RESOURCE_STATE_COMMON;
 

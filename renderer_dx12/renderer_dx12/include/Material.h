@@ -8,7 +8,7 @@ namespace Effect {
 
 typedef std::vector<PipelineStateObjectPtr> PSOContainer;
 
-typedef std::unordered_map<std::string, unsigned int> PSOIndexCotainer;
+typedef std::unordered_map<std::string, unsigned int> PSOIndexContainer;
 
 class Material {
 public:
@@ -16,11 +16,10 @@ public:
 
   Material(const Material &rhs) = delete;
 
-  Material &operator=(const Material &rhs) = delete;
+  auto operator=(const Material &rhs) -> Material & = delete;
 
   virtual ~Material() = default;
 
-public:
   virtual bool Initialize() = 0;
 
   // virtual bool Update() = 0;
@@ -30,7 +29,7 @@ public:
   // virtual void Render() = 0;
 
   // virtual bool PostRender() = 0;
-public:
+
   VertexShaderByteCode GetVSByteCode() const;
 
   PixelShaderByteCode GetPSByteCode() const;
@@ -50,15 +49,15 @@ public:
   void SetPSOByName(std::string name, const PipelineStateObjectPtr &pso);
 
 private:
-  VertexShaderByteCode vertex_shader_bitecode_ = {};
+  VertexShaderByteCode vertex_shader_bytecode_ = {};
 
   PixelShaderByteCode pixel_shader_bitcode_ = {};
 
   RootSignaturePtr root_signature_ = nullptr;
 
-  PSOContainer pso_cotainer_ = {};
+  PSOContainer pso_container_;
 
-  PSOIndexCotainer pso_index_cotainer_ = {};
+  PSOIndexContainer pso_index_container_;
 };
 
 } // namespace Effect

@@ -12,14 +12,15 @@ public:
   explicit ReflectionModel(std::shared_ptr<DirectX12Device> device);
 
   ReflectionModel(const ReflectionModel &rhs) = delete;
-  ReflectionModel &operator=(const ReflectionModel &rhs) = delete;
+
+  auto operator=(const ReflectionModel &rhs) -> ReflectionModel & = delete;
 
   ~ReflectionModel();
 
-  bool Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr,
-                  unsigned int texture_count);
+  auto Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr,
+                  unsigned int texture_count) -> bool;
 
-  UINT GetIndexCount() const { return index_count_; }
+  auto GetIndexCount() const -> UINT { return index_count_; }
 
   const D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() const {
     return vertex_buffer_view_;
@@ -29,9 +30,9 @@ public:
     return index_buffer_view_;
   }
 
-  DescriptorHeapPtr GetShaderResourceView() const;
+  auto GetShaderResourceView() const -> DescriptorHeapPtr;
 
-  ResourceSharedPtr GetTextureResource(size_t index) const;
+  auto GetTextureResource(size_t index) const -> ResourceSharedPtr;
 
 private:
   struct VertexType {
@@ -46,22 +47,25 @@ private:
     float nx, ny, nz;
   };
 
-  bool LoadModel(WCHAR *filename);
+  auto LoadModel(WCHAR *filename) -> bool;
 
-  bool InitializeBuffers();
+  auto InitializeBuffers() -> bool;
 
-  bool LoadTextures(WCHAR **texture_filename_arr, unsigned int texture_count);
+  auto LoadTextures(WCHAR **texture_filename_arr, unsigned int texture_count) -> bool;
 
   void ReleaseModel();
 
 private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   ResourceSharedPtr vertex_buffer_ = nullptr;
-  ResourceSharedPtr index_buffer_ = nullptr;
   D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
+
+  ResourceSharedPtr index_buffer_ = nullptr;
   D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
   UINT vertex_count_ = 0;
+  
   UINT index_count_ = 0;
 
   ModelType *model_data_ = nullptr;

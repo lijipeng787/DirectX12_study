@@ -13,7 +13,7 @@ public:
   explicit ReflectionFloorMaterial(std::shared_ptr<DirectX12Device> device);
 
   ReflectionFloorMaterial(const ReflectionFloorMaterial &rhs) = delete;
-  
+
   auto operator=(const ReflectionFloorMaterial &rhs) -> ReflectionFloorMaterial & = delete;
 
   ~ReflectionFloorMaterial() override = default;
@@ -30,6 +30,7 @@ public:
 
   auto UpdateReflectionConstant(const DirectX::XMMATRIX &reflection) -> bool;
 
+private:
   auto InitializeRootSignature() -> bool;
 
   auto InitializeGraphicsPipelineState() -> bool;

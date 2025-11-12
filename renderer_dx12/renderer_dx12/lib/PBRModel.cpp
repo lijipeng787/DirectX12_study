@@ -134,7 +134,7 @@ PBRModel::PBRModel(std::shared_ptr<DirectX12Device> device)
 
 PBRModel::~PBRModel() { ReleaseModel(); }
 
-bool PBRModel::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) {
+auto PBRModel::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) -> bool {
   if (!LoadModel(model_filename)) {
     return false;
   }
@@ -156,13 +156,16 @@ bool PBRModel::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) {
   return true;
 }
 
-PBRMaterial *PBRModel::GetMaterial() { return &material_; }
+auto PBRModel::GetMaterial() -> PBRMaterial * { return &material_; }
 
-DescriptorHeapPtr PBRModel::GetShaderRescourceView() const {
+auto PBRModel::GetShaderRescourceView() const -> DescriptorHeapPtr {
+  if (!texture_container_) {
+    return nullptr;
+  }
   return texture_container_->GetTexturesDescriptorHeap();
 }
 
-bool PBRModel::LoadModel(WCHAR *filename) {
+auto PBRModel::LoadModel(WCHAR *filename) -> bool {
   std::ifstream fin;
   fin.open(filename);
   if (fin.fail()) {
@@ -340,7 +343,7 @@ void PBRModel::CalculateTangentBinormal(const TempVertexType &vertex1,
   }
 }
 
-bool PBRModel::InitializeBuffers() {
+auto PBRModel::InitializeBuffers() -> bool {
   if (!device_ || !model_data_) {
     return false;
   }
@@ -386,7 +389,7 @@ bool PBRModel::InitializeBuffers() {
   return true;
 }
 
-bool PBRModel::LoadTexture(WCHAR **texture_filename_arr) {
+auto PBRModel::LoadTexture(WCHAR **texture_filename_arr) -> bool {
   texture_container_ = std::make_shared<TextureLoader>(device_);
   return texture_container_->LoadTexturesByNameArray(3, texture_filename_arr);
 }

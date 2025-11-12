@@ -34,7 +34,9 @@ public:
 
 private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
+
   RenderTargetHandle render_target_handle_ = kInvalidRenderTargetHandle;
+  
   RenderTargetDescriptor descriptor_ = {};
 };
 

@@ -14,18 +14,17 @@ public:
 
   PBRModel(const PBRModel &rhs) = delete;
 
-  PBRModel &operator=(const PBRModel &rhs) = delete;
+  auto operator=(const PBRModel &rhs) -> PBRModel & = delete;
 
   ~PBRModel();
 
-public:
-  bool Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr);
+  auto Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) -> bool;
 
-  UINT GetIndexCount() const { return index_count_; }
+  auto GetIndexCount() const -> UINT { return index_count_; }
 
-  PBRMaterial *GetMaterial();
+  auto GetMaterial() -> PBRMaterial *;
 
-  DescriptorHeapPtr GetShaderRescourceView() const;
+  auto GetShaderRescourceView() const -> DescriptorHeapPtr;
 
   const D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() const {
     return vertex_buffer_view_;
@@ -61,8 +60,7 @@ private:
     float x, y, z;
   };
 
-private:
-  bool LoadModel(WCHAR *filename);
+  auto LoadModel(WCHAR *filename) -> bool;
 
   void ReleaseModel();
 
@@ -73,21 +71,18 @@ private:
                                 const TempVertexType &vertex3,
                                 VectorType &tangent, VectorType &binormal);
 
-  bool InitializeBuffers();
+  auto InitializeBuffers() -> bool;
 
-  bool LoadTexture(WCHAR **texture_filename_arr);
+  auto LoadTexture(WCHAR **texture_filename_arr) -> bool;
 
-private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   PBRMaterial material_;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
-
   D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
 
   ResourceSharedPtr index_buffer_ = nullptr;
-  
   D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
 
   UINT vertex_count_ = 0;

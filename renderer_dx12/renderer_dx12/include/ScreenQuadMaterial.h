@@ -14,7 +14,7 @@ public:
       : device_(std::move(device)) {}
 
   ScreenQuadMaterial(const ScreenQuadMaterial &rhs) = delete;
-  
+
   auto operator=(const ScreenQuadMaterial &rhs) -> ScreenQuadMaterial & = delete;
 
   ~ScreenQuadMaterial() override = default;
@@ -43,13 +43,17 @@ private:
   };
 
   auto InitializeGraphicsPipelineState() -> bool;
+  
   auto InitializeRootSignature() -> bool;
 
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   ConstantBuffer<MatrixBufferType> constant_buffer_;
+
   ResourceSharedPtr external_constant_buffer_ = nullptr;
+  
   ResourceSharedPtr current_constant_buffer_ = nullptr;
+  
   MatrixBufferType matrix_constant_data_ = {};
 
   bool initialized_ = false;

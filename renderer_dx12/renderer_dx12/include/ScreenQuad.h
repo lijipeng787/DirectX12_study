@@ -61,11 +61,9 @@ private:
   std::shared_ptr<ScreenQuadMaterial> material_ = nullptr;
 
   ResourceSharedPtr vertex_buffer_ = nullptr;
-
   VertexBufferView vertex_buffer_view_;
 
   ResourceSharedPtr index_buffer_ = nullptr;
-
   IndexBufferView index_buffer_view_;
 
   UINT index_count_ = 0, vertex_count_ = 0;
