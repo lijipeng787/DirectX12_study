@@ -200,6 +200,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
 
     DirectX::XMMATRIX base_matrix = {};
     camera_->GetViewMatrix(base_matrix);
+    base_view_matrix_ = base_matrix;
     if (!text_->Initialize(screenWidth, screenHeight, base_matrix)) {
       return false;
     }
@@ -470,6 +471,8 @@ bool Graphics::Render() {
   camera_->GetViewMatrix(view_matrix);
   DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(view_matrix);
 
+  DirectX::XMMATRIX base_view = DirectX::XMMatrixTranspose(base_view_matrix_);
+
   DirectX::XMMATRIX orthogonality = {};
   d3d12_device_->GetOrthoMatrix(orthogonality);
   orthogonality = DirectX::XMMatrixTranspose(orthogonality);
@@ -497,7 +500,7 @@ bool Graphics::Render() {
     return false;
   }
 
-  if (!text_->GetMaterial()->UpdateMatrixConstant(font_world, view,
+  if (!text_->GetMaterial()->UpdateMatrixConstant(font_world, base_view,
                                                        orthogonality)) {
     return false;
   }
@@ -720,7 +723,7 @@ bool Graphics::Render() {
     d3d12_device_->SetGraphicsRootSignature(off_screen_root_signature);
     d3d12_device_->SetPipelineStateObject(off_screen_pso);
 
-    bitmap_->GetMaterial()->UpdateConstantBuffer(font_world, view,
+  bitmap_->GetMaterial()->UpdateConstantBuffer(font_world, base_view,
                                                  orthogonality);
     bitmap_->UpdatePosition(100, 100);
 

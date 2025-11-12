@@ -78,6 +78,8 @@ private:
   float camera_turn_speed_ = 90.0f;
 
   float shared_rotation_angle_ = 0.0f;
-  
+
   float shared_rotation_speed_ = DirectX::XM_PI * 0.25f;
+
+  DirectX::XMMATRIX base_view_matrix_ = DirectX::XMMatrixIdentity();
 };
