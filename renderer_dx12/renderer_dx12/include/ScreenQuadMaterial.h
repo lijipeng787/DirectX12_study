@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <memory>
 
+#include "ConstantBuffer.h"
 #include "Material.h"
 
 class DirectX12Device;
@@ -41,14 +42,14 @@ private:
     DirectX::XMFLOAT4X4 orthogonality_;
   };
 
-private:
   auto InitializeGraphicsPipelineState() -> bool;
   auto InitializeRootSignature() -> bool;
 
-private:
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
-  ResourceSharedPtr constant_buffer_ = nullptr;
+  ConstantBuffer<MatrixBufferType> constant_buffer_;
+  ResourceSharedPtr external_constant_buffer_ = nullptr;
+  ResourceSharedPtr current_constant_buffer_ = nullptr;
   MatrixBufferType matrix_constant_data_ = {};
 
   bool initialized_ = false;
