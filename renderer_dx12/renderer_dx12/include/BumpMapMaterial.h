@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <memory>
 
+#include "ConstantBuffer.h"
 #include "Material.h"
 
 class DirectX12Device;
@@ -55,10 +56,10 @@ private:
 
   std::shared_ptr<DirectX12Device> device_;
 
-  ResourceSharedPtr matrix_constant_buffer_ = nullptr;
+  ConstantBuffer<MatrixBufferType> matrix_constant_buffer_;
   MatrixBufferType matrix_constant_data_ = {};
 
-  ResourceSharedPtr light_constant_buffer_ = nullptr;
+  ConstantBuffer<LightBufferType> light_constant_buffer_;
   LightBufferType light_constant_data_ = {};
 };
 
