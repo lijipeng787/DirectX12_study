@@ -89,9 +89,9 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
       }
     };
 
-    ShaderCompileDesc texture_vs{L"shader/textureVS.hlsl",
+    ShaderCompileDesc texture_vs{L"shader/texture.hlsl",
                                  "TextureVertexShader", "vs_5_0"};
-    ShaderCompileDesc texture_ps{L"shader/texturePS.hlsl",
+    ShaderCompileDesc texture_ps{L"shader/texture.hlsl",
                                  "TexturePixelShader", "ps_5_0"};
     if (!shader_loader_->CompileVertexAndPixelShaders(texture_vs,
                                                       texture_ps)) {
@@ -99,27 +99,27 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
       return false;
     }
 
-    ShaderCompileDesc light_vs{L"shader/lightVS.hlsl", "LightVertexShader",
+    ShaderCompileDesc light_vs{L"shader/light.hlsl", "LightVertexShader",
                                "vs_5_0"};
-    ShaderCompileDesc light_ps{L"shader/lightPS.hlsl", "LightPixelShader",
+    ShaderCompileDesc light_ps{L"shader/light.hlsl", "LightPixelShader",
                                "ps_5_0"};
     if (!shader_loader_->CompileVertexAndPixelShaders(light_vs, light_ps)) {
       report_shader_error(L"Could not initialize Light Shader.");
       return false;
     }
 
-    ShaderCompileDesc font_vs{L"shader/fontVS.hlsl", "FontVertexShader",
+    ShaderCompileDesc font_vs{L"shader/font.hlsl", "FontVertexShader",
                               "vs_5_0"};
-    ShaderCompileDesc font_ps{L"shader/fontPS.hlsl", "FontPixelShader",
+    ShaderCompileDesc font_ps{L"shader/font.hlsl", "FontPixelShader",
                               "ps_5_0"};
     if (!shader_loader_->CompileVertexAndPixelShaders(font_vs, font_ps)) {
       report_shader_error(L"Could not initialize Font Shader.");
       return false;
     }
 
-    ShaderCompileDesc pbr_vs{L"shader/pbrVS.hlsl", "PbrVertexShader",
+    ShaderCompileDesc pbr_vs{L"shader/pbr.hlsl", "PbrVertexShader",
                              "vs_5_0"};
-    ShaderCompileDesc pbr_ps{L"shader/pbrPS.hlsl", "PbrPixelShader",
+    ShaderCompileDesc pbr_ps{L"shader/pbr.hlsl", "PbrPixelShader",
                              "ps_5_0"};
     if (!shader_loader_->CompileVertexAndPixelShaders(pbr_vs, pbr_ps)) {
       report_shader_error(L"Could not initialize PBR Shader.");
@@ -142,10 +142,10 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
       return false;
     }
     bitmap_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"shader/textureVS.hlsl")
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/texture.hlsl")
             .Get()));
     bitmap_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"shader/texturePS.hlsl")
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/texture.hlsl")
             .Get()));
 
     bitmap_ = std::make_shared<ScreenQuad>(d3d12_device_, bitmap_material);
@@ -165,10 +165,10 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
     ModelMaterial *model_material = model_->GetMaterial();
     model_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"shader/lightVS.hlsl")
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/light.hlsl")
             .Get()));
     model_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"shader/lightPS.hlsl")
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/light.hlsl")
             .Get()));
 
     WCHAR *texture_filename_arr[3] = {L"data/stone01.dds", L"data/dirt01.dds",
@@ -186,10 +186,10 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
     TextMaterial *text_material = text_->GetMaterial();
     text_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"shader/fontVS.hlsl")
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/font.hlsl")
             .Get()));
     text_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"shader/fontPS.hlsl")
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/font.hlsl")
             .Get()));
 
     WCHAR *font_texture[1] = {L"data/font.dds"};
@@ -212,10 +212,10 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     }
     PBRMaterial *pbr_material = pbr_model_->GetMaterial();
     pbr_material->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetVertexShaderBlobByFileName(L"shader/pbrVS.hlsl")
+        shader_loader_->GetVertexShaderBlobByFileName(L"shader/pbr.hlsl")
             .Get()));
     pbr_material->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-        shader_loader_->GetPixelShaderBlobByFileName(L"shader/pbrPS.hlsl")
+        shader_loader_->GetPixelShaderBlobByFileName(L"shader/pbr.hlsl")
             .Get()));
 
     WCHAR *pbr_textures[3] = {L"data/pbr/pbr_albedo.tga",

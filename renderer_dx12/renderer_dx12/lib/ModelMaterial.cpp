@@ -125,7 +125,7 @@ auto ModelMaterial::UpdateFogConstant(float fog_begin, float fog_end) -> bool {
 auto ModelMaterial::InitializeRootSignature() -> bool {
 
   CD3DX12_DESCRIPTOR_RANGE descriptor_ranges_srv[1];
-  descriptor_ranges_srv[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0);
+  descriptor_ranges_srv[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 
   CD3DX12_ROOT_PARAMETER root_parameters[4];
   root_parameters[0].InitAsDescriptorTable(1, descriptor_ranges_srv,

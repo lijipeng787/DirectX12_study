@@ -69,10 +69,10 @@ Shaders are located in `shader/` directory:
 - `reflection.hlsl` - Real-time reflection vertex/pixel shaders
 - `bumpMap.hlsl` - Normal mapping shaders
 - `specMap.hlsl` - Specular mapping shaders
-- `pbrPS.hlsl`/`pbrVS.hlsl` - Physically-based rendering
-- `lightPS.hlsl`/`lightVS.hlsl` - Basic lighting
-- `texturePS.hlsl`/`textureVS.hlsl` - Simple texture rendering
-- `fontPS.hlsl`/`fontVS.hlsl` - Text rendering
+- `pbr.hlsl` - Physically-based rendering (vertex + pixel)
+- `light.hlsl` - Basic lighting with fog (vertex + pixel)
+- `texture.hlsl` - Simple texture rendering (vertex + pixel)
+- `font.hlsl` - Text rendering with alpha masking (vertex + pixel)
 
 Note: Shaders are excluded from x64 Debug builds in the project file.
 

@@ -44,7 +44,6 @@ public:
 private:
   auto EnsureShadersLoaded() -> bool;
 
-private:
   std::shared_ptr<DirectX12Device> device_;
 
   std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader_;

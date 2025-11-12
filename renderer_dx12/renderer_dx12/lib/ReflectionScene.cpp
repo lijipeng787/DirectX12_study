@@ -80,10 +80,10 @@ auto ReflectionScene::Initialize() -> bool {
   }
 
   cube_material_->SetVSByteCode(CD3DX12_SHADER_BYTECODE(
-      shader_loader_->GetVertexShaderBlobByFileName(L"shader/textureVS.hlsl")
+      shader_loader_->GetVertexShaderBlobByFileName(L"shader/texture.hlsl")
           .Get()));
   cube_material_->SetPSByteCode(CD3DX12_SHADER_BYTECODE(
-      shader_loader_->GetPixelShaderBlobByFileName(L"shader/texturePS.hlsl")
+      shader_loader_->GetPixelShaderBlobByFileName(L"shader/texture.hlsl")
           .Get()));
   if (!cube_material_->Initialize()) {
     return false;

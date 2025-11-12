@@ -76,49 +76,6 @@ void ScreenQuadMaterial::SetExternalConstantBuffer(
   XMStoreFloat4x4(&matrix_constant_data_.orthogonality_, initial_ortho);
 }
 
-auto ScreenQuadMaterial::InitializeGraphicsPipelineState() -> bool {
-
-  D3D12_INPUT_ELEMENT_DESC input_element_descs[] = {
-      {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-      {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
-
-  D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
-  pso_desc.InputLayout = {input_element_descs, _countof(input_element_descs)};
-  pso_desc.pRootSignature = GetRootSignature().Get();
-  pso_desc.VS = GetVSByteCode();
-  pso_desc.PS = GetPSByteCode();
-  pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-  pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-  pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-  pso_desc.SampleMask = UINT_MAX;
-  pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-  pso_desc.NumRenderTargets = 1;
-  pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-  pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-  pso_desc.SampleDesc.Count = 1;
-
-  auto device = device_->GetD3d12Device();
-
-  PipelineStateObjectPtr pso = {};
-  if (FAILED(
-          device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso)))) {
-    return false;
-  }
-  SetPSOByName("bitmap_normal", pso);
-
-  PipelineStateObjectPtr pso2 = {};
-  pso_desc.DepthStencilState.DepthEnable = false;
-  if (FAILED(device->CreateGraphicsPipelineState(&pso_desc,
-                                                 IID_PPV_ARGS(&pso2)))) {
-    return false;
-  }
-  SetPSOByName("bitmap_depth_disable", pso2);
-
-  return true;
-}
-
 auto ScreenQuadMaterial::InitializeRootSignature() -> bool {
 
   CD3DX12_DESCRIPTOR_RANGE descriptor_ranges_srv[1];
@@ -171,4 +128,45 @@ auto ScreenQuadMaterial::InitializeRootSignature() -> bool {
   return true;
 }
 
+auto ScreenQuadMaterial::InitializeGraphicsPipelineState() -> bool {
 
+  D3D12_INPUT_ELEMENT_DESC input_element_descs[] = {
+      {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+      {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
+
+  D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
+  pso_desc.InputLayout = {input_element_descs, _countof(input_element_descs)};
+  pso_desc.pRootSignature = GetRootSignature().Get();
+  pso_desc.VS = GetVSByteCode();
+  pso_desc.PS = GetPSByteCode();
+  pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+  pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+  pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+  pso_desc.SampleMask = UINT_MAX;
+  pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+  pso_desc.NumRenderTargets = 1;
+  pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+  pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+  pso_desc.SampleDesc.Count = 1;
+
+  auto device = device_->GetD3d12Device();
+
+  PipelineStateObjectPtr pso = {};
+  if (FAILED(
+          device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pso)))) {
+    return false;
+  }
+  SetPSOByName("bitmap_normal", pso);
+
+  PipelineStateObjectPtr pso2 = {};
+  pso_desc.DepthStencilState.DepthEnable = false;
+  if (FAILED(device->CreateGraphicsPipelineState(&pso_desc,
+                                                 IID_PPV_ARGS(&pso2)))) {
+    return false;
+  }
+  SetPSOByName("bitmap_depth_disable", pso2);
+
+  return true;
+}

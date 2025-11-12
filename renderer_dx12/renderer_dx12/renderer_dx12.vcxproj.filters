@@ -243,28 +243,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fontPS.hlsl">
+    <None Include="shader\font.hlsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="fontVS.hlsl">
+    <None Include="shader\light.hlsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="lightPS.hlsl">
+    <None Include="shader\texture.hlsl">
       <Filter>shaders</Filter>
     </None>
-    <None Include="lightVS.hlsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="texturePS.hlsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="textureVS.hlsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="pbrVS.hlsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="pbrPS.hlsl">
+    <None Include="shader\pbr.hlsl">
       <Filter>shaders</Filter>
     </None>
     <None Include="shader\bumpMap.hlsl">

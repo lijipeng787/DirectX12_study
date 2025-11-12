@@ -82,7 +82,6 @@ private:
   void CalculateNormal(const VectorType &tangent, const VectorType &binormal,
                        VectorType &normal);
 
-private:
   std::shared_ptr<DirectX12Device> device_;
 
   BumpMapMaterial material_;

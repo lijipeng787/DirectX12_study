@@ -9,18 +9,17 @@ public:
 
   BitmapFont(const BitmapFont &rhs) = delete;
 
-  BitmapFont &operator=(const BitmapFont &rhs) = delete;
+  auto operator=(const BitmapFont &rhs) -> BitmapFont & = delete;
 
   ~BitmapFont() {
-    if (nullptr != font_) {
       delete[] font_;
-    }
   }
 
 private:
   struct FontType {
-    float left_, right_;
-    int width_;
+    float left_ = 0.0f;
+    float right_ = 0.0f;
+    int width_ = 0;
   };
 
   struct VertexType {
@@ -29,14 +28,13 @@ private:
   };
 
 public:
-  bool Initialize(WCHAR *font_filename);
+  auto Initialize(WCHAR *font_filename) -> bool;
 
   void BuildVertexArray(void *vertices, WCHAR *sentence, float drawX,
                         float drawY);
 
 private:
-  bool LoadFontData(WCHAR *font_name);
+  auto LoadFontData(WCHAR *font_name) -> bool;
 
-private:
   FontType *font_ = nullptr;
 };

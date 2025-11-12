@@ -4,42 +4,42 @@ error_message:{};
 
 shader:{
 shader_type:vertex_shader;
-shader_filename:textureVS.hlsl;
+shader_filename:texture.hlsl;
 shader_entry_point:TextureVertexShader;
 shader_target_version:vs_5_0;
 };
 
 shader:{
 shader_type:vertex_shader;
-shader_filename:fontVS.hlsl;
+shader_filename:font.hlsl;
 shader_entry_point:FontVertexShader;
 shader_target_version:vs_5_0;
 };
 
 shader:{
 shader_type:vertex_shader;
-shader_filename:LightVS.hlsl;
+shader_filename:light.hlsl;
 shader_entry_point:LightVertexShader;
 shader_target_version:vs_5_0;
 };
 
 shader:{
 shader_type:pixel_shader;
-shader_filename:texturePS.hlsl;
+shader_filename:texture.hlsl;
 shader_entry_point:TexturePixelShader;
 shader_target_version:ps_5_0;
 }
 
 shader:{
 shader_type:pixel_shader;
-shader_filename:FontPS.hlsl;
+shader_filename:font.hlsl;
 shader_entry_point:FontPixelShader;
 shader_target_version:ps_5_0;
 }
 
 shader:{
 shader_type:pixel_shader;
-shader_filename:LightPS.hlsl;
+shader_filename:light.hlsl;
 shader_entry_point:LightPixelShader;
 shader_target_version:ps_5_0;
 }

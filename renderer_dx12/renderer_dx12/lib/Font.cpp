@@ -1,9 +1,10 @@
 #include "stdafx.h"
 
+#include <fstream>
+
 #include "Font.h"
 
 #include "TypeDefine.h"
-#include <fstream>
 
 using namespace std;
 
