@@ -57,7 +57,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
   system->Shutdown();
   delete system;
-  system = 0;
+  system = nullptr;
 
   if (console_initialized) {
     ShutdownConsole();

@@ -269,8 +269,7 @@ void Graphics::UpdateCameraFromInput(float delta_seconds, Input *input) {
 
 bool Graphics::Render() {
   // Get view and projection matrices
-  DirectX::XMMATRIX view_matrix = {};
-  camera_->GetViewMatrix(view_matrix);
+  DirectX::XMMATRIX view_matrix = camera_->GetViewMatrix();
 
   DirectX::XMMATRIX projection_matrix = {};
   d3d12_device_->GetProjectionMatrix(projection_matrix);
@@ -440,8 +439,7 @@ bool Graphics::InitializeRenderObjects(int screenWidth, int screenHeight, HWND h
     return false;
   }
 
-  DirectX::XMMATRIX base_matrix = {};
-  camera_->GetViewMatrix(base_matrix);
+  DirectX::XMMATRIX base_matrix = camera_->GetViewMatrix();
   base_view_matrix_ = base_matrix;
   if (!text_->Initialize(screenWidth, screenHeight, base_matrix)) {
     return false;

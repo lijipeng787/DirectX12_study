@@ -102,7 +102,7 @@ bool ScreenQuad::UpdatePosition(int pos_x, int pos_y) {
   D3D12_RANGE range;
   range.Begin = 0;
   range.End = 0;
-  UINT8 *data_begin = 0;
+  UINT8 *data_begin = nullptr;
   if (FAILED(vertex_buffer_->Map(0, &range,
                                  reinterpret_cast<void **>(&data_begin)))) {
     return false;

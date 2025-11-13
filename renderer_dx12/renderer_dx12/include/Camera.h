@@ -36,16 +36,16 @@ public:
 
   void Construct2DViewMatrix();
 
-  void GetViewMatrix(DirectX::XMMATRIX &view) const { view = view_matrix_; }
+  auto GetViewMatrix() const -> DirectX::XMMATRIX { return view_matrix_; }
 
-  void Get2DViewMatrix(DirectX::XMMATRIX &view) const {
-    view = view_matrix_2d_;
+  auto Get2DViewMatrix() const -> DirectX::XMMATRIX {
+    return view_matrix_2d_;
   }
 
   void UpdateReflection(float height);
 
-  void GetReflectionViewMatrix(DirectX::XMMATRIX &view) const {
-    view = reflection_view_matrix_;
+  auto GetReflectionViewMatrix() const -> DirectX::XMMATRIX {
+    return reflection_view_matrix_;
   }
 
 private:

@@ -30,43 +30,41 @@ void StringToWCHAR(std::string s, WCHAR *wchar);
 
 #define CBSIZE(constant_buffer) ((sizeof(constant_buffer) + 255) & ~255)
 
-typedef Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DescriptorHeapPtr;
+using DescriptorHeapPtr = Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>;
 
-typedef std::vector<D3D12_VIEWPORT> ViewPortVector;
+using ViewPortVector = std::vector<D3D12_VIEWPORT>;
 
-typedef std::vector<D3D12_RECT> ScissorRectVector;
+using ScissorRectVector = std::vector<D3D12_RECT>;
 
-typedef Microsoft::WRL::ComPtr<IDXGISwapChain3> SwapChainPtr;
+using SwapChainPtr = Microsoft::WRL::ComPtr<IDXGISwapChain3>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12DebugDevice> D2d12DebugDevicePtr;
+using D3d12DebugDevicePtr = Microsoft::WRL::ComPtr<ID3D12DebugDevice>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12DebugCommandQueue>
-    D3d12DebugCommandQueuePtr;
+using D3d12DebugCommandQueuePtr = Microsoft::WRL::ComPtr<ID3D12DebugCommandQueue>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12DebugCommandList> D3d12DebugCommandListPtr;
+using D3d12DebugCommandListPtr = Microsoft::WRL::ComPtr<ID3D12DebugCommandList>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12Device> D3d12DevicePtr;
+using D3d12DevicePtr = Microsoft::WRL::ComPtr<ID3D12Device>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12Resource> ResourceSharedPtr;
+using ResourceSharedPtr = Microsoft::WRL::ComPtr<ID3D12Resource>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CommandAllocatorPtr;
+using CommandAllocatorPtr = Microsoft::WRL::ComPtr<ID3D12CommandAllocator>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12CommandQueue> CommandQueuePtr;
+using CommandQueuePtr = Microsoft::WRL::ComPtr<ID3D12CommandQueue>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12RootSignature> RootSignaturePtr;
+using RootSignaturePtr = Microsoft::WRL::ComPtr<ID3D12RootSignature>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12PipelineState> PipelineStateObjectPtr;
+using PipelineStateObjectPtr = Microsoft::WRL::ComPtr<ID3D12PipelineState>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>
-    GraphicsCommandListPtr;
+using GraphicsCommandListPtr = Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>;
 
-typedef Microsoft::WRL::ComPtr<ID3D12Fence> FencePtr;
+using FencePtr = Microsoft::WRL::ComPtr<ID3D12Fence>;
 
-typedef D3D12_VERTEX_BUFFER_VIEW VertexBufferView;
+using VertexBufferView = D3D12_VERTEX_BUFFER_VIEW;
 
-typedef D3D12_SHADER_BYTECODE VertexShaderByteCode;
+using VertexShaderByteCode = D3D12_SHADER_BYTECODE;
 
-typedef D3D12_SHADER_BYTECODE PixelShaderByteCode;
+using PixelShaderByteCode = D3D12_SHADER_BYTECODE;
 
-typedef D3D12_INDEX_BUFFER_VIEW IndexBufferView;
+using IndexBufferView = D3D12_INDEX_BUFFER_VIEW;
 

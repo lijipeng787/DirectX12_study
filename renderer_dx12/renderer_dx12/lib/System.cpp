@@ -103,8 +103,6 @@ void System::Run() {
       }
     }
   }
-
-  return;
 }
 
 bool System::Frame() {
@@ -225,8 +223,6 @@ void System::InitializeWindows(int screen_width, int screen_height) {
 
   // Hide the mouse cursor.
   ShowCursor(false);
-
-  return;
 }
 
 void System::ShutdownWindows() {
@@ -240,16 +236,14 @@ void System::ShutdownWindows() {
 
   // Remove the window.
   DestroyWindow(hwnd_);
-  hwnd_ = NULL;
+  hwnd_ = nullptr;
 
   // Remove the application instance.
   UnregisterClass(application_name_, hinstance_);
-  hinstance_ = NULL;
+  hinstance_ = nullptr;
 
   // Release the pointer to this class.
-  g_system_instance = NULL;
-
-  return;
+  g_system_instance = nullptr;
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,

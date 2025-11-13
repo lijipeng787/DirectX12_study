@@ -26,42 +26,42 @@ public:
 
   auto Update() -> bool;
 
-  void GetMouseLocation(int &mouse_x, int &mouse_y) {
+  void GetMouseLocation(int &mouse_x, int &mouse_y) const {
     mouse_x = mouse_x_;
     mouse_y = mouse_y_;
   }
 
-  auto IsEscapePressed() -> bool;
+  auto IsEscapePressed() const -> bool;
 
-  auto IsLeftPressed() -> bool;
+  auto IsLeftPressed() const -> bool;
 
-  auto IsRightPressed() -> bool;
+  auto IsRightPressed() const -> bool;
 
-  auto IsUpPressed() -> bool;
+  auto IsUpPressed() const -> bool;
 
-  auto IsDownPressed() -> bool;
+  auto IsDownPressed() const -> bool;
 
-  auto IsWPressed() -> bool;
+  auto IsWPressed() const -> bool;
 
-  auto IsSPressed() -> bool;
+  auto IsSPressed() const -> bool;
 
-  auto IsAPressed() -> bool;
+  auto IsAPressed() const -> bool;
 
-  auto IsDPressed() -> bool;
+  auto IsDPressed() const -> bool;
 
-  auto IsZPressed() -> bool;
+  auto IsZPressed() const -> bool;
 
-  auto IsPageUpPressed() -> bool;
+  auto IsPageUpPressed() const -> bool;
 
-  auto IsPageDownPressed() -> bool;
+  auto IsPageDownPressed() const -> bool;
 
-  auto IsRPressed() -> bool;
+  auto IsRPressed() const -> bool;
 
-  auto IsFPressed() -> bool;
+  auto IsFPressed() const -> bool;
 
-  auto IsQPressed() -> bool;
+  auto IsQPressed() const -> bool;
 
-  auto IsEPressed() -> bool;
+  auto IsEPressed() const -> bool;
 
 private:
   void ProcessInput();

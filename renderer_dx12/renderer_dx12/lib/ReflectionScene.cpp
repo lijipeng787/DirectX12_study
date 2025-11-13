@@ -197,8 +197,7 @@ auto ReflectionScene::Render(const XMMATRIX &view,
   }
 
   camera_->UpdateReflection(reflection_plane_height_);
-  XMMATRIX reflection_view;
-  camera_->GetReflectionViewMatrix(reflection_view);
+  XMMATRIX reflection_view = camera_->GetReflectionViewMatrix();
   const XMMATRIX reflection_t = XMMatrixTranspose(reflection_view);
   if (!floor_material_->UpdateReflectionConstant(reflection_t)) {
     return false;
@@ -247,8 +246,7 @@ auto ReflectionScene::RenderReflectionTexture(const XMMATRIX &projection)
 
   camera_->UpdateReflection(reflection_plane_height_);
 
-  XMMATRIX reflection_view;
-  camera_->GetReflectionViewMatrix(reflection_view);
+  XMMATRIX reflection_view = camera_->GetReflectionViewMatrix();
 
   const XMMATRIX world = XMMatrixRotationY(rotation_radians_) *
                          XMMatrixTranslation(cube_position_.x, cube_position_.y,

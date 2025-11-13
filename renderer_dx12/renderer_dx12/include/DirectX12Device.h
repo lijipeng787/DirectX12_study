@@ -319,7 +319,7 @@ private:
 
   SwapChainPtr swap_chain_ = nullptr;
 
-  D2d12DebugDevicePtr d3d12_debug_device_ = nullptr;
+  D3d12DebugDevicePtr d3d12_debug_device_ = nullptr;
 
   D3d12DebugCommandQueuePtr debug_command_queue_ = nullptr;
 

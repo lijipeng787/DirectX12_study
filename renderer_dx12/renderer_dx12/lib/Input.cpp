@@ -158,97 +158,97 @@ void Input::ProcessInput() {
   }
 }
 
-bool Input::IsEscapePressed() {
+bool Input::IsEscapePressed() const {
   if (keyboard_state_[DIK_ESCAPE] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsLeftPressed() {
+bool Input::IsLeftPressed() const {
   if (keyboard_state_[DIK_LEFT] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsRightPressed() {
+bool Input::IsRightPressed() const {
   if (keyboard_state_[DIK_RIGHT] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsUpPressed() {
+bool Input::IsUpPressed() const {
   if (keyboard_state_[DIK_UP] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsDownPressed() {
+bool Input::IsDownPressed() const {
   if (keyboard_state_[DIK_DOWN] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsWPressed() {
+bool Input::IsWPressed() const {
   if (keyboard_state_[DIK_W] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsSPressed() {
+bool Input::IsSPressed() const {
   if (keyboard_state_[DIK_S] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsAPressed() {
+bool Input::IsAPressed() const {
   if (keyboard_state_[DIK_A] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsDPressed() {
+bool Input::IsDPressed() const {
   if (keyboard_state_[DIK_D] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsZPressed() {
+bool Input::IsZPressed() const {
   if (keyboard_state_[DIK_Z] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsRPressed() {
+bool Input::IsRPressed() const {
   if (keyboard_state_[DIK_R] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsFPressed() {
+bool Input::IsFPressed() const {
   if (keyboard_state_[DIK_F] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsQPressed() {
+bool Input::IsQPressed() const {
   if (keyboard_state_[DIK_Q] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsEPressed() {
+bool Input::IsEPressed() const {
   if (keyboard_state_[DIK_E] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsPageUpPressed() {
+bool Input::IsPageUpPressed() const {
   if (keyboard_state_[DIK_PGUP] & 0x80)
     return true;
   return false;
 }
 
-bool Input::IsPageDownPressed() {
+bool Input::IsPageDownPressed() const {
   if (keyboard_state_[DIK_PGDN] & 0x80)
     return true;
   return false;
