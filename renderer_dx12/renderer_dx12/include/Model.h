@@ -40,7 +40,7 @@ public:
 
   auto GetMaterial() -> ModelMaterial * { return &material_; }
 
-  auto GetShaderRescourceView() const -> DescriptorHeapPtr;
+  auto GetShaderResourceView() const -> DescriptorHeapPtr;
   
   auto GetVertexBufferView() const -> const D3D12_VERTEX_BUFFER_VIEW & {
     return vertex_buffer_view_;

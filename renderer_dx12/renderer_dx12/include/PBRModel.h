@@ -24,7 +24,7 @@ public:
 
   auto GetMaterial() -> PBRMaterial *;
 
-  auto GetShaderRescourceView() const -> DescriptorHeapPtr;
+  auto GetShaderResourceView() const -> DescriptorHeapPtr;
 
   const D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() const {
     return vertex_buffer_view_;

@@ -55,7 +55,7 @@ public:
 
   TextMaterial *GetMaterial();
 
-  DescriptorHeapPtr GetShaderRescourceView() const;
+  DescriptorHeapPtr GetShaderResourceView() const;
 
   UINT GetIndexCount(int index) const {
     return sentence_vector_.at(index)->index_count_;

@@ -595,7 +595,7 @@ bool Graphics::RenderOffscreenPass() {
   d3d12_device_->SetPipelineStateObject(cached_resources_.light_pso);
 
   ID3D12DescriptorHeap *light_shader_heap[] = {
-      model_.get()->GetShaderRescourceView().Get()};
+      model_.get()->GetShaderResourceView().Get()};
   d3d12_device_->SetDescriptorHeaps(1, light_shader_heap);
 
   d3d12_device_->SetGraphicsRootDescriptorTable(
@@ -616,7 +616,7 @@ bool Graphics::RenderOffscreenPass() {
   d3d12_device_->SetPipelineStateObject(cached_resources_.font_pso);
 
   ID3D12DescriptorHeap *font_shader_heap[] = {
-      text_.get()->GetShaderRescourceView().Get()};
+      text_.get()->GetShaderResourceView().Get()};
   d3d12_device_->SetDescriptorHeaps(1, font_shader_heap);
 
   d3d12_device_->SetGraphicsRootDescriptorTable(
@@ -683,7 +683,7 @@ bool Graphics::RenderMainScenePass(const DirectX::XMMATRIX& view_matrix,
     auto pbr_light_cb = pbr_material->GetLightConstantBuffer();
 
     ID3D12DescriptorHeap *pbr_heap[] = {
-        pbr_model_->GetShaderRescourceView().Get()};
+        pbr_model_->GetShaderResourceView().Get()};
     d3d12_device_->SetDescriptorHeaps(1, pbr_heap);
 
     d3d12_device_->SetGraphicsRootSignature(pbr_root_signature);
@@ -717,7 +717,7 @@ bool Graphics::RenderUIPass() {
   d3d12_device_->SetPipelineStateObject(cached_resources_.light_pso);
 
   ID3D12DescriptorHeap *light_shader_heap[] = {
-      model_.get()->GetShaderRescourceView().Get()};
+      model_.get()->GetShaderResourceView().Get()};
   d3d12_device_->SetDescriptorHeaps(1, light_shader_heap);
 
   d3d12_device_->SetGraphicsRootDescriptorTable(
@@ -738,7 +738,7 @@ bool Graphics::RenderUIPass() {
   d3d12_device_->SetPipelineStateObject(cached_resources_.font_pso);
 
   ID3D12DescriptorHeap *font_shader_heap[] = {
-      text_.get()->GetShaderRescourceView().Get()};
+      text_.get()->GetShaderResourceView().Get()};
   d3d12_device_->SetDescriptorHeaps(1, font_shader_heap);
 
   d3d12_device_->SetGraphicsRootDescriptorTable(

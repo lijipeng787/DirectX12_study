@@ -295,7 +295,7 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
   return true;
 }
 
-DescriptorHeapPtr Text::GetShaderRescourceView() const {
+DescriptorHeapPtr Text::GetShaderResourceView() const {
   return texture_container_->GetTexturesDescriptorHeap();
 }
 

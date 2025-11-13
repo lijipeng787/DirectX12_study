@@ -51,7 +51,7 @@ public:
 private:
   VertexShaderByteCode vertex_shader_bytecode_ = {};
 
-  PixelShaderByteCode pixel_shader_bitcode_ = {};
+  PixelShaderByteCode pixel_shader_bytecode_ = {};
 
   RootSignaturePtr root_signature_ = nullptr;
 

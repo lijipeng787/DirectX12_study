@@ -158,7 +158,7 @@ auto PBRModel::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) -
 
 auto PBRModel::GetMaterial() -> PBRMaterial * { return &material_; }
 
-auto PBRModel::GetShaderRescourceView() const -> DescriptorHeapPtr {
+auto PBRModel::GetShaderResourceView() const -> DescriptorHeapPtr {
   if (!texture_container_) {
     return nullptr;
   }

@@ -7,7 +7,7 @@ VertexShaderByteCode Effect::Material::GetVSByteCode() const {
 }
 
 PixelShaderByteCode Effect::Material::GetPSByteCode() const {
-  return pixel_shader_bitcode_;
+  return pixel_shader_bytecode_;
 }
 
 void Effect::Material::SetVSByteCode(const VertexShaderByteCode &bytecode) {
@@ -15,7 +15,7 @@ void Effect::Material::SetVSByteCode(const VertexShaderByteCode &bytecode) {
 }
 
 void Effect::Material::SetPSByteCode(const PixelShaderByteCode &bytecode) {
-  pixel_shader_bitcode_ = bytecode;
+  pixel_shader_bytecode_ = bytecode;
 }
 
 RootSignaturePtr Effect::Material::GetRootSignature() const {

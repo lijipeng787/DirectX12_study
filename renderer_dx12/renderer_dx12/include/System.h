@@ -3,10 +3,10 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
-
-class Input;
-class Graphics;
-class TimerClass;
+#include <memory>
+#include "Timer.h"
+#include "Input.h"
+#include "Graphics.h"
 
 class System {
 
@@ -15,7 +15,7 @@ public:
 
   System(const System &rhs) = delete;
 
-  System &operator==(const System &rhs) = delete;
+  System &operator=(const System &rhs) = delete;
 
   ~System() {}
 
@@ -42,11 +42,11 @@ private:
 
   HWND hwnd_;
 
-  Input *input_ = nullptr;
+  std::unique_ptr<Input> input_ = nullptr;
 
-  Graphics *graphics_ = nullptr;
+  std::unique_ptr<Graphics> graphics_ = nullptr;
 
-  TimerClass *timer_ = nullptr;
+  std::unique_ptr<TimerClass> timer_ = nullptr;
 };
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

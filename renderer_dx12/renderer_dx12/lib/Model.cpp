@@ -160,7 +160,7 @@ bool Model::Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) {
   return true;
 }
 
-DescriptorHeapPtr Model::GetShaderRescourceView() const {
+DescriptorHeapPtr Model::GetShaderResourceView() const {
   if (!texture_container_) {
     return {};
   }

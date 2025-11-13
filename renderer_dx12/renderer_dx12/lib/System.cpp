@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 #include "System.h"
 
@@ -20,7 +20,7 @@ bool System::Initialize() {
 
   // Create the input object.  This object will be used to handle reading the
   // keyboard input from the user.
-  input_ = new Input();
+  input_ = std::make_unique<Input>();
   if (!input_) {
     return false;
   }
@@ -31,7 +31,7 @@ bool System::Initialize() {
   }
 
   // Create and initialize the high resolution timer.
-  timer_ = new TimerClass();
+  timer_ = std::make_unique<TimerClass>();
   if (!timer_) {
     return false;
   }
@@ -42,7 +42,7 @@ bool System::Initialize() {
 
   // Create the graphics object.  This object will handle rendering all the
   // graphics for this application.
-  graphics_ = new Graphics();
+  graphics_ = std::make_unique<Graphics>();
   if (!graphics_) {
     return false;
   }
@@ -60,25 +60,20 @@ void System::Shutdown() {
   // Release the graphics object.
   if (graphics_) {
     graphics_->Shutdown();
-    delete graphics_;
-    graphics_ = 0;
+    graphics_.reset();
   }
 
   // Release the input object.
   if (input_) {
-    delete input_;
-    input_ = 0;
+    input_.reset();
   }
 
   if (timer_) {
-    delete timer_;
-    timer_ = nullptr;
+    timer_.reset();
   }
 
   // Shutdown the window.
   ShutdownWindows();
-
-  return;
 }
 
 void System::Run() {
@@ -129,7 +124,7 @@ bool System::Frame() {
     }
   }
 
-  if (!graphics_->Frame(delta_seconds, input_)) {
+  if (!graphics_->Frame(delta_seconds, input_.get())) {
     return false;
   }
 
@@ -155,7 +150,7 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam,
   }
 }
 
-void System::InitializeWindows(int screen_width, int screen__height) {
+void System::InitializeWindows(int screen_width, int screen_height) {
   WNDCLASSEX wc;
   DEVMODE dmScreenSettings;
   int posX, posY;
@@ -188,7 +183,7 @@ void System::InitializeWindows(int screen_width, int screen__height) {
 
   // Determine the resolution of the clients desktop screen.
   screen_width = GetSystemMetrics(SM_CXSCREEN);
-  screen__height = GetSystemMetrics(SM_CYSCREEN);
+  screen_height = GetSystemMetrics(SM_CYSCREEN);
 
   // Setup the screen settings depending on whether it is running in full screen
   // or in windowed mode.
@@ -198,7 +193,7 @@ void System::InitializeWindows(int screen_width, int screen__height) {
     memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
     dmScreenSettings.dmSize = sizeof(dmScreenSettings);
     dmScreenSettings.dmPelsWidth = (unsigned long)screen_width;
-    dmScreenSettings.dmPelsHeight = (unsigned long)screen__height;
+    dmScreenSettings.dmPelsHeight = (unsigned long)screen_height;
     dmScreenSettings.dmBitsPerPel = 32;
     dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
@@ -210,17 +205,17 @@ void System::InitializeWindows(int screen_width, int screen__height) {
   } else {
     // If windowed then set it to 800x600 resolution.
     screen_width = 800;
-    screen__height = 600;
+    screen_height = 600;
 
     // Place the window in the middle of the screen.
     posX = (GetSystemMetrics(SM_CXSCREEN) - screen_width) / 2;
-    posY = (GetSystemMetrics(SM_CYSCREEN) - screen__height) / 2;
+    posY = (GetSystemMetrics(SM_CYSCREEN) - screen_height) / 2;
   }
 
   // Create the window with the screen settings and get the handle to it.
   hwnd_ = CreateWindowEx(WS_EX_APPWINDOW, application_name_, application_name_,
                          WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP, posX,
-                         posY, screen_width, screen__height, NULL, NULL,
+                         posY, screen_width, screen_height, NULL, NULL,
                          hinstance_, NULL);
 
   // Bring the window up on the screen and set it as main focus.
