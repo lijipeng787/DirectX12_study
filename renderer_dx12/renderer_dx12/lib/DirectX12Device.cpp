@@ -282,10 +282,9 @@ bool DirectX12Device::CreateBuffer(size_t size, const void *data,
   return WaitForGpuIdle();
 }
 
-bool DirectX12Device::CreateTexture(
+bool DirectX12Device::LoadTexture(
     const std::wstring &filename,
-    Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
-    D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
+    Microsoft::WRL::ComPtr<ID3D12Resource> &resource) {
 
   if (!d3d12device_ || filename.empty()) {
     return false;
@@ -307,11 +306,12 @@ bool DirectX12Device::CreateTexture(
   std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> upload_resources;
   bool success = false;
   std::wstring lowercase = ToLower(filename);
+  D3D12_CPU_DESCRIPTOR_HANDLE null_handle = {0};
 
   if (EndsWith(lowercase, L".dds")) {
     success = SUCCEEDED(CreateDDSTextureFromFile(
         d3d12device_.Get(), default_graphics_command_list_.Get(),
-        filename.c_str(), 0, false, &resource, srv_handle, upload_resources));
+        filename.c_str(), 0, false, &resource, null_handle, upload_resources));
   } else if (EndsWith(lowercase, L".tga")) {
     std::vector<uint8_t> image_data;
     uint32_t width = 0;
@@ -368,17 +368,6 @@ bool DirectX12Device::CreateTexture(
               D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
           default_graphics_command_list_->ResourceBarrier(1, &to_shader);
 
-          D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
-          srv_desc.Shader4ComponentMapping =
-              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-          srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-          srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-          srv_desc.Texture2D.MipLevels = 1;
-          srv_desc.Texture2D.MostDetailedMip = 0;
-          srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-          d3d12device_->CreateShaderResourceView(resource.Get(), &srv_desc,
-                                                 srv_handle);
           success = true;
         }
       }
@@ -400,6 +389,29 @@ bool DirectX12Device::CreateTexture(
   }
 
   return success;
+}
+
+bool DirectX12Device::CreateTexture(
+    const std::wstring &filename,
+    Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
+    D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
+  
+  if (!LoadTexture(filename, resource)) {
+    return false;
+  }
+
+  D3D12_RESOURCE_DESC desc = resource->GetDesc();
+  D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+  srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+  srv_desc.Format = desc.Format;
+  srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+  srv_desc.Texture2D.MipLevels = desc.MipLevels;
+  srv_desc.Texture2D.MostDetailedMip = 0;
+  srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+  d3d12device_->CreateShaderResourceView(resource.Get(), &srv_desc,
+                                         srv_handle);
+  return true;
 }
 
 HRESULT DirectX12Device::EnableDebugLayer() {
@@ -733,10 +745,8 @@ auto DirectX12Device::CreateRenderTarget(
   RenderTargetHandle handle = next_render_target_handle_++;
   user_render_targets_.insert(std::make_pair(handle, std::move(resource)));
 
-  std::wstringstream stream;
-  stream << L"[DirectX12Device] Created render target handle " << handle
-         << L" (" << descriptor.width << L"x" << descriptor.height << L").\n";
-  OutputDebugStringW(stream.str().c_str());
+  Logger::Info(L"[DirectX12Device] Created render target handle %zu (%dx%d).", 
+      handle, descriptor.width, descriptor.height);
 
   return handle;
 }
@@ -1119,7 +1129,7 @@ bool DirectX12Device::OnResize(int new_width, int new_height) {
 
   // Validate dimensions
   if (new_width <= 0 || new_height <= 0) {
-    OutputDebugStringW(L"[DirectX12Device::OnResize] Invalid dimensions, ignoring resize.\n");
+    Logger::Warn(L"[DirectX12Device::OnResize] Invalid dimensions (%dx%d), ignoring resize.", new_width, new_height);
     return true; // Not an error, just ignore
   }
 
@@ -1128,14 +1138,12 @@ bool DirectX12Device::OnResize(int new_width, int new_height) {
     return true;
   }
 
-  std::wstringstream log;
-  log << L"[DirectX12Device::OnResize] Resizing from " << config_.screen_width 
-      << L"x" << config_.screen_height << L" to " << new_width << L"x" << new_height << L"\n";
-  OutputDebugStringW(log.str().c_str());
+  Logger::Info(L"[DirectX12Device::OnResize] Resizing from %dx%d to %dx%d", 
+      config_.screen_width, config_.screen_height, new_width, new_height);
 
   // Step 1: Wait for GPU to finish all work
   if (!WaitForGpuIdle()) {
-    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to wait for GPU idle.\n");
+    Logger::Error(L"[DirectX12Device::OnResize] Failed to wait for GPU idle.");
     return false;
   }
 
@@ -1163,10 +1171,7 @@ bool DirectX12Device::OnResize(int new_width, int new_height) {
       0);
 
   if (FAILED(hr)) {
-    std::wstringstream error;
-    error << L"[DirectX12Device::OnResize] ResizeBuffers failed with HRESULT: 0x" 
-          << std::hex << hr << std::dec << L"\n";
-    OutputDebugStringW(error.str().c_str());
+    Logger::LogResult(L"[DirectX12Device::OnResize] ResizeBuffers", hr);
     return false;
   }
 
@@ -1180,21 +1185,21 @@ bool DirectX12Device::OnResize(int new_width, int new_height) {
   // Step 8: Recreate render target views
   hr = CreateRenderTargetViews();
   if (FAILED(hr)) {
-    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate render target views.\n");
+    Logger::LogResult(L"[DirectX12Device::OnResize] CreateRenderTargetViews", hr);
     return false;
   }
 
   // Step 9: Recreate depth stencil resources
   hr = CreateDepthStencilResources();
   if (FAILED(hr)) {
-    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate depth stencil resources.\n");
+    Logger::LogResult(L"[DirectX12Device::OnResize] CreateDepthStencilResources", hr);
     return false;
   }
 
   // Step 10: Recreate offscreen resources
   hr = CreateOffscreenResources();
   if (FAILED(hr)) {
-    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate offscreen resources.\n");
+    Logger::LogResult(L"[DirectX12Device::OnResize] CreateOffscreenResources", hr);
     return false;
   }
 
@@ -1204,7 +1209,7 @@ bool DirectX12Device::OnResize(int new_width, int new_height) {
   // Step 12: Update matrices (projection and ortho)
   InitializeMatrices();
 
-  OutputDebugStringW(L"[DirectX12Device::OnResize] Resize completed successfully.\n");
+  Logger::Info(L"[DirectX12Device::OnResize] Resize completed successfully.");
   return true;
 }
 
@@ -1256,10 +1261,7 @@ void DirectX12Device::ResetDeviceState() {
 
 void DirectX12Device::LogInitializationFailure(const wchar_t *stage,
                                                HRESULT hr) const {
-  std::wstringstream stream;
-  stream << L"[DirectX12Device] Initialization failed at " << stage
-         << L" (hr=0x" << std::hex << hr << std::dec << L")\n";
-  OutputDebugStringW(stream.str().c_str());
+  Logger::LogResult(stage, hr);
 }
 
 DirectX12Device::FrameResource &DirectX12Device::CurrentFrameResource() {

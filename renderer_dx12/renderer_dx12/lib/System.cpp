@@ -141,11 +141,10 @@ void System::OnResize(int new_width, int new_height) {
     return;
   }
 
-  std::wcout << L"[System::OnResize] Resizing to " << new_width << L"x" 
-             << new_height << std::endl;
+  Logger::Info(L"[System::OnResize] Resizing to %dx%d", new_width, new_height);
 
   if (!graphics_->OnResize(new_width, new_height)) {
-    std::wcerr << L"[System::OnResize] Failed to resize graphics!" << std::endl;
+    Logger::Error(L"[System::OnResize] Failed to resize graphics!");
   }
 }
 

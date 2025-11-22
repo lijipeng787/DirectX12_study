@@ -44,7 +44,7 @@ public:
 
       adapter->GetDesc1(&adapter_desc);
       if (adapter_desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
-        LogAdapterAttempt(adapter_desc, DXGI_ERROR_UNSUPPORTED);
+        Logger::Info(L"[DxgiResourceManager] Skipping software adapter: %s", adapter_desc.Description);
         continue;
       }
 
@@ -66,8 +66,7 @@ public:
       device.Reset();
     }
 
-    OutputDebugStringW(L"[DxgiResourceManager] Can not find available hardware "
-                       L"adapter, create device failed.\n");
+    Logger::Error(L"[DxgiResourceManager] Can not find available hardware adapter, create device failed.");
     return DXGI_ERROR_NOT_FOUND;
   }
 
@@ -95,44 +94,40 @@ public:
                                                   &swap_chain_desc, nullptr,
                                                   nullptr, &temp_swap_chain);
     if (FAILED(hr)) {
-      OutputDebugStringW(L"[DxgiResourceManager] Create SwapChain failed, "
-                         L"CreateSwapChainForHwnd "
-                         L"returned error.\n");
+      Logger::LogResult(L"[DxgiResourceManager] CreateSwapChainForHwnd", hr);
       return hr;
     }
 
     hr = factory_->MakeWindowAssociation(config.hwnd, DXGI_MWA_NO_ALT_ENTER);
     if (FAILED(hr)) {
-      OutputDebugStringW(
-          L"[DxgiResourceManager] MakeWindowAssociation failed.\n");
+      Logger::LogResult(L"[DxgiResourceManager] MakeWindowAssociation", hr);
       return hr;
     }
 
     hr = temp_swap_chain.As(&swap_chain);
     if (FAILED(hr)) {
-      OutputDebugStringW(L"[DxgiResourceManager] Failed to cast SwapChain to "
-                         L"IDXGISwapChain3.\n");
+      Logger::LogResult(L"[DxgiResourceManager] Cast to IDXGISwapChain3", hr);
       return hr;
     }
 
-    std::wstringstream stream;
-    stream << L"[DxgiResourceManager] Create SwapChain successfully, size "
-           << config.screen_width << L"x" << config.screen_height
-           << L", buffer count " << frame_count << L".\n";
-    OutputDebugStringW(stream.str().c_str());
+    Logger::Info(L"[DxgiResourceManager] Create SwapChain successfully, size %dx%d, buffer count %d.", 
+        config.screen_width, config.screen_height, frame_count);
 
     return S_OK;
   }
 
 private:
   void LogAdapterAttempt(const DXGI_ADAPTER_DESC1 &desc, HRESULT result) const {
-    std::wstringstream stream;
-    stream << L"[DxgiResourceManager] try adapter " << desc.Description
-           << L", video memory "
-           << static_cast<unsigned long long>(desc.DedicatedVideoMemory /
-                                              (1024ull * 1024ull))
-           << L" MB, result 0x" << std::hex << result << std::dec << L".\n";
-    OutputDebugStringW(stream.str().c_str());
+    if (SUCCEEDED(result)) {
+        Logger::Info(L"[DxgiResourceManager] Adapter '%s' (Video Memory: %llu MB) - OK", 
+            desc.Description, 
+            desc.DedicatedVideoMemory / (1024ull * 1024ull));
+    } else {
+        Logger::Warn(L"[DxgiResourceManager] Adapter '%s' (Video Memory: %llu MB) - Failed (hr=0x%X)", 
+            desc.Description, 
+            desc.DedicatedVideoMemory / (1024ull * 1024ull), 
+            result);
+    }
   }
 
   Microsoft::WRL::ComPtr<IDXGIFactory4> factory_ = nullptr;
@@ -275,6 +270,9 @@ public:
                     Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
                     D3D12_RESOURCE_STATES final_state =
                         D3D12_RESOURCE_STATE_GENERIC_READ);
+
+  bool LoadTexture(const std::wstring &filename,
+                   Microsoft::WRL::ComPtr<ID3D12Resource> &resource);
 
   bool CreateTexture(const std::wstring &filename,
                      Microsoft::WRL::ComPtr<ID3D12Resource> &resource,

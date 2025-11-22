@@ -2,6 +2,7 @@
 
 #include "DirectX12Device.h"
 #include "TextureLoader.h"
+#include "ResourceManager.h"
 
 #include <algorithm>
 #include <cwctype>
@@ -66,11 +67,24 @@ bool TextureLoader::LoadTexturesByNameArray(unsigned int num_textures,
     tem_texture.Reset();
     std::wstring file_path(texture_filename_arr[i]);
     
-    if (!device_->CreateTexture(file_path, tem_texture, handle)) {
+    tem_texture = ResourceManager::GetInstance().GetTexture(file_path);
+    if (!tem_texture) {
       return false;
     }
 
     texture_container_.push_back(tem_texture);
+
+    // Create SRV
+    D3D12_RESOURCE_DESC desc = tem_texture->GetDesc();
+    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srv_desc.Format = desc.Format;
+    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.Texture2D.MipLevels = desc.MipLevels;
+    srv_desc.Texture2D.MostDetailedMip = 0;
+    srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+    device->CreateShaderResourceView(tem_texture.Get(), &srv_desc, handle);
 
     filename.clear();
     WCHARToString(texture_filename_arr[i], filename);

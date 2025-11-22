@@ -755,7 +755,9 @@ static HRESULT CreateD3DResources(
         SRVDesc.Texture1D.MipLevels = (!mipCount) ? -1 : ResourceDesc.MipLevels;
       }
 
-      d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
+      if (textureView.ptr != 0) {
+        d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
+      }
 
       if (texture != nullptr) {
         *texture = tex.Detach();
@@ -803,7 +805,9 @@ static HRESULT CreateD3DResources(
         SRVDesc.Texture2D.MostDetailedMip = 0;
       }
 
-      d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
+      if (textureView.ptr != 0) {
+        d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
+      }
 
       if (texture != nullptr) {
         *texture = tex.Detach();
@@ -832,7 +836,9 @@ static HRESULT CreateD3DResources(
       SRVDesc.Texture3D.MipLevels = (!mipCount) ? -1 : ResourceDesc.MipLevels;
       SRVDesc.Texture3D.MostDetailedMip = 0;
 
-      d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
+      if (textureView.ptr != 0) {
+        d3dDevice->CreateShaderResourceView(tex.Get(), &SRVDesc, textureView);
+      }
 
       if (texture != nullptr) {
         *texture = tex.Detach();

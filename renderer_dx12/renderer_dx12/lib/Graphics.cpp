@@ -2,6 +2,7 @@
 
 #include "Graphics.h"
 
+#include "ResourceManager.h"
 #include "BumpMappingScene.h"
 #include "CPUUsageTracker.h"
 #include "Camera.h"
@@ -33,6 +34,8 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd) {
     MessageBox(hwnd, L"Could not initialize Direct3D.", L"Error", MB_OK);
     return false;
   }
+
+  ResourceManager::GetInstance().Initialize(d3d12_device_);
 
   // Initialize system components
   cpu_usage_tracker_ = std::make_shared<CPUUsageTracker>();
@@ -96,6 +99,9 @@ void Graphics::Shutdown() {
   if (d3d12_device_) {
     d3d12_device_->WaitForGpuIdle();
   }
+
+  ResourceManager::GetInstance().ClearCache();
+  ResourceManager::GetInstance().Initialize(nullptr);
 
   // Shutdown all scenes
   for (auto& scene : scenes_) {
@@ -287,16 +293,23 @@ bool Graphics::Render() {
     return false;
   }
 
+  auto command_list = d3d12_device_->GetDefaultGraphicsCommandList().Get();
+
   // Render reflection pre-pass (generates reflection textures)
+  PIXBeginEvent(command_list, 0, "Reflection Pass");
   SceneReflectionContext refl_ctx{projection_matrix};
   for (auto& scene : scenes_) {
     if (!scene.RenderReflection(refl_ctx)) {
+      PIXEndEvent(command_list);
       return false;
     }
   }
+  PIXEndEvent(command_list);
 
   // Begin main rendering pass
   d3d12_device_->BeginPopulateGraphicsCommandList();
+
+  PIXBeginEvent(command_list, 0, "Main Pass");
 
   // Get main light for scenes
   auto main_light = light_manager_->GetPrimaryLight();
@@ -308,9 +321,12 @@ bool Graphics::Render() {
   SceneRenderContext render_ctx{view_matrix, projection_matrix, main_light.get()};
   for (auto& scene : scenes_) {
     if (!scene.Render(render_ctx)) {
+      PIXEndEvent(command_list);
       return false;
     }
   }
+
+  PIXEndEvent(command_list);
 
   d3d12_device_->EndPopulateGraphicsCommandList();
 
@@ -341,9 +357,9 @@ bool Graphics::InitializeShaders(HWND hwnd) {
 
   // Compile texture shaders
   ShaderCompileDesc texture_vs{L"shader/texture.hlsl",
-                               "TextureVertexShader", "vs_5_0"};
+                               "TextureVertexShader", "vs_5_1"};
   ShaderCompileDesc texture_ps{L"shader/texture.hlsl",
-                               "TexturePixelShader", "ps_5_0"};
+                               "TexturePixelShader", "ps_5_1"};
   if (!shader_loader_->CompileVertexAndPixelShaders(texture_vs, texture_ps)) {
     report_shader_error(L"Could not initialize Texture Shader.");
     return false;
@@ -351,9 +367,9 @@ bool Graphics::InitializeShaders(HWND hwnd) {
 
   // Compile light shaders
   ShaderCompileDesc light_vs{L"shader/light.hlsl", "LightVertexShader",
-                             "vs_5_0"};
+                             "vs_5_1"};
   ShaderCompileDesc light_ps{L"shader/light.hlsl", "LightPixelShader",
-                             "ps_5_0"};
+                             "ps_5_1"};
   if (!shader_loader_->CompileVertexAndPixelShaders(light_vs, light_ps)) {
     report_shader_error(L"Could not initialize Light Shader.");
     return false;
@@ -361,9 +377,9 @@ bool Graphics::InitializeShaders(HWND hwnd) {
 
   // Compile font shaders
   ShaderCompileDesc font_vs{L"shader/font.hlsl", "FontVertexShader",
-                            "vs_5_0"};
+                            "vs_5_1"};
   ShaderCompileDesc font_ps{L"shader/font.hlsl", "FontPixelShader",
-                            "ps_5_0"};
+                            "ps_5_1"};
   if (!shader_loader_->CompileVertexAndPixelShaders(font_vs, font_ps)) {
     report_shader_error(L"Could not initialize Font Shader.");
     return false;
@@ -371,9 +387,9 @@ bool Graphics::InitializeShaders(HWND hwnd) {
 
   // Compile PBR shaders
   ShaderCompileDesc pbr_vs{L"shader/pbr.hlsl", "PbrVertexShader",
-                           "vs_5_0"};
+                           "vs_5_1"};
   ShaderCompileDesc pbr_ps{L"shader/pbr.hlsl", "PbrPixelShader",
-                           "ps_5_0"};
+                           "ps_5_1"};
   if (!shader_loader_->CompileVertexAndPixelShaders(pbr_vs, pbr_ps)) {
     report_shader_error(L"Could not initialize PBR Shader.");
     return false;
@@ -381,9 +397,9 @@ bool Graphics::InitializeShaders(HWND hwnd) {
 
   // Compile specular mapping shaders
   ShaderCompileDesc spec_vs{L"shader/specMap.hlsl", "SpecMapVertexShader",
-                            "vs_5_0"};
+                            "vs_5_1"};
   ShaderCompileDesc spec_ps{L"shader/specMap.hlsl", "SpecMapPixelShader",
-                            "ps_5_0"};
+                            "ps_5_1"};
   if (!shader_loader_->CompileVertexAndPixelShaders(spec_vs, spec_ps)) {
     report_shader_error(L"Could not initialize Specular Map Shader.");
     return false;

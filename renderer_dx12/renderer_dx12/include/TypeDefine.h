@@ -2,6 +2,7 @@
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <pix3.h>
 #include <string>
 #include <vector>
 #include <wrl.h>

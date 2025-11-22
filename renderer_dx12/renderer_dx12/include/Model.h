@@ -6,6 +6,7 @@
 
 #include "ModelMaterial.h"
 #include "TextureLoader.h"
+#include "ResourceManager.h"
 
 class DirectX12Device;
 
@@ -20,58 +21,35 @@ public:
 
   ~Model() = default;
 
-private:
-  struct VertexType {
-    DirectX::XMFLOAT3 position_;
-    DirectX::XMFLOAT2 texture_position_;
-    DirectX::XMFLOAT3 normal_;
-  };
-
-  struct ModelType {
-    float x_, y_, z_;
-    float tu_, tv_;
-    float nx_, ny_, nz_;
-  };
-
 public:
   auto Initialize(WCHAR *model_filename, WCHAR **texture_filename_arr) -> bool;
 
-  auto GetIndexCount() const -> UINT { return index_count_; }
+  auto GetIndexCount() const -> UINT { 
+      return model_resource_ ? model_resource_->index_count : 0; 
+  }
 
   auto GetMaterial() -> ModelMaterial * { return &material_; }
 
   auto GetShaderResourceView() const -> DescriptorHeapPtr;
   
   auto GetVertexBufferView() const -> const D3D12_VERTEX_BUFFER_VIEW & {
-    return vertex_buffer_view_;
+    static D3D12_VERTEX_BUFFER_VIEW null_view = {};
+    return model_resource_ ? model_resource_->vertex_buffer_view : null_view;
   }
 
   auto GetIndexBufferView() const -> const D3D12_INDEX_BUFFER_VIEW & {
-    return index_buffer_view_;
+    static D3D12_INDEX_BUFFER_VIEW null_view = {};
+    return model_resource_ ? model_resource_->index_buffer_view : null_view;
   }
 
 private:
-  auto LoadModel(WCHAR *filename) -> bool;
-
-  auto InitializeBuffers() -> bool;
-
   auto LoadTexture(WCHAR **texture_filename_arr) -> bool;
 
   std::shared_ptr<DirectX12Device> device_ = nullptr;
 
   ModelMaterial material_;
 
-  ResourceSharedPtr vertex_buffer_ = nullptr;
-  D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view_ = {};
-
-  ResourceSharedPtr index_buffer_ = nullptr;
-  D3D12_INDEX_BUFFER_VIEW index_buffer_view_ = {};
-
-  UINT vertex_count_ = 0;
-
-  UINT index_count_ = 0;
-
-  std::vector<ModelType> temp_model_;
+  std::shared_ptr<ModelResource> model_resource_ = nullptr;
 
   std::shared_ptr<ResourceLoader::TextureLoader> texture_container_ = nullptr;
 };

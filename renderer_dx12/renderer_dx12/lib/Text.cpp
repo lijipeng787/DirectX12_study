@@ -174,113 +174,12 @@ bool Text::InitializeSentence(SentenceType **sentence, int max_length) {
 
   auto device = device_->GetD3d12Device();
 
-  ResourceSharedPtr upload_index_buffer = nullptr;
-  if (FAILED(device->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint16_t) *
-                                         (*sentence)->index_count_),
-          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-          IID_PPV_ARGS(&upload_index_buffer)))) {
+  if (!device_->CreateBuffer(sizeof(uint16_t) * (*sentence)->index_count_,
+                             indices, (*sentence)->index_buffer_,
+                             D3D12_RESOURCE_STATE_INDEX_BUFFER)) {
     return false;
   }
-
-  if (FAILED(device_->GetD3d12Device()->CreateCommittedResource(
-          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-          D3D12_HEAP_FLAG_NONE,
-          &CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint16_t) *
-                                         (*sentence)->index_count_),
-          D3D12_RESOURCE_STATE_COMMON, nullptr,
-          IID_PPV_ARGS(&(*sentence)->index_buffer_)))) {
-    return false;
-  }
-
-  D3D12_COMMAND_QUEUE_DESC queue_desc = {};
-  queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-  queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
-  Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
-  if (FAILED(device->CreateCommandQueue(&queue_desc,
-                                        IID_PPV_ARGS(&command_queue)))) {
-    return false;
-  }
-
-  Microsoft::WRL::ComPtr<ID3D12CommandAllocator> command_allocator;
-  if (FAILED(device->CreateCommandAllocator(
-          D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&command_allocator)))) {
-    return false;
-  }
-
-  Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
-  if (FAILED(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                       command_allocator.Get(), nullptr,
-                                       IID_PPV_ARGS(&command_list)))) {
-    return false;
-  }
-  if (FAILED(command_list->Close())) {
-    return false;
-  }
-
-  D3D12_SUBRESOURCE_DATA init_data = {};
-  init_data.pData = indices;
-  init_data.RowPitch = sizeof(uint16_t);
-  init_data.SlicePitch = sizeof(uint16_t) * (*sentence)->index_count_;
-
-  if (FAILED(command_allocator->Reset())) {
-    return false;
-  }
-
-  if (FAILED(command_list->Reset(command_allocator.Get(), nullptr))) {
-    return false;
-  }
-
-  if ((*sentence)->index_buffer_state_ != D3D12_RESOURCE_STATE_COPY_DEST) {
-    auto to_copy = CD3DX12_RESOURCE_BARRIER::Transition(
-        (*sentence)->index_buffer_.Get(), (*sentence)->index_buffer_state_,
-        D3D12_RESOURCE_STATE_COPY_DEST);
-    command_list->ResourceBarrier(1, &to_copy);
-    (*sentence)->index_buffer_state_ = D3D12_RESOURCE_STATE_COPY_DEST;
-  }
-
-  UpdateSubresources(command_list.Get(), (*sentence)->index_buffer_.Get(),
-                     upload_index_buffer.Get(), 0, 0, 1, &init_data);
-
-  auto to_index = CD3DX12_RESOURCE_BARRIER::Transition(
-      (*sentence)->index_buffer_.Get(), (*sentence)->index_buffer_state_,
-      D3D12_RESOURCE_STATE_INDEX_BUFFER);
-  command_list->ResourceBarrier(1, &to_index);
   (*sentence)->index_buffer_state_ = D3D12_RESOURCE_STATE_INDEX_BUFFER;
-
-  if (FAILED(command_list->Close())) {
-    return false;
-  }
-
-  Microsoft::WRL::ComPtr<ID3D12Fence> fence;
-  if (FAILED(device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-                                 IID_PPV_ARGS(&fence)))) {
-    return false;
-  }
-
-  auto fence_event = CreateEvent(nullptr, false, false, nullptr);
-  if (nullptr == fence_event) {
-    return false;
-  }
-
-  ID3D12CommandList *ppCommandLists[] = {command_list.Get()};
-  command_queue->ExecuteCommandLists(1, ppCommandLists);
-
-  if (FAILED(command_queue->Signal(fence.Get(), 1))) {
-    return false;
-  }
-
-  if (fence->GetCompletedValue() < 1) {
-    if (FAILED(fence->SetEventOnCompletion(1, fence_event))) {
-      return false;
-    }
-    WaitForSingleObject(fence_event, INFINITE);
-  }
-
-  CloseHandle(fence_event);
 
   (*sentence)->index_buffer_view_.BufferLocation =
       (*sentence)->index_buffer_->GetGPUVirtualAddress();

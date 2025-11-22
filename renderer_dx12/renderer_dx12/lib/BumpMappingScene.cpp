@@ -137,9 +137,9 @@ auto BumpMappingScene::EnsureShadersLoaded() -> bool {
   }
 
   ResourceLoader::ShaderCompileDesc vs_desc{L"shader/bumpMap.hlsl",
-                                            "BumpMapVertexShader", "vs_5_0"};
+                                            "BumpMapVertexShader", "vs_5_1"};
   ResourceLoader::ShaderCompileDesc ps_desc{L"shader/bumpMap.hlsl",
-                                            "BumpMapPixelShader", "ps_5_0"};
+                                            "BumpMapPixelShader", "ps_5_1"};
 
   if (!shader_loader_->CompileVertexAndPixelShaders(vs_desc, ps_desc)) {
     return false;

@@ -26,12 +26,12 @@ bool InitializeConsole() {
 
   std::ios::sync_with_stdio();
 
-  std::wcout << L"[renderer_dx12] Console initialized." << std::endl;
+  Logger::Info(L"[renderer_dx12] Console initialized.");
   return true;
 }
 
 void ShutdownConsole() {
-  std::wcout << L"[renderer_dx12] Console shutting down." << std::endl;
+  Logger::Info(L"[renderer_dx12] Console shutting down.");
   FreeConsole();
 }
 
@@ -42,6 +42,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
   const bool console_initialized = InitializeConsole();
 
+  Logger::Initialize();
+  
   auto system = new System();
   if (!system) {
     if (console_initialized) {

@@ -23,7 +23,7 @@ const char *ShaderTypeName(bool is_vertex_shader) {
 
 void OutputErrorMessage(const std::string &message) {
   if (!message.empty()) {
-    OutputDebugStringA(message.c_str());
+    Logger::Error(message.c_str());
   }
 }
 

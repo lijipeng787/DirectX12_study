@@ -131,6 +131,30 @@
     <ClInclude Include="include\RenderTexture.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\ConstantBuffer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LegacyModelScene.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PBRModelScene.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PipelineStateBuilder.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RootSignatureBuilder.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Scene.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\TextOverlayScene.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ResourceManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\stdafx.cpp">
@@ -241,28 +265,32 @@
     <ClCompile Include="lib\RenderTexture.cpp">
       <Filter>lib</Filter>
     </ClCompile>
+    <ClCompile Include="lib\LegacyModelScene.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\PBRModelScene.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\PipelineStateBuilder.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\TextOverlayScene.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\RootSignatureBuilder.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\ResourceManager.cpp">
+      <Filter>lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\font.hlsl">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="shader\light.hlsl">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="shader\texture.hlsl">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="shader\pbr.hlsl">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="shader\bumpMap.hlsl">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="shader\specMap.hlsl">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="shader\reflection.hlsl">
-      <Filter>shader</Filter>
-    </None>
+    <FxCompile Include="shader\bumpMap.hlsl" />
+    <FxCompile Include="shader\reflection.hlsl" />
+    <FxCompile Include="shader\specMap.hlsl" />
+    <FxCompile Include="shader\font.hlsl" />
+    <FxCompile Include="shader\light.hlsl" />
+    <FxCompile Include="shader\pbr.hlsl" />
+    <FxCompile Include="shader\texture.hlsl" />
   </ItemGroup>
 </Project>

@@ -58,7 +58,7 @@
     - 优先级：P1，在继续添加功能前必须建立基础测试框架。
 
 3.  **Shader 模型落后**:
-    - 现状：所有 Shader 编译硬编码使用 `vs_5_0` / `ps_5_0`。
+    - 现状：所有 Shader 编译已升级到 `vs_5_1` / `ps_5_1`。
     - 问题：这是 DX11 时代的 Shader 模型。DX12 的高级特性（如 Bindless Descriptors, Wave Intrinsics）需要 SM 5.1 或 SM 6.0+。
     - 优先级：P2，阻碍向现代架构演进。
 
@@ -107,7 +107,7 @@
 - ❌ 没有现代日志系统
 
 **架构问题：**
-- ❌ **Shader Model 过旧** (SM 5.0)，不支持现代 DX12 特性
+- ✅ **Shader Model 已升级** (SM 5.1)，支持现代 DX12 特性
 - ❌ 场景系统虽然使用了 Type Erasure，但渲染循环 (`Graphics::Render`) 仍是简单的线性遍历，缺乏 Render Graph。
 - ❌ 错误处理方式原始（bool + HRESULT）
 
@@ -115,7 +115,7 @@
 - ❌ 没有 Render Graph
 - ❌ 没有多线程命令录制
 - ❌ 没有异步资源加载
-- ❌ 没有 bindless descriptors (受限于 SM 5.0)
+- ❌ 没有 bindless descriptors (SM 5.1 已支持，待实现)
 - ❌ 没有 GPU-driven rendering
 - ❌ 没有 async compute 利用
 

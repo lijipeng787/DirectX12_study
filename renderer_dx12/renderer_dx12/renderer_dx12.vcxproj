@@ -106,13 +106,13 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;..\.\..\thirdparty\include;..\packages\WinPixEventRuntime.1.0.240308001\Include\WinPixEventRuntime;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>DirectXTK.lib;d3d12.lib;d3dcompiler.lib;dinput8.lib;dsound.lib;dxgi.lib;dxguid.lib;pdh.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\DirectXTK;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\DirectXTK;..\packages\WinPixEventRuntime.1.0.240308001\bin\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -157,6 +157,7 @@
     <ClInclude Include="include\BumpMappingScene.h" />
     <ClInclude Include="include\ConstantBuffer.h" />
     <ClInclude Include="include\LegacyModelScene.h" />
+    <ClInclude Include="include\Logger.h" />
     <ClInclude Include="include\Material.h" />
     <ClInclude Include="include\ModelMaterial.h" />
     <ClInclude Include="include\PBRModelScene.h" />
@@ -166,6 +167,7 @@
     <ClInclude Include="include\ReflectionScene.h" />
     <ClInclude Include="include\ReflectionTextureMaterial.h" />
     <ClInclude Include="include\RenderTexture.h" />
+    <ClInclude Include="include\ResourceManager.h" />
     <ClInclude Include="include\RootSignatureBuilder.h" />
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\ScreenQuadMaterial.h" />
@@ -204,6 +206,7 @@
     <ClCompile Include="lib\BumpMapModel.cpp" />
     <ClCompile Include="lib\BumpMappingScene.cpp" />
     <ClCompile Include="lib\LegacyModelScene.cpp" />
+    <ClCompile Include="lib\Logger.cpp" />
     <ClCompile Include="lib\Material.cpp" />
     <ClCompile Include="lib\PBRModelScene.cpp" />
     <ClCompile Include="lib\PipelineStateBuilder.cpp" />
@@ -212,6 +215,7 @@
     <ClCompile Include="lib\ReflectionScene.cpp" />
     <ClCompile Include="lib\ReflectionTextureMaterial.cpp" />
     <ClCompile Include="lib\RenderTexture.cpp" />
+    <ClCompile Include="lib\ResourceManager.cpp" />
     <ClCompile Include="lib\ShaderLoader.cpp" />
     <ClCompile Include="lib\ScreenQuad.cpp" />
     <ClCompile Include="lib\ScreenQuadMaterial.cpp" />
@@ -270,7 +274,17 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets" Condition="Exists('..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets'))" />
+  </Target>
 </Project>

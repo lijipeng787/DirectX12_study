@@ -23,10 +23,10 @@ auto ReflectionScene::EnsureShadersLoaded() -> bool {
 
   ResourceLoader::ShaderCompileDesc vs_desc{L"shader/reflection.hlsl",
                                             "ReflectionVertexShader",
-                                            "vs_5_0"};
+                                            "vs_5_1"};
   ResourceLoader::ShaderCompileDesc ps_desc{L"shader/reflection.hlsl",
                                             "ReflectionPixelShader",
-                                            "ps_5_0"};
+                                            "ps_5_1"};
   if (!shader_loader_->CompileVertexAndPixelShaders(vs_desc, ps_desc)) {
     return false;
   }
