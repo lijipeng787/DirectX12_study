@@ -351,3 +351,11 @@ auto ReflectionScene::BuildFloorDescriptorHeap() -> bool {
   return true;
 }
 
+auto ReflectionScene::OnResize(int width, int height) -> void {
+  if (render_texture_) {
+    render_texture_->Initialize(static_cast<UINT>(std::max(width, 1)),
+                                static_cast<UINT>(std::max(height, 1)));
+    BuildFloorDescriptorHeap();
+  }
+}
+

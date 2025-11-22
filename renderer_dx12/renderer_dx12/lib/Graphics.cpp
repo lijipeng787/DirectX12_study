@@ -138,8 +138,10 @@ bool Graphics::OnResize(int new_width, int new_height) {
     camera_->Update();
   }
 
-  // Note: If we had other resolution-dependent resources (like RenderTextures),
-  // we would need to recreate them here as well.
+  // Update all scenes
+  for (auto& scene : scenes_) {
+    scene.OnResize(new_width, new_height);
+  }
 
   return true;
 }

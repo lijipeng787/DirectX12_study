@@ -461,6 +461,9 @@ void DirectX12Device::DestroyRenderTarget(RenderTargetHandle handle) {
     return;
   }
 
+  // Ensure GPU is done with the resource before destroying it
+  WaitForGpuIdle();
+
   if (default_offscreen_handle_ == handle) {
     default_offscreen_handle_ = kInvalidRenderTargetHandle;
   }
@@ -658,8 +661,23 @@ void DirectX12Device::BeginDrawToOffScreen(RenderTargetHandle handle) {
     return;
   }
 
-  default_graphics_command_list_->RSSetViewports(1, &viewport_.at(0));
-  default_graphics_command_list_->RSSetScissorRects(1, &scissor_rect_.at(0));
+  // Use viewport and scissor rect matching the render target dimensions
+  D3D12_VIEWPORT viewport = {};
+  viewport.Width = static_cast<float>(resource->descriptor.width);
+  viewport.Height = static_cast<float>(resource->descriptor.height);
+  viewport.MinDepth = 0.0f;
+  viewport.MaxDepth = 1.0f;
+  viewport.TopLeftX = 0.0f;
+  viewport.TopLeftY = 0.0f;
+
+  D3D12_RECT scissor = {};
+  scissor.left = 0;
+  scissor.top = 0;
+  scissor.right = static_cast<LONG>(resource->descriptor.width);
+  scissor.bottom = static_cast<LONG>(resource->descriptor.height);
+
+  default_graphics_command_list_->RSSetViewports(1, &viewport);
+  default_graphics_command_list_->RSSetScissorRects(1, &scissor);
 
   if (resource->current_state != D3D12_RESOURCE_STATE_RENDER_TARGET) {
     auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -825,10 +843,6 @@ bool DirectX12Device::OnResize(int new_width, int new_height) {
       << L"x" << config_.screen_height << L" to " << new_width << L"x" << new_height << L"\n";
   OutputDebugStringW(log.str().c_str());
 
-  // Update config
-  config_.screen_width = new_width;
-  config_.screen_height = new_height;
-
   // Step 1: Wait for GPU to finish all work
   if (!WaitForGpuIdle()) {
     OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to wait for GPU idle.\n");
@@ -866,34 +880,38 @@ bool DirectX12Device::OnResize(int new_width, int new_height) {
     return false;
   }
 
-  // Step 6: Update frame index after resize
+  // Step 6: Update config with new dimensions (after ResizeBuffers succeeds)
+  config_.screen_width = new_width;
+  config_.screen_height = new_height;
+
+  // Step 7: Update frame index after resize
   frame_index_ = swap_chain_->GetCurrentBackBufferIndex();
 
-  // Step 7: Recreate render target views
+  // Step 8: Recreate render target views
   hr = CreateRenderTargetViews();
   if (FAILED(hr)) {
     OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate render target views.\n");
     return false;
   }
 
-  // Step 8: Recreate depth stencil resources
+  // Step 9: Recreate depth stencil resources
   hr = CreateDepthStencilResources();
   if (FAILED(hr)) {
     OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate depth stencil resources.\n");
     return false;
   }
 
-  // Step 9: Recreate offscreen resources
+  // Step 10: Recreate offscreen resources
   hr = CreateOffscreenResources();
   if (FAILED(hr)) {
     OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate offscreen resources.\n");
     return false;
   }
 
-  // Step 10: Update viewport and scissor rect
+  // Step 11: Update viewport and scissor rect
   InitializeViewportsAndScissors();
 
-  // Step 11: Update matrices (projection and ortho)
+  // Step 12: Update matrices (projection and ortho)
   InitializeMatrices();
 
   OutputDebugStringW(L"[DirectX12Device::OnResize] Resize completed successfully.\n");

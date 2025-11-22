@@ -42,6 +42,8 @@ public:
 
   auto Render(const SceneRenderContext &ctx) -> bool;
 
+  auto OnResize(int width, int height) -> void;
+
   auto SetRotationAngle(float radians) -> void { rotation_radians_ = radians; }
 
 private:

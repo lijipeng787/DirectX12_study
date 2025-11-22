@@ -77,6 +77,11 @@ public:
     return impl_->RenderReflection(ctx);
   }
 
+  // Optional resize handler
+  void OnResize(int width, int height) {
+    impl_->OnResize(width, height);
+  }
+
 private:
   // Internal concept interface (virtual base)
   struct Concept {
@@ -88,6 +93,7 @@ private:
     virtual bool Render(const SceneRenderContext &ctx) = 0;
     virtual void SetRotationAngle(float radians) = 0;
     virtual bool RenderReflection(const SceneReflectionContext &ctx) = 0;
+    virtual void OnResize(int width, int height) = 0;
   };
 
   // Internal model implementation (wraps concrete scene)
@@ -124,6 +130,12 @@ private:
       }
     }
 
+    void OnResize(int width, int height) override {
+      if constexpr (HasOnResize<T>) {
+        scene_->OnResize(width, height);
+      }
+    }
+
   private:
     // Type trait to detect RenderReflection method
     template <typename U, typename = void>
@@ -138,6 +150,19 @@ private:
     template <typename U>
     static constexpr bool HasRenderReflection =
         HasRenderReflectionImpl<U>::value;
+
+    // Type trait to detect OnResize method
+    template <typename U, typename = void>
+    struct HasOnResizeImpl : std::false_type {};
+
+    template <typename U>
+    struct HasOnResizeImpl<
+        U, std::void_t<decltype(std::declval<U>().OnResize(0, 0))>>
+        : std::true_type {};
+
+    template <typename U>
+    static constexpr bool HasOnResize =
+        HasOnResizeImpl<U>::value;
   };
 
   // Type-erased pointer to concrete scene
