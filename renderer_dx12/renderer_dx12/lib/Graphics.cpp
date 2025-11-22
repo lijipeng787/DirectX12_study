@@ -10,8 +10,6 @@
 #include "Input.h"
 #include "LegacyModelScene.h"
 #include "LightManager.h"
-#include "OffscreenPreviewScene.h"
-#include "OffscreenRenderScene.h"
 #include "PBRModelScene.h"
 #include "ReflectionScene.h"
 #include "Scene.h"
@@ -379,20 +377,6 @@ bool Graphics::InitializeScenes(HWND hwnd) {
   scene_ctx.camera = camera_;
   scene_ctx.hwnd = hwnd;
 
-  // Create offscreen render scene (renders to offscreen texture in RenderReflection pass)
-  // Keep a raw pointer before moving to scenes_ vector
-  OffscreenRenderScene* offscreen_render_ptr = nullptr;
-  {
-    auto offscreen_render = std::make_shared<OffscreenRenderScene>();
-    if (!offscreen_render || !offscreen_render->Initialize(scene_ctx)) {
-      MessageBox(hwnd, L"Could not initialize offscreen render scene.", L"Error", MB_OK);
-      return false;
-    }
-    offscreen_render_ptr = offscreen_render.get();
-    scenes_.emplace_back(std::move(offscreen_render));
-  }
-  // Note: Text will be shared with TextOverlayScene (set after TextOverlayScene is created)
-
   // Create legacy model scene (textured cube with fog)
   auto legacy_scene = std::make_shared<LegacyModelScene>();
   if (!legacy_scene || !legacy_scene->Initialize(scene_ctx)) {
@@ -440,23 +424,7 @@ bool Graphics::InitializeScenes(HWND hwnd) {
     return false;
   }
   text_cache_ = text_scene->GetText();  // Cache for SetFps/SetCpu calls
-  
-  // Share the text object with offscreen render scene
-  // This ensures the same FPS/CPU text appears both on main screen and in offscreen texture
-  if (offscreen_render_ptr) {
-    offscreen_render_ptr->SetSharedText(text_cache_);
-  }
-  
   scenes_.emplace_back(std::move(text_scene));
-
-  // Create offscreen preview scene (displays offscreen texture in corner)
-  // This must be after OffscreenRenderScene so content is already rendered
-  auto offscreen_scene = std::make_shared<OffscreenPreviewScene>();
-  if (!offscreen_scene || !offscreen_scene->Initialize(scene_ctx)) {
-    MessageBox(hwnd, L"Could not initialize offscreen preview scene.", L"Error", MB_OK);
-    return false;
-  }
-  scenes_.emplace_back(std::move(offscreen_scene));
 
   return true;
 }

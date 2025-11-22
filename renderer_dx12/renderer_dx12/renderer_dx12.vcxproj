@@ -159,8 +159,6 @@
     <ClInclude Include="include\LegacyModelScene.h" />
     <ClInclude Include="include\Material.h" />
     <ClInclude Include="include\ModelMaterial.h" />
-    <ClInclude Include="include\OffscreenPreviewScene.h" />
-    <ClInclude Include="include\OffscreenRenderScene.h" />
     <ClInclude Include="include\PBRModelScene.h" />
     <ClInclude Include="include\PipelineStateBuilder.h" />
     <ClInclude Include="include\ReflectionFloorMaterial.h" />
@@ -207,8 +205,6 @@
     <ClCompile Include="lib\BumpMappingScene.cpp" />
     <ClCompile Include="lib\LegacyModelScene.cpp" />
     <ClCompile Include="lib\Material.cpp" />
-    <ClCompile Include="lib\OffscreenPreviewScene.cpp" />
-    <ClCompile Include="lib\OffscreenRenderScene.cpp" />
     <ClCompile Include="lib\PBRModelScene.cpp" />
     <ClCompile Include="lib\PipelineStateBuilder.cpp" />
     <ClCompile Include="lib\ReflectionFloorMaterial.cpp" />
