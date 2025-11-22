@@ -156,8 +156,12 @@
     <ClInclude Include="include\BumpMapModel.h" />
     <ClInclude Include="include\BumpMappingScene.h" />
     <ClInclude Include="include\ConstantBuffer.h" />
+    <ClInclude Include="include\LegacyModelScene.h" />
     <ClInclude Include="include\Material.h" />
     <ClInclude Include="include\ModelMaterial.h" />
+    <ClInclude Include="include\OffscreenPreviewScene.h" />
+    <ClInclude Include="include\OffscreenRenderScene.h" />
+    <ClInclude Include="include\PBRModelScene.h" />
     <ClInclude Include="include\PipelineStateBuilder.h" />
     <ClInclude Include="include\ReflectionFloorMaterial.h" />
     <ClInclude Include="include\ReflectionModel.h" />
@@ -165,12 +169,14 @@
     <ClInclude Include="include\ReflectionTextureMaterial.h" />
     <ClInclude Include="include\RenderTexture.h" />
     <ClInclude Include="include\RootSignatureBuilder.h" />
+    <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\ScreenQuadMaterial.h" />
     <ClInclude Include="include\ShaderLoader.h" />
     <ClInclude Include="include\ScreenQuad.h" />
     <ClInclude Include="include\SpecularMapMaterial.h" />
     <ClInclude Include="include\SpecularMapModel.h" />
     <ClInclude Include="include\SpecularMappingScene.h" />
+    <ClInclude Include="include\TextOverlayScene.h" />
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\CPUUsageTracker.h" />
     <ClInclude Include="include\d3dx12.h" />
@@ -199,7 +205,11 @@
     <ClCompile Include="lib\BumpMapMaterial.cpp" />
     <ClCompile Include="lib\BumpMapModel.cpp" />
     <ClCompile Include="lib\BumpMappingScene.cpp" />
+    <ClCompile Include="lib\LegacyModelScene.cpp" />
     <ClCompile Include="lib\Material.cpp" />
+    <ClCompile Include="lib\OffscreenPreviewScene.cpp" />
+    <ClCompile Include="lib\OffscreenRenderScene.cpp" />
+    <ClCompile Include="lib\PBRModelScene.cpp" />
     <ClCompile Include="lib\PipelineStateBuilder.cpp" />
     <ClCompile Include="lib\ReflectionFloorMaterial.cpp" />
     <ClCompile Include="lib\ReflectionModel.cpp" />
@@ -212,6 +222,7 @@
     <ClCompile Include="lib\SpecularMapMaterial.cpp" />
     <ClCompile Include="lib\SpecularMapModel.cpp" />
     <ClCompile Include="lib\SpecularMappingScene.cpp" />
+    <ClCompile Include="lib\TextOverlayScene.cpp" />
     <ClCompile Include="lib\Camera.cpp" />
     <ClCompile Include="lib\CPUUsageTracker.cpp" />
     <ClCompile Include="lib\DDSTextureLoader.cpp" />

@@ -18,15 +18,11 @@ constexpr float SCREEN_DEPTH = 1000.0f;
 constexpr float SCREEN_NEAR = 0.1f;
 
 class DirectX12Device;
-class Light;
 class Camera;
 class Input;
-class ScreenQuad;
-class Text;
-class Model;
-class PBRModel;
 class Fps;
 class CPUUsageTracker;
+class Text;  // Still needed for external SetFps/SetCpu interface
 
 class Graphics {
 public:
@@ -56,34 +52,7 @@ private:
   
   auto InitializeScenes(HWND hwnd) -> bool;
 
-  // Render pass helpers
-  auto UpdateConstantBuffers(const DirectX::XMMATRIX& view_matrix,
-                            const DirectX::XMMATRIX& projection_matrix) -> bool;
-  
-  auto RenderOffscreenPass() -> bool;
-  
-  auto RenderMainScenePass(const DirectX::XMMATRIX& view_matrix,
-                          const DirectX::XMMATRIX& projection_matrix) -> bool;
-  auto RenderUIPass() -> bool;
 
-  // Resource caching structure
-  struct CachedRenderResources {
-    ID3D12RootSignature* light_root_signature = nullptr;
-    ID3D12PipelineState* light_pso = nullptr;
-    ID3D12Resource* light_matrix_cb = nullptr;
-    ID3D12Resource* light_cb = nullptr;
-    ID3D12Resource* fog_cb = nullptr;
-
-    ID3D12RootSignature* font_root_signature = nullptr;
-    ID3D12PipelineState* font_pso = nullptr;
-    ID3D12Resource* font_matrix_cb = nullptr;
-    ID3D12Resource* font_pixel_cb = nullptr;
-
-    ID3D12RootSignature* offscreen_root_signature = nullptr;
-    ID3D12PipelineState* offscreen_pso = nullptr;
-  };
-
-  CachedRenderResources cached_resources_;
 
   std::shared_ptr<DirectX12Device> d3d12_device_ = nullptr;
 
@@ -93,28 +62,21 @@ private:
 
   std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader_ = nullptr;
 
-  std::shared_ptr<ScreenQuad> bitmap_ = nullptr;
-
-  std::shared_ptr<Text> text_ = nullptr;
-
-  std::shared_ptr<Model> model_ = nullptr;
-
-  std::shared_ptr<PBRModel> pbr_model_ = nullptr;
-
   std::shared_ptr<Fps> fps_ = nullptr;
 
   std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
 
   // Unified scene container using type erasure
   std::vector<Scene> scenes_;
-  
-  float camera_move_speed_ = 5.0f;
 
+  // Cached references for external interaction
+  std::shared_ptr<Text> text_cache_ = nullptr;  // For SetFps/SetCpu calls
+
+  // Camera control
+  float camera_move_speed_ = 5.0f;
   float camera_turn_speed_ = 90.0f;
 
+  // Shared rotation for all rotating scenes
   float shared_rotation_angle_ = 0.0f;
-
   float shared_rotation_speed_ = DirectX::XM_PI * 0.25f;
-
-  DirectX::XMMATRIX base_view_matrix_ = DirectX::XMMatrixIdentity();
 };
