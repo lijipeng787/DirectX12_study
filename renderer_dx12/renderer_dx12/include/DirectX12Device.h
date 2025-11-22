@@ -271,6 +271,15 @@ public:
 
   void inline GetVideoCardInfo(char *card_name, int &memory);
 
+  bool CreateBuffer(size_t size, const void *data,
+                    Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
+                    D3D12_RESOURCE_STATES final_state =
+                        D3D12_RESOURCE_STATE_GENERIC_READ);
+
+  bool CreateTexture(const std::wstring &filename,
+                     Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
+                     D3D12_CPU_DESCRIPTOR_HANDLE srv_handle);
+
   RenderTargetHandle
   CreateRenderTarget(const RenderTargetDescriptor &descriptor);
 

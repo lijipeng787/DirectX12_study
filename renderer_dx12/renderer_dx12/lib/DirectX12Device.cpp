@@ -1,8 +1,112 @@
 ﻿#include "stdafx.h"
 
 #include "DirectX12Device.h"
+#include "DDSTextureLoader.h"
 
+#include <algorithm>
+#include <cwctype>
+#include <fstream>
 #include <sstream>
+#include <vector>
+
+using namespace Microsoft::WRL;
+
+namespace {
+
+#pragma pack(push, 1)
+struct TargaHeader {
+  uint8_t id_length;
+  uint8_t color_map_type;
+  uint8_t data_type_code;
+  uint16_t color_map_origin;
+  uint16_t color_map_length;
+  uint8_t color_map_depth;
+  uint16_t x_origin;
+  uint16_t y_origin;
+  uint16_t width;
+  uint16_t height;
+  uint8_t bits_per_pixel;
+  uint8_t image_descriptor;
+};
+#pragma pack(pop)
+
+bool LoadTarga32Bit(const std::wstring &file_path, std::vector<uint8_t> &data,
+                    uint32_t &width, uint32_t &height) {
+  std::ifstream file(file_path, std::ios::binary);
+  if (!file) {
+    return false;
+  }
+
+  TargaHeader header = {};
+  file.read(reinterpret_cast<char *>(&header), sizeof(TargaHeader));
+  if (!file) {
+    return false;
+  }
+
+  if (header.bits_per_pixel != 32) {
+    return false;
+  }
+
+  if (header.id_length > 0) {
+    file.seekg(header.id_length, std::ios::cur);
+  }
+
+  if (header.color_map_length > 0 && header.color_map_depth > 0) {
+    size_t color_map_size =
+        static_cast<size_t>(header.color_map_length) *
+        static_cast<size_t>((header.color_map_depth + 7) / 8);
+    file.seekg(static_cast<std::streamoff>(color_map_size), std::ios::cur);
+  }
+
+  width = header.width;
+  height = header.height;
+
+  size_t image_size =
+      static_cast<size_t>(width) * static_cast<size_t>(height) * 4u;
+  std::vector<uint8_t> raw_data(image_size);
+  file.read(reinterpret_cast<char *>(raw_data.data()),
+            static_cast<std::streamsize>(image_size));
+  if (!file) {
+    return false;
+  }
+
+  data.resize(image_size);
+
+  const bool flip_vertical = ((header.image_descriptor & 0x20) == 0);
+  for (uint32_t y = 0; y < height; ++y) {
+    uint32_t src_row = flip_vertical ? (height - 1 - y) : y;
+    const uint8_t *src =
+        raw_data.data() + (static_cast<size_t>(src_row) * width * 4);
+    uint8_t *dst = data.data() + (static_cast<size_t>(y) * width * 4);
+    for (uint32_t x = 0; x < width; ++x) {
+      dst[0] = src[2];
+      dst[1] = src[1];
+      dst[2] = src[0];
+      dst[3] = src[3];
+      dst += 4;
+      src += 4;
+    }
+  }
+
+  return true;
+}
+
+std::wstring ToLower(std::wstring value) {
+  std::transform(value.begin(), value.end(), value.begin(), [](wchar_t c) {
+    return static_cast<wchar_t>(std::towlower(c));
+  });
+  return value;
+}
+
+bool EndsWith(const std::wstring &value, const std::wstring &suffix) {
+  if (value.length() < suffix.length()) {
+    return false;
+  }
+  return value.compare(value.length() - suffix.length(), suffix.length(),
+                       suffix) == 0;
+}
+
+} // namespace
 
 DirectX12Device::~DirectX12Device() {
   if (fence_ && default_graphics_command_queue_) {
@@ -110,6 +214,192 @@ bool DirectX12Device::Initialize(const DirectX12DeviceConfig &config) {
   InitializeMatrices();
 
   return true;
+}
+
+bool DirectX12Device::CreateBuffer(size_t size, const void *data,
+                                   Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
+                                   D3D12_RESOURCE_STATES final_state) {
+  if (!d3d12device_ || size == 0 || data == nullptr) {
+    return false;
+  }
+
+  if (FAILED(d3d12device_->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+          D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(size),
+          D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&resource)))) {
+    return false;
+  }
+
+  Microsoft::WRL::ComPtr<ID3D12Resource> upload_buffer;
+  if (FAILED(d3d12device_->CreateCommittedResource(
+          &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+          D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(size),
+          D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+          IID_PPV_ARGS(&upload_buffer)))) {
+    return false;
+  }
+
+  UINT8 *mapped_data = nullptr;
+  if (FAILED(upload_buffer->Map(0, nullptr,
+                                reinterpret_cast<void **>(&mapped_data)))) {
+    return false;
+  }
+  memcpy(mapped_data, data, size);
+  upload_buffer->Unmap(0, nullptr);
+
+  if (!WaitForGpuIdle()) {
+    return false;
+  }
+
+  auto &frame = CurrentFrameResource();
+  if (FAILED(frame.command_allocator->Reset())) {
+    return false;
+  }
+  if (FAILED(default_graphics_command_list_->Reset(
+          frame.command_allocator.Get(), nullptr))) {
+    return false;
+  }
+
+  auto to_copy = CD3DX12_RESOURCE_BARRIER::Transition(
+      resource.Get(), D3D12_RESOURCE_STATE_COMMON,
+      D3D12_RESOURCE_STATE_COPY_DEST);
+  default_graphics_command_list_->ResourceBarrier(1, &to_copy);
+
+  default_graphics_command_list_->CopyBufferRegion(resource.Get(), 0,
+                                                   upload_buffer.Get(), 0, size);
+
+  auto to_final = CD3DX12_RESOURCE_BARRIER::Transition(
+      resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, final_state);
+  default_graphics_command_list_->ResourceBarrier(1, &to_final);
+
+  if (FAILED(default_graphics_command_list_->Close())) {
+    return false;
+  }
+
+  ID3D12CommandList *lists[] = {default_graphics_command_list_.Get()};
+  default_graphics_command_queue_->ExecuteCommandLists(1, lists);
+
+  return WaitForGpuIdle();
+}
+
+bool DirectX12Device::CreateTexture(
+    const std::wstring &filename,
+    Microsoft::WRL::ComPtr<ID3D12Resource> &resource,
+    D3D12_CPU_DESCRIPTOR_HANDLE srv_handle) {
+
+  if (!d3d12device_ || filename.empty()) {
+    return false;
+  }
+
+  if (!WaitForGpuIdle()) {
+    return false;
+  }
+
+  auto &frame = CurrentFrameResource();
+  if (FAILED(frame.command_allocator->Reset())) {
+    return false;
+  }
+  if (FAILED(default_graphics_command_list_->Reset(
+          frame.command_allocator.Get(), nullptr))) {
+    return false;
+  }
+
+  std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> upload_resources;
+  bool success = false;
+  std::wstring lowercase = ToLower(filename);
+
+  if (EndsWith(lowercase, L".dds")) {
+    success = SUCCEEDED(CreateDDSTextureFromFile(
+        d3d12device_.Get(), default_graphics_command_list_.Get(),
+        filename.c_str(), 0, false, &resource, srv_handle, upload_resources));
+  } else if (EndsWith(lowercase, L".tga")) {
+    std::vector<uint8_t> image_data;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    if (LoadTarga32Bit(filename, image_data, width, height)) {
+      D3D12_RESOURCE_DESC resource_desc = {};
+      resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+      resource_desc.Alignment = 0;
+      resource_desc.Width = width;
+      resource_desc.Height = height;
+      resource_desc.DepthOrArraySize = 1;
+      resource_desc.MipLevels = 1;
+      resource_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+      resource_desc.SampleDesc.Count = 1;
+      resource_desc.SampleDesc.Quality = 0;
+      resource_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+      resource_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+      if (SUCCEEDED(d3d12device_->CreateCommittedResource(
+              &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+              D3D12_HEAP_FLAG_NONE, &resource_desc, D3D12_RESOURCE_STATE_COMMON,
+              nullptr, IID_PPV_ARGS(&resource)))) {
+
+        UINT64 upload_size =
+            GetRequiredIntermediateSize(resource.Get(), 0, 1);
+
+        Microsoft::WRL::ComPtr<ID3D12Resource> upload_resource;
+        if (SUCCEEDED(d3d12device_->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Buffer(upload_size),
+                D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+                IID_PPV_ARGS(&upload_resource)))) {
+
+          D3D12_SUBRESOURCE_DATA subresource_data = {};
+          subresource_data.pData = image_data.data();
+          subresource_data.RowPitch = static_cast<LONG_PTR>(width) * 4;
+          subresource_data.SlicePitch =
+              static_cast<LONG_PTR>(subresource_data.RowPitch) * height;
+
+          upload_resources.push_back(upload_resource);
+
+          auto to_copy = CD3DX12_RESOURCE_BARRIER::Transition(
+              resource.Get(), D3D12_RESOURCE_STATE_COMMON,
+              D3D12_RESOURCE_STATE_COPY_DEST);
+          default_graphics_command_list_->ResourceBarrier(1, &to_copy);
+
+          UpdateSubresources(default_graphics_command_list_.Get(),
+                             resource.Get(), upload_resource.Get(), 0, 0, 1,
+                             &subresource_data);
+
+          auto to_shader = CD3DX12_RESOURCE_BARRIER::Transition(
+              resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
+              D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+          default_graphics_command_list_->ResourceBarrier(1, &to_shader);
+
+          D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+          srv_desc.Shader4ComponentMapping =
+              D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+          srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+          srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+          srv_desc.Texture2D.MipLevels = 1;
+          srv_desc.Texture2D.MostDetailedMip = 0;
+          srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+          d3d12device_->CreateShaderResourceView(resource.Get(), &srv_desc,
+                                                 srv_handle);
+          success = true;
+        }
+      }
+    }
+  }
+
+  if (success) {
+    if (FAILED(default_graphics_command_list_->Close())) {
+      return false;
+    }
+    ID3D12CommandList *lists[] = {default_graphics_command_list_.Get()};
+    default_graphics_command_queue_->ExecuteCommandLists(1, lists);
+    if (!WaitForGpuIdle()) {
+      return false;
+    }
+  } else {
+      // If failed, we might need to close the command list if it's open
+      default_graphics_command_list_->Close();
+  }
+
+  return success;
 }
 
 HRESULT DirectX12Device::EnableDebugLayer() {

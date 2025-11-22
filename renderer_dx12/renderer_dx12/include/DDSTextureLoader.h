@@ -1,4 +1,4 @@
-//
+﻿//
 // Copyright (c) Microsoft. All rights reserved.
 // This code is licensed under the MIT License (MIT).
 // THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
@@ -23,6 +23,7 @@
 
 #include "d3dx12.h"
 #include <d3d12.h>
+#include <wrl.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4005)
@@ -30,6 +31,8 @@
 #include <stdint.h>
 
 #pragma warning(pop)
+
+#include <vector>
 
 enum DDS_ALPHA_MODE {
   DDS_ALPHA_MODE_UNKNOWN = 0,
@@ -41,17 +44,22 @@ enum DDS_ALPHA_MODE {
 
 HRESULT __cdecl CreateDDSTextureFromMemory(
     _In_ ID3D12Device *d3dDevice,
+    _In_ ID3D12GraphicsCommandList *commandList,
     _In_reads_bytes_(ddsDataSize) const uint8_t *ddsData,
     _In_ size_t ddsDataSize, _In_ size_t maxsize, _In_ bool forceSRGB,
     _Outptr_opt_ ID3D12Resource **texture,
     _In_ D3D12_CPU_DESCRIPTOR_HANDLE textureView,
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> &uploadResources,
     _Out_opt_ DDS_ALPHA_MODE *alphaMode = nullptr);
 
 HRESULT __cdecl CreateDDSTextureFromFile(
-    _In_ ID3D12Device *d3dDevice, _In_z_ const wchar_t *szFileName,
+    _In_ ID3D12Device *d3dDevice,
+    _In_ ID3D12GraphicsCommandList *commandList,
+    _In_z_ const wchar_t *szFileName,
     _In_ size_t maxsize, _In_ bool forceSRGB,
     _Outptr_opt_ ID3D12Resource **texture,
     _In_ D3D12_CPU_DESCRIPTOR_HANDLE textureView,
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& uploadResources,
     _Out_opt_ DDS_ALPHA_MODE *alphaMode = nullptr);
 
 size_t BitsPerPixel(_In_ DXGI_FORMAT fmt);

@@ -694,13 +694,14 @@ static HRESULT FillInitData(_In_ size_t width, _In_ size_t height,
 
 //--------------------------------------------------------------------------------------
 static HRESULT CreateD3DResources(
-    _In_ ID3D12Device *d3dDevice, _In_ uint32_t resDim, _In_ size_t width,
-    _In_ size_t height, _In_ size_t depth, _In_ size_t mipCount,
-    _In_ size_t arraySize, _In_ DXGI_FORMAT format, _In_ bool forceSRGB,
-    _In_ bool isCubeMap,
+    _In_ ID3D12Device *d3dDevice, _In_ ID3D12GraphicsCommandList *commandList,
+    _In_ uint32_t resDim, _In_ size_t width, _In_ size_t height,
+    _In_ size_t depth, _In_ size_t mipCount, _In_ size_t arraySize,
+    _In_ DXGI_FORMAT format, _In_ bool forceSRGB, _In_ bool isCubeMap,
     _In_reads_opt_(mipCount *arraySize) D3D12_SUBRESOURCE_DATA *initData,
     _Outptr_opt_ ID3D12Resource **texture,
-    _In_ D3D12_CPU_DESCRIPTOR_HANDLE textureView) {
+    _In_ D3D12_CPU_DESCRIPTOR_HANDLE textureView,
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> &uploadResources) {
   if (!d3dDevice)
     return E_POINTER;
 
@@ -846,13 +847,14 @@ static HRESULT CreateD3DResources(
 }
 
 //--------------------------------------------------------------------------------------
-static HRESULT
-CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
-                     _In_ const DirectX::DDS_HEADER *header,
-                     _In_reads_bytes_(bitSize) const uint8_t *bitData,
-                     _In_ size_t bitSize, _In_ size_t maxsize,
-                     _In_ bool forceSRGB, _Outptr_opt_ ID3D12Resource **texture,
-                     _In_ D3D12_CPU_DESCRIPTOR_HANDLE textureView) {
+static HRESULT CreateTextureFromDDS(
+    _In_ ID3D12Device *d3dDevice, _In_ ID3D12GraphicsCommandList *commandList,
+    _In_ const DirectX::DDS_HEADER *header,
+    _In_reads_bytes_(bitSize) const uint8_t *bitData, _In_ size_t bitSize,
+    _In_ size_t maxsize, _In_ bool forceSRGB,
+    _Outptr_opt_ ID3D12Resource **texture,
+    _In_ D3D12_CPU_DESCRIPTOR_HANDLE textureView,
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> &uploadResources) {
   HRESULT hr = S_OK;
 
   UINT width = header->width;
@@ -1015,9 +1017,10 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
                       skipMip, initData.get());
 
     if (SUCCEEDED(hr)) {
-      hr = CreateD3DResources(d3dDevice, resDim, twidth, theight, tdepth,
-                              mipCount - skipMip, arraySize, format, forceSRGB,
-                              isCubeMap, initData.get(), texture, textureView);
+      hr = CreateD3DResources(d3dDevice, commandList, resDim, twidth, theight,
+                              tdepth, mipCount - skipMip, arraySize, format,
+                              forceSRGB, isCubeMap, initData.get(), texture,
+                              textureView, uploadResources);
 
       if (FAILED(hr) && !maxsize && (mipCount > 1)) {
         // Retry with a maxsize determined by feature level
@@ -1029,10 +1032,11 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
                           maxsize, bitSize, bitData, twidth, theight, tdepth,
                           skipMip, initData.get());
         if (SUCCEEDED(hr)) {
-          hr = CreateD3DResources(d3dDevice, resDim, twidth, theight, tdepth,
-                                  mipCount - skipMip, arraySize, format,
-                                  forceSRGB, isCubeMap, initData.get(), texture,
-                                  textureView);
+          hr = CreateD3DResources(d3dDevice, commandList, resDim, twidth,
+                                  theight, tdepth, mipCount - skipMip,
+                                  arraySize, format, forceSRGB, isCubeMap,
+                                  initData.get(), texture, textureView,
+                                  uploadResources);
         }
       }
 
@@ -1065,81 +1069,18 @@ CreateTextureFromDDS(_In_ ID3D12Device *d3dDevice,
           return E_UNEXPECTED;
         }
 
-        D3D12_COMMAND_QUEUE_DESC queue_desc = {};
-        queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        uploadResources.push_back(upload_resource);
 
-        Microsoft::WRL::ComPtr<ID3D12CommandQueue> command_queue;
-        if (FAILED(d3dDevice->CreateCommandQueue(
-                &queue_desc, IID_PPV_ARGS(&command_queue)))) {
-          return false;
-        }
-
-        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> command_allocator;
-        if (FAILED(d3dDevice->CreateCommandAllocator(
-                D3D12_COMMAND_LIST_TYPE_DIRECT,
-                IID_PPV_ARGS(&command_allocator)))) {
-          return E_UNEXPECTED;
-        }
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> command_list;
-        if (FAILED(d3dDevice->CreateCommandList(
-                0, D3D12_COMMAND_LIST_TYPE_DIRECT, command_allocator.Get(),
-                nullptr, IID_PPV_ARGS(&command_list)))) {
-          return E_UNEXPECTED;
-        }
-
-        if (FAILED(command_list->Close())) {
-          return E_UNEXPECTED;
-        }
-
-        if (FAILED(command_allocator->Reset())) {
-          return false;
-        }
-
-        if (FAILED(command_list->Reset(command_allocator.Get(), nullptr))) {
-          return false;
-        }
-
-        command_list->ResourceBarrier(1,
+        commandList->ResourceBarrier(1,
                                       &CD3DX12_RESOURCE_BARRIER::Transition(
                                           *texture, D3D12_RESOURCE_STATE_COMMON,
                                           D3D12_RESOURCE_STATE_COPY_DEST));
-        UpdateSubresources(command_list.Get(), *texture, upload_resource.Get(),
+        UpdateSubresources(commandList, *texture, upload_resource.Get(),
                            0, 0, subresourceCount, initData.get());
-        command_list->ResourceBarrier(
+        commandList->ResourceBarrier(
             1, &CD3DX12_RESOURCE_BARRIER::Transition(
                    *texture, D3D12_RESOURCE_STATE_COPY_DEST,
                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
-        if (FAILED(command_list->Close())) {
-          return E_UNEXPECTED;
-        }
-
-        Microsoft::WRL::ComPtr<ID3D12Fence> fence;
-        if (FAILED(d3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-                                          IID_PPV_ARGS(&fence)))) {
-          return E_UNEXPECTED;
-        }
-
-        auto fence_event = CreateEvent(nullptr, false, false, nullptr);
-        if (nullptr == fence_event) {
-          return E_UNEXPECTED;
-        }
-
-        ID3D12CommandList *cl[] = {command_list.Get()};
-        command_queue->ExecuteCommandLists(1, cl);
-
-        if (FAILED(command_queue->Signal(fence.Get(), 1))) {
-          return E_UNEXPECTED;
-        }
-
-        if (fence->GetCompletedValue() < 1) {
-          if (FAILED(fence->SetEventOnCompletion(1, fence_event))) {
-            return E_UNEXPECTED;
-          }
-          WaitForSingleObject(fence_event, INFINITE);
-        }
-
       }
     }
   }
@@ -1172,9 +1113,11 @@ static DDS_ALPHA_MODE GetAlphaMode(_In_ const DirectX::DDS_HEADER *header) {
 }
 
 _Use_decl_annotations_ HRESULT CreateDDSTextureFromMemory(
-    ID3D12Device *d3dDevice, const uint8_t *ddsData, size_t ddsDataSize,
-    size_t maxsize, bool forceSRGB, ID3D12Resource **texture,
-    D3D12_CPU_DESCRIPTOR_HANDLE textureView, DDS_ALPHA_MODE *alphaMode) {
+    ID3D12Device *d3dDevice, ID3D12GraphicsCommandList *commandList,
+    const uint8_t *ddsData, size_t ddsDataSize, size_t maxsize, bool forceSRGB,
+    ID3D12Resource **texture, D3D12_CPU_DESCRIPTOR_HANDLE textureView,
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> &uploadResources,
+    DDS_ALPHA_MODE *alphaMode) {
   if (texture) {
     *texture = nullptr;
   }
@@ -1218,9 +1161,10 @@ _Use_decl_annotations_ HRESULT CreateDDSTextureFromMemory(
   if (ddsDataSize < offset)
     return E_FAIL;
 
-  HRESULT hr = CreateTextureFromDDS(d3dDevice, header, ddsData + offset,
-                                    ddsDataSize - offset, maxsize, forceSRGB,
-                                    texture, textureView);
+  HRESULT hr = CreateTextureFromDDS(d3dDevice, commandList, header,
+                                    ddsData + offset, ddsDataSize - offset,
+                                    maxsize, forceSRGB, texture, textureView,
+                                    uploadResources);
   if (SUCCEEDED(hr)) {
     if (texture != nullptr && *texture != nullptr) {
       (*texture)->SetName(L"DDSTextureLoader");
@@ -1234,9 +1178,11 @@ _Use_decl_annotations_ HRESULT CreateDDSTextureFromMemory(
 }
 
 _Use_decl_annotations_ HRESULT CreateDDSTextureFromFile(
-    ID3D12Device *d3dDevice, const wchar_t *fileName, size_t maxsize,
-    bool forceSRGB, ID3D12Resource **texture,
-    D3D12_CPU_DESCRIPTOR_HANDLE textureView, DDS_ALPHA_MODE *alphaMode) {
+    ID3D12Device *d3dDevice, ID3D12GraphicsCommandList *commandList,
+    const wchar_t *fileName, size_t maxsize, bool forceSRGB,
+    ID3D12Resource **texture, D3D12_CPU_DESCRIPTOR_HANDLE textureView,
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> &uploadResources,
+    DDS_ALPHA_MODE *alphaMode) {
   if (texture) {
     *texture = nullptr;
   }
@@ -1260,8 +1206,9 @@ _Use_decl_annotations_ HRESULT CreateDDSTextureFromFile(
     return hr;
   }
 
-  hr = CreateTextureFromDDS(d3dDevice, header, bitData, bitSize, maxsize,
-                            forceSRGB, texture, textureView);
+  hr = CreateTextureFromDDS(d3dDevice, commandList, header, bitData, bitSize,
+                            maxsize, forceSRGB, texture, textureView,
+                            uploadResources);
 
   if (alphaMode)
     *alphaMode = GetAlphaMode(header);

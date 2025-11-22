@@ -8,9 +8,10 @@
 - 离屏渲染抽象
 - 统一光照系统（LightManager）
 - 实时反射验证（ReflectionScene）
+- **窗口 Resize 支持** (已确认代码实现)
 
 ### ⚠️ 结论
-基础重构取得进展，但**过早停止**。许多基础功能仍然缺失，就开始添加新渲染技术。这导致地基不牢，影响后续开发。
+基础重构大部分完成，但留下了**资源加载性能灾难**这一重大隐患。必须优先清除此地雷。
 
 ---
 
@@ -21,16 +22,20 @@
 本阶段必须修复阻碍项目作为"实验平台"的基础问题。**在这些问题解决前，禁止添加任何新渲染特性。**
 
 ### 🚨 任务 2.1：修复资源加载 [P0 - Critical]
-**预计工作量：1-2天**
+**预计工作量：2天**
 
-- [ ] **删除 `Model.cpp` 中每次创建临时command queue的代码**（当前是严重的反模式）
-- [ ] 在 `DirectX12Device` 中添加共享的upload command list
-- [ ] 实现资源上传队列，批量提交
-- [ ] 添加围栏同步，确保资源上传完成后才能使用
+- [x] **重构 `DirectX12Device`**：
+    - [x] 暴露或提供一个共享的 `CommandQueue` (Copy 或 Direct) 用于资源上传。
+    - [x] 实现一个简单的 `UploadContext` 或 `ResourceUploader` 类，管理临时的 Upload Heap 和 Command List。
+- [x] **重构 `Model.cpp`**：
+    - [x] 删除 `CreateBufferOnGpu` 中创建临时 Command Queue/Allocator 的代码。
+    - [x] 改用设备提供的上传上下文。
+- [x] **重构 `TextureLoader.cpp`**：
+    - [x] 删除 `LoadTexturesByNameArray` 和 `CreateTextureFromTga` 中创建临时 Queue 的代码。
+    - [x] 统一使用新的上传机制。
 - [ ] **验收标准**: 
-  - 加载100个模型只创建1个upload command list
-  - 加载时间减少50%+
-  - PIX中看不到多余的command queue创建
+  - 加载场景时 PIX 捕获显示不再有数百个 Command Queue 创建销毁。
+  - 启动速度显著提升。
 
 ### ⚠️ 任务 2.2：建立测试基础设施 [P1 - High]
 **预计工作量：3-4天**
@@ -56,62 +61,51 @@
   - [ ] 模型缓存
   - [ ] 引用计数管理
 - [ ] 添加资源统计和调试信息
-- [ ] 实现资源热重载（可选）
 - [ ] **验收标准**: 
   - 多次加载同一纹理只占用1份显存
   - 可查询当前加载的所有资源
-  - 资源释放后显存正确回收
 
 ### ⚠️ 任务 2.4：日志系统 [P1 - High]
 **预计工作量：半天**
 
 - [ ] 集成 spdlog
 - [ ] 替换所有 `OutputDebugString` 调用
-- [ ] 支持日志级别（Debug/Info/Warn/Error）
-- [ ] 支持文件输出（rotating file sink）
-- [ ] 添加性能计数器（GPU/CPU时间）
 - [ ] **验收标准**: 
   - 日志有时间戳和来源信息
   - Release构建中Debug日志被优化掉
-  - 日志文件不超过100MB（自动轮转）
 
 ### 📋 任务 2.5：构建系统现代化 [P2 - Medium]
 **预计工作量：1-2天**
 
 - [ ] 添加 CMakeLists.txt
-- [ ] 支持 MSVC/Clang/GCC
+- [ ] 支持 MSVC
 - [ ] 添加 vcpkg manifest 管理依赖
-- [ ] 生成 compile_commands.json（LSP支持）
 - [ ] **验收标准**: 
-  - 可以用CMake在Windows/Linux构建
-  - 所有依赖通过vcpkg自动获取
+  - 可以用CMake在Windows构建
 
 ---
 
-## 3. 阶段 3：调试和性能工具 (待基础完成后)
+## 3. 阶段 3：现代化准备 (基础完成后)
 
 **前置条件：完成阶段2的所有P0和P1任务**
 
-### 任务 3.1：PIX集成 [P2]
+### 任务 3.1：升级 Shader Model [P2]
+- [ ] 将 Shader 编译目标从 `vs_5_0`/`ps_5_0` 升级到 `vs_5_1`/`ps_5_1` 或 `vs_6_0`/`ps_6_0`。
+- [ ] 验证现有 Shader 的兼容性。
+
+### 任务 3.2：PIX集成 [P2]
 - [ ] 添加PIX事件标记（`PIXBeginEvent`/`PIXEndEvent`）
 - [ ] 标记所有主要渲染pass
-- [ ] 添加GPU时间戳查询
 
-### 任务 3.2：Shader热重载 [P2]
-- [ ] 文件监听（`FindFirstChangeNotification`）
-- [ ] 后台编译HLSL
-- [ ] 安全替换PSO
-
-## 4. 阶段 4：高级渲染特性 (远期，暂不规划)
+## 4. 阶段 4：高级渲染特性 (远期)
 
 **前置条件：完成阶段2和3的所有任务**
 
 ⚠️ **警告**：在基础功能完善前，**禁止**添加以下特性：
 - ❌ 延迟渲染
 - ❌ Compute shader
-- ❌ Mesh shader
-- ❌ 更多材质类型
-- ❌ 后处理效果
+- ❌ Render Graph
+- ❌ Bindless Rendering
 
 **原因**：地基不牢，继续盖楼只会增加技术债务。
 
@@ -119,21 +113,15 @@
 
 ### 阶段2验收标准
 - **资源加载**: 
-  - ✅ 不再创建临时command queue
-  - ✅ 加载性能提升50%+
+  - ✅ **彻底消除临时 Command Queue 的创建**。
+  - ✅ 资源上传使用批处理或共享队列。
   
 - **测试**: 
-  - ✅ 至少30%代码覆盖率
-  - ✅ CI自动运行所有测试
+  - ✅ CI自动运行所有测试。
   
 - **资源管理**: 
-  - ✅ 重复加载同一资源不重复占用显存
-  - ✅ 可查询所有已加载资源
-  
-- **日志**: 
-  - ✅ 结构化日志替代OutputDebugString
-  - ✅ 支持文件输出和日志轮转
+  - ✅ 资源去重加载。
 
 ### 阶段3验收标准
-- **PIX**: 打开PIX截帧，能清晰看到标记的Pass结构
-- **热重载**: 修改shader并保存，程序立即反映变化
+- **Shader**: 
+  - ✅ Shader Model >= 5.1。
