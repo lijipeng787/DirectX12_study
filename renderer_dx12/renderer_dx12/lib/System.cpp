@@ -2,6 +2,8 @@
 
 #include "System.h"
 
+#include <iostream>
+
 #include "Input.h"
 #include "Timer.h"
 #include "Graphics.h"
@@ -106,6 +108,11 @@ void System::Run() {
 }
 
 bool System::Frame() {
+  // Skip rendering if we're in the middle of a resize operation
+  if (is_resizing_) {
+    return true;
+  }
+
   float delta_seconds = 0.0f;
   if (timer_) {
     timer_->Update();
@@ -129,15 +136,74 @@ bool System::Frame() {
   return true;
 }
 
+void System::OnResize(int new_width, int new_height) {
+  if (!graphics_) {
+    return;
+  }
+
+  std::wcout << L"[System::OnResize] Resizing to " << new_width << L"x" 
+             << new_height << std::endl;
+
+  if (!graphics_->OnResize(new_width, new_height)) {
+    std::wcerr << L"[System::OnResize] Failed to resize graphics!" << std::endl;
+  }
+}
+
 LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam,
                                         LPARAM lparam) {
   switch (umsg) {
   // Check if a key has been pressed on the keyboard.
   case WM_KEYDOWN: {
+    break;
   }
 
   // Check if a key has been released on the keyboard.
   case WM_KEYUP: {
+    break;
+  }
+
+  // Handle window resize
+  case WM_SIZE: {
+    int new_width = LOWORD(lparam);
+    int new_height = HIWORD(lparam);
+
+    if (wparam == SIZE_MINIMIZED) {
+      // Window is minimized, don't resize
+      is_resizing_ = false;
+      return 0;
+    }
+
+    if (wparam == SIZE_MAXIMIZED || wparam == SIZE_RESTORED) {
+      // Window is maximized or restored, perform resize immediately
+      OnResize(new_width, new_height);
+      return 0;
+    }
+
+    // For SIZE_RESTORED during drag, store pending dimensions
+    if (new_width > 0 && new_height > 0) {
+      pending_width_ = new_width;
+      pending_height_ = new_height;
+      is_resizing_ = true;
+    }
+    return 0;
+  }
+
+  // Handle entering resize/move loop
+  case WM_ENTERSIZEMOVE: {
+    is_resizing_ = true;
+    return 0;
+  }
+
+  // Handle exiting resize/move loop
+  case WM_EXITSIZEMOVE: {
+    is_resizing_ = false;
+    // Perform the actual resize now that user has stopped dragging
+    if (pending_width_ > 0 && pending_height_ > 0) {
+      OnResize(pending_width_, pending_height_);
+      pending_width_ = 0;
+      pending_height_ = 0;
+    }
+    return 0;
   }
 
   // Any other messages send to the default message handler as our application
@@ -146,6 +212,8 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam,
     return DefWindowProc(hwnd, umsg, wparam, lparam);
   }
   }
+
+  return 0;
 }
 
 void System::InitializeWindows(int screen_width, int screen_height) {
@@ -211,23 +279,42 @@ void System::InitializeWindows(int screen_width, int screen_height) {
   }
 
   // Create the window with the screen settings and get the handle to it.
+  // Use WS_OVERLAPPEDWINDOW for a standard resizable window with title bar
+  DWORD windowStyle = FULL_SCREEN ? (WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP) 
+                                   : WS_OVERLAPPEDWINDOW;
+
+  // Adjust window size to account for borders and title bar
+  if (!FULL_SCREEN) {
+    RECT windowRect = {0, 0, screen_width, screen_height};
+    AdjustWindowRect(&windowRect, windowStyle, FALSE);
+    screen_width = windowRect.right - windowRect.left;
+    screen_height = windowRect.bottom - windowRect.top;
+
+    // Recalculate position after size adjustment
+    posX = (GetSystemMetrics(SM_CXSCREEN) - screen_width) / 2;
+    posY = (GetSystemMetrics(SM_CYSCREEN) - screen_height) / 2;
+  }
+
   hwnd_ = CreateWindowEx(WS_EX_APPWINDOW, application_name_, application_name_,
-                         WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP, posX,
-                         posY, screen_width, screen_height, NULL, NULL,
-                         hinstance_, NULL);
+                         windowStyle, posX, posY, screen_width, screen_height, 
+                         NULL, NULL, hinstance_, NULL);
 
   // Bring the window up on the screen and set it as main focus.
   ShowWindow(hwnd_, SW_SHOW);
   SetForegroundWindow(hwnd_);
   SetFocus(hwnd_);
 
-  // Hide the mouse cursor.
-  ShowCursor(false);
+  // Only hide cursor in fullscreen mode
+  if (FULL_SCREEN) {
+    ShowCursor(false);
+  }
 }
 
 void System::ShutdownWindows() {
-  // Show the mouse cursor.
-  ShowCursor(true);
+  // Show the mouse cursor (only if it was hidden in fullscreen).
+  if (FULL_SCREEN) {
+    ShowCursor(true);
+  }
 
   // Fix the display settings if leaving full screen mode.
   if (FULL_SCREEN) {

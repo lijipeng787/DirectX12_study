@@ -1,58 +1,139 @@
 # DirectX12 渲染架构实施计划 (Implementation Plan)
 
-## 1. 阶段 1：解耦与基础重构 (已完成)
+## 1. 阶段 1：解耦与基础重构
 
-本阶段主要目标是消除历史债务，建立现代化的 C++17 资源管理体系与模块化架构。
+### ✅ 已完成
+- Device 构造重构（移除单例）
+- 使用 ComPtr 管理资源
+- 离屏渲染抽象
+- 统一光照系统（LightManager）
+- 实时反射验证（ReflectionScene）
 
-### ✅ 完成的任务
-1.  **Device 构造重构**: 移除了单例，实现了 `DirectX12DeviceConfig` 配置化构造。
-2.  **初始化模块化**: 拆分了 `CreateCommandQueues`, `CreateSwapChain` 等独立步骤，增强了错误处理。
-3.  **资源管理统一**: 全面采用 `ComPtr` 管理 D3D12 接口，重构了 `DxgiResourceManager`。
-4.  **离屏渲染抽象**: 实现了 `RenderTargetDescriptor` 与 `RenderTargetHandle` 系统，支持动态创建离屏目标。
-5.  **材质解耦**: `ScreenQuad` 与 `Material` 分离，支持外部注入材质与常量缓冲。
-6.  **统一光照系统**: 实现了 `Lighting::SceneLight` 与 `LightManager`，移除了冗余光照代码。
-7.  **实时反射验证**: 落地了 `ReflectionScene`，验证了 Render-to-Texture 管线与自定义材质的可行性。
-
----
-
-## 2. 阶段 2：交互性与调试增强 (当前重点)
-
-本阶段目标是解决架构的“可用性”短板，特别是窗口交互与性能分析能力。
-
-### 任务 2.1：窗口与交换链热重建 (Window Resize) [High Priority]
-- [ ] **实现 OnResize 接口**: 在 `System` 类中监听 `WM_SIZE` 消息，传递给 `Graphics` 和 `DirectX12Device`。
-- [ ] **交换链重建逻辑**: 
-    - 确保 GPU 闲置 (`WaitForGpuIdle`)。
-    - 释放旧的 SwapChain buffers 和 RTV heap。
-    - 调用 `ResizeBuffers` 并重新创建 RTV。
-- [ ] **深度缓冲适配**: 根据新尺寸重建 DepthStencil buffer。
-- [ ] **投影矩阵更新**: 更新纵横比 (Aspect Ratio) 并重新计算投影矩阵。
-
-### 任务 2.2：性能调试工具集成 (Performance Tools)
-- [ ] **集成 PIX Markers**: 引入 `PIXBeginEvent`, `PIXEndEvent`，在 Command List 中标记 Render Pass（如 "Draw ShadowMap", "Draw PBR"）。
-- [ ] **GPU 时间戳查询**: 封装 `ID3D12QueryHeap`，统计关键 Pass 的 GPU 耗时。
-- [ ] **FPS 统计优化**: 在 UI 上显示详细的 CPU/GPU 帧时间 (ms)。
-
-### 任务 2.3：Shader 热重载 (Hot Reload)
-- [ ] **文件监听**: 使用 Win32 `FindFirstChangeNotification` 监听 `shader/` 目录。
-- [ ] **自动重编译**: 检测到文件变更后，后台尝试编译 HLSL。
-- [ ] **PSO 重建**: 若编译成功，安全地替换现有的 Pipeline State Object (PSO)，实现运行时效果更新。
+### ⚠️ 结论
+基础重构取得进展，但**过早停止**。许多基础功能仍然缺失，就开始添加新渲染技术。这导致地基不牢，影响后续开发。
 
 ---
 
-## 3. 阶段 3：高级渲染特性 (未来规划)
+## 2. 阶段 2：修复基础缺陷 (当前最高优先级)
 
-### 任务 3.1：多光源实战与优化
-- [ ] 在场景中放置 4-8 个不同颜色的点光源。
-- [ ] 优化 Shader 中的循环与分支，评估性能开销。
-- [ ] (可选) 引入 Tiled Lighting 或 Cluster Culling 算法实验。
+**状态：进行中**
 
-### 任务 3.2：多 Pass 延迟渲染 (Deferred Rendering)
-- [ ] 利用现有的 Off-screen 机制建立 G-Buffer (Albedo, Normal, Position/Depth)。
-- [ ] 实现 Lighting Pass，读取 G-Buffer 进行光照计算。
-- [ ] 验证架构对多 Render Target (MRT) 的支持能力。
+本阶段必须修复阻碍项目作为"实验平台"的基础问题。**在这些问题解决前，禁止添加任何新渲染特性。**
 
-## 验收标准 (Acceptance Criteria)
-- **Resize**: 拖动窗口边缘，渲染内容无拉伸、无黑边，且程序不崩溃，显存无泄漏。
-- **Debug**: 打开 PIX 工具截帧时，能清晰看到标记好的 Pass 结构。
-- **Hot Reload**: 修改 `pbr.hlsl` 中的颜色输出并保存，程序运行窗口内立即反映颜色变化。
+### 🚨 任务 2.1：修复资源加载 [P0 - Critical]
+**预计工作量：1-2天**
+
+- [ ] **删除 `Model.cpp` 中每次创建临时command queue的代码**（当前是严重的反模式）
+- [ ] 在 `DirectX12Device` 中添加共享的upload command list
+- [ ] 实现资源上传队列，批量提交
+- [ ] 添加围栏同步，确保资源上传完成后才能使用
+- [ ] **验收标准**: 
+  - 加载100个模型只创建1个upload command list
+  - 加载时间减少50%+
+  - PIX中看不到多余的command queue创建
+
+### ⚠️ 任务 2.2：建立测试基础设施 [P1 - High]
+**预计工作量：3-4天**
+
+- [ ] 添加 Google Test 或 Catch2
+- [ ] 添加基础单元测试：
+  - [ ] 数学库测试（矩阵、向量运算）
+  - [ ] 资源加载测试（模型解析、纹理加载）
+  - [ ] 光照系统测试（LightManager）
+- [ ] 添加集成测试：
+  - [ ] 设备创建/销毁测试
+  - [ ] 简单场景渲染测试（无窗口，离屏渲染）
+- [ ] 集成到CI（GitHub Actions）
+- [ ] **验收标准**: 
+  - 至少30%代码覆盖率
+  - 所有测试在CI中自动运行
+
+### ⚠️ 任务 2.3：资源管理系统 [P1 - High]
+**预计工作量：2-3天**
+
+- [ ] 实现 `ResourceManager` 类：
+  - [ ] 纹理缓存（基于文件路径）
+  - [ ] 模型缓存
+  - [ ] 引用计数管理
+- [ ] 添加资源统计和调试信息
+- [ ] 实现资源热重载（可选）
+- [ ] **验收标准**: 
+  - 多次加载同一纹理只占用1份显存
+  - 可查询当前加载的所有资源
+  - 资源释放后显存正确回收
+
+### ⚠️ 任务 2.4：日志系统 [P1 - High]
+**预计工作量：半天**
+
+- [ ] 集成 spdlog
+- [ ] 替换所有 `OutputDebugString` 调用
+- [ ] 支持日志级别（Debug/Info/Warn/Error）
+- [ ] 支持文件输出（rotating file sink）
+- [ ] 添加性能计数器（GPU/CPU时间）
+- [ ] **验收标准**: 
+  - 日志有时间戳和来源信息
+  - Release构建中Debug日志被优化掉
+  - 日志文件不超过100MB（自动轮转）
+
+### 📋 任务 2.5：构建系统现代化 [P2 - Medium]
+**预计工作量：1-2天**
+
+- [ ] 添加 CMakeLists.txt
+- [ ] 支持 MSVC/Clang/GCC
+- [ ] 添加 vcpkg manifest 管理依赖
+- [ ] 生成 compile_commands.json（LSP支持）
+- [ ] **验收标准**: 
+  - 可以用CMake在Windows/Linux构建
+  - 所有依赖通过vcpkg自动获取
+
+---
+
+## 3. 阶段 3：调试和性能工具 (待基础完成后)
+
+**前置条件：完成阶段2的所有P0和P1任务**
+
+### 任务 3.1：PIX集成 [P2]
+- [ ] 添加PIX事件标记（`PIXBeginEvent`/`PIXEndEvent`）
+- [ ] 标记所有主要渲染pass
+- [ ] 添加GPU时间戳查询
+
+### 任务 3.2：Shader热重载 [P2]
+- [ ] 文件监听（`FindFirstChangeNotification`）
+- [ ] 后台编译HLSL
+- [ ] 安全替换PSO
+
+## 4. 阶段 4：高级渲染特性 (远期，暂不规划)
+
+**前置条件：完成阶段2和3的所有任务**
+
+⚠️ **警告**：在基础功能完善前，**禁止**添加以下特性：
+- ❌ 延迟渲染
+- ❌ Compute shader
+- ❌ Mesh shader
+- ❌ 更多材质类型
+- ❌ 后处理效果
+
+**原因**：地基不牢，继续盖楼只会增加技术债务。
+
+## 验收标准更新
+
+### 阶段2验收标准
+- **资源加载**: 
+  - ✅ 不再创建临时command queue
+  - ✅ 加载性能提升50%+
+  
+- **测试**: 
+  - ✅ 至少30%代码覆盖率
+  - ✅ CI自动运行所有测试
+  
+- **资源管理**: 
+  - ✅ 重复加载同一资源不重复占用显存
+  - ✅ 可查询所有已加载资源
+  
+- **日志**: 
+  - ✅ 结构化日志替代OutputDebugString
+  - ✅ 支持文件输出和日志轮转
+
+### 阶段3验收标准
+- **PIX**: 打开PIX截帧，能清晰看到标记的Pass结构
+- **热重载**: 修改shader并保存，程序立即反映变化

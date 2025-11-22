@@ -117,6 +117,33 @@ void Graphics::Shutdown() {
   d3d12_device_.reset();
 }
 
+bool Graphics::OnResize(int new_width, int new_height) {
+  if (!d3d12_device_) {
+    return false;
+  }
+
+  // Validate dimensions
+  if (new_width <= 0 || new_height <= 0) {
+    return true; // Ignore invalid dimensions (e.g., minimized window)
+  }
+
+  // Resize the device (this will recreate swap chain buffers, depth stencil, etc.)
+  if (!d3d12_device_->OnResize(new_width, new_height)) {
+    return false;
+  }
+
+  // Update camera projection matrix with new aspect ratio
+  if (camera_) {
+    // Note: Camera should ideally have an OnResize method, but for now we can trigger an update
+    camera_->Update();
+  }
+
+  // Note: If we had other resolution-dependent resources (like RenderTextures),
+  // we would need to recreate them here as well.
+
+  return true;
+}
+
 bool Graphics::Frame(float delta_seconds, Input *input) {
 
   cpu_usage_tracker_->Update();

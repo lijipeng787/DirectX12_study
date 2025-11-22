@@ -31,6 +31,8 @@ public:
 private:
   bool Frame();
 
+  void OnResize(int new_width, int new_height);
+
   void InitializeWindows(int screen_width, int screen_height);
 
   void ShutdownWindows();
@@ -47,6 +49,11 @@ private:
   std::unique_ptr<Graphics> graphics_ = nullptr;
 
   std::unique_ptr<TimerClass> timer_ = nullptr;
+
+  // Track if we're currently in a resize operation
+  bool is_resizing_ = false;
+  int pending_width_ = 0;
+  int pending_height_ = 0;
 };
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

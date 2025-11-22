@@ -804,6 +804,102 @@ bool DirectX12Device::WaitForGpuIdle() {
   return true;
 }
 
+bool DirectX12Device::OnResize(int new_width, int new_height) {
+  if (!d3d12device_ || !swap_chain_) {
+    return false;
+  }
+
+  // Validate dimensions
+  if (new_width <= 0 || new_height <= 0) {
+    OutputDebugStringW(L"[DirectX12Device::OnResize] Invalid dimensions, ignoring resize.\n");
+    return true; // Not an error, just ignore
+  }
+
+  // Skip if dimensions haven't changed
+  if (new_width == config_.screen_width && new_height == config_.screen_height) {
+    return true;
+  }
+
+  std::wstringstream log;
+  log << L"[DirectX12Device::OnResize] Resizing from " << config_.screen_width 
+      << L"x" << config_.screen_height << L" to " << new_width << L"x" << new_height << L"\n";
+  OutputDebugStringW(log.str().c_str());
+
+  // Update config
+  config_.screen_width = new_width;
+  config_.screen_height = new_height;
+
+  // Step 1: Wait for GPU to finish all work
+  if (!WaitForGpuIdle()) {
+    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to wait for GPU idle.\n");
+    return false;
+  }
+
+  // Step 2: Release all references to swap chain buffers
+  for (auto &render_target : back_buffer_render_targets_) {
+    render_target.Reset();
+  }
+
+  // Step 3: Release depth stencil resources
+  depth_stencil_resource_.Reset();
+  depth_stencil_view_heap_.Reset();
+
+  // Step 4: Recreate offscreen resources (they depend on screen size)
+  if (default_offscreen_handle_ != kInvalidRenderTargetHandle) {
+    DestroyRenderTarget(default_offscreen_handle_);
+    default_offscreen_handle_ = kInvalidRenderTargetHandle;
+  }
+
+  // Step 5: Resize the swap chain buffers
+  HRESULT hr = swap_chain_->ResizeBuffers(
+      frame_cout_,
+      new_width,
+      new_height,
+      DXGI_FORMAT_R8G8B8A8_UNORM,
+      0);
+
+  if (FAILED(hr)) {
+    std::wstringstream error;
+    error << L"[DirectX12Device::OnResize] ResizeBuffers failed with HRESULT: 0x" 
+          << std::hex << hr << std::dec << L"\n";
+    OutputDebugStringW(error.str().c_str());
+    return false;
+  }
+
+  // Step 6: Update frame index after resize
+  frame_index_ = swap_chain_->GetCurrentBackBufferIndex();
+
+  // Step 7: Recreate render target views
+  hr = CreateRenderTargetViews();
+  if (FAILED(hr)) {
+    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate render target views.\n");
+    return false;
+  }
+
+  // Step 8: Recreate depth stencil resources
+  hr = CreateDepthStencilResources();
+  if (FAILED(hr)) {
+    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate depth stencil resources.\n");
+    return false;
+  }
+
+  // Step 9: Recreate offscreen resources
+  hr = CreateOffscreenResources();
+  if (FAILED(hr)) {
+    OutputDebugStringW(L"[DirectX12Device::OnResize] Failed to recreate offscreen resources.\n");
+    return false;
+  }
+
+  // Step 10: Update viewport and scissor rect
+  InitializeViewportsAndScissors();
+
+  // Step 11: Update matrices (projection and ortho)
+  InitializeMatrices();
+
+  OutputDebugStringW(L"[DirectX12Device::OnResize] Resize completed successfully.\n");
+  return true;
+}
+
 void DirectX12Device::GetVideoCardInfo(char *card_name, int &memory) {
   strcpy_s(card_name, 128, video_card_description_);
   memory = video_card_memory_;

@@ -220,6 +220,8 @@ public:
   
   bool WaitForGpuIdle();
 
+  bool OnResize(int new_width, int new_height);
+
   DescriptorHeapPtr GetOffScreenTextureHeapView() {
     return GetRenderTargetSrv(default_offscreen_handle_);
   }

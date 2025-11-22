@@ -40,6 +40,8 @@ public:
 
   auto Frame(float delta_seconds, Input *input) -> bool;
 
+  auto OnResize(int new_width, int new_height) -> bool;
+
 private:
   auto Render() -> bool;
 
