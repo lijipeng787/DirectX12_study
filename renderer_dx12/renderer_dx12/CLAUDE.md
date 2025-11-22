@@ -42,14 +42,39 @@ Three main scene types implementing different rendering techniques:
 - **SpecularMappingScene**: Specular mapping with reflections
 - **ReflectionScene**: Real-time reflections using render-to-texture
 
-Each scene follows the pattern:
+**Unified Scene Interface (Type-Erased):**
+All scenes implement a standardized interface through context-based parameters:
 ```cpp
-class XScene {
-    bool Initialize();
-    void Update(float delta_seconds);
-    bool Render(view_matrix, projection_matrix);
-    void SetRotationAngle(float radians);
+// Scene contexts define what data is needed for each operation
+struct SceneInitializeContext {
+    std::shared_ptr<DirectX12Device> device;
+    std::shared_ptr<ShaderLoader> shader_loader;
+    std::shared_ptr<LightManager> light_manager;
+    std::shared_ptr<Camera> camera;
+    HWND hwnd;
 };
+
+struct SceneRenderContext {
+    const XMMATRIX& view;
+    const XMMATRIX& projection;
+    SceneLight* primary_light;
+};
+
+// All scenes follow this pattern:
+class XScene {
+    bool Initialize(const SceneInitializeContext& ctx);
+    void Update(float delta_seconds);
+    bool Render(const SceneRenderContext& ctx);
+    void SetRotationAngle(float radians);
+    // Optional: bool RenderReflection(const SceneReflectionContext& ctx);
+};
+```
+
+The `Scene` wrapper provides type erasure, allowing heterogeneous scene storage:
+```cpp
+std::vector<Scene> scenes_;  // Can hold any scene type
+scenes_.emplace_back(std::make_shared<BumpMappingScene>());
+scenes_.emplace_back(std::make_shared<ReflectionScene>());
 ```
 
 #### Material System
@@ -107,8 +132,19 @@ device->EndPopulateGraphicsCommandList();
 device->ExecuteDefaultGraphicsCommandList();
 ```
 
-### Scene Graph
-Each scene manages its own models, materials, and rendering state independently.
+### Type Erasure for Scene Management
+Scenes use external polymorphism (type erasure) to enable heterogeneous storage without virtual inheritance:
+```cpp
+// Scene wrapper internally uses concept/model pattern
+Scene scene(std::make_shared<BumpMappingScene>());
+// Type-erased storage allows uniform containers
+std::vector<Scene> all_scenes;
+```
+
+This pattern provides:
+- Zero overhead compared to virtual functions for rendering workloads
+- Flexible scene registration without modifying base classes
+- Compile-time interface checking through SFINAE
 
 ## Development Notes
 

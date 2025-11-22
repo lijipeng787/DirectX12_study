@@ -12,17 +12,12 @@ using namespace DirectX;
 using namespace Lighting;
 using namespace ResourceLoader;
 
-SpecularMappingScene::SpecularMappingScene(
-    std::shared_ptr<DirectX12Device> device,
-    std::shared_ptr<ShaderLoader> shader_loader,
-    std::shared_ptr<LightManager> light_manager,
-    std::shared_ptr<Camera> camera)
-    : device_(std::move(device)),
-      shader_loader_(std::move(shader_loader)),
-      light_manager_(std::move(light_manager)),
-      camera_(std::move(camera)) {}
+auto SpecularMappingScene::Initialize(const SceneInitializeContext &ctx) -> bool {
+  device_ = ctx.device;
+  shader_loader_ = ctx.shader_loader;
+  light_manager_ = ctx.light_manager;
+  camera_ = ctx.camera;
 
-auto SpecularMappingScene::Initialize() -> bool {
   if (!device_ || !shader_loader_ || !light_manager_ || !camera_) {
     return false;
   }
@@ -60,9 +55,7 @@ void SpecularMappingScene::Shutdown() {
 
 void SpecularMappingScene::Update(float /*delta_seconds*/) {}
 
-auto SpecularMappingScene::Render(const XMMATRIX &view,
-                                  const XMMATRIX &projection,
-                                  const SceneLight *scene_light) -> bool {
+auto SpecularMappingScene::Render(const SceneRenderContext &ctx) -> bool {
   if (!device_ || !model_) {
     return false;
   }
@@ -76,8 +69,8 @@ auto SpecularMappingScene::Render(const XMMATRIX &view,
                    XMMatrixTranslation(position_.x, position_.y, position_.z);
 
   XMMATRIX world_t = XMMatrixTranspose(world);
-  XMMATRIX view_t = XMMatrixTranspose(view);
-  XMMATRIX projection_t = XMMatrixTranspose(projection);
+  XMMATRIX view_t = XMMatrixTranspose(ctx.view);
+  XMMATRIX projection_t = XMMatrixTranspose(ctx.projection);
 
   if (!material->UpdateMatrixConstant(world_t, view_t, projection_t)) {
     return false;
@@ -88,7 +81,7 @@ auto SpecularMappingScene::Render(const XMMATRIX &view,
     return false;
   }
 
-  const SceneLight *light_to_use = scene_light;
+  const SceneLight *light_to_use = ctx.primary_light;
   if (!light_to_use && light_manager_) {
     light_to_use = light_manager_->GetPrimaryLight().get();
   }

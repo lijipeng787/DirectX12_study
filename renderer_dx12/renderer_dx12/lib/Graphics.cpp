@@ -10,10 +10,11 @@
 #include "Input.h"
 #include "LightManager.h"
 #include "PBRModel.h"
-#include "SpecularMappingScene.h"
 #include "ReflectionScene.h"
-
+#include "Scene.h"
 #include "ScreenQuad.h"
+#include "SpecularMappingScene.h"
+
 #include "Model.h"
 #include "Text.h"
 
@@ -97,20 +98,11 @@ void Graphics::Shutdown() {
     d3d12_device_->WaitForGpuIdle();
   }
 
-  if (bump_mapping_scene_) {
-    bump_mapping_scene_->Shutdown();
-    bump_mapping_scene_.reset();
+  // Shutdown all scenes
+  for (auto& scene : scenes_) {
+    scene.Shutdown();
   }
-
-  if (specular_mapping_scene_) {
-    specular_mapping_scene_->Shutdown();
-    specular_mapping_scene_.reset();
-  }
-
-  if (reflection_scene_) {
-    reflection_scene_->Shutdown();
-    reflection_scene_.reset();
-  }
+  scenes_.clear();
 
   bitmap_.reset();
   text_.reset();
@@ -142,33 +134,21 @@ bool Graphics::Frame(float delta_seconds, Input *input) {
     return false;
   }
 
-  if (bump_mapping_scene_) {
-    bump_mapping_scene_->Update(delta_seconds);
+  // Update all scenes
+  SceneUpdateContext update_ctx{delta_seconds};
+  for (auto& scene : scenes_) {
+    scene.Update(update_ctx);
   }
 
-  if (specular_mapping_scene_) {
-    specular_mapping_scene_->Update(delta_seconds);
-  }
-
-  if (reflection_scene_) {
-    reflection_scene_->Update(delta_seconds);
-  }
-
+  // Update shared rotation angle
   shared_rotation_angle_ += shared_rotation_speed_ * delta_seconds;
   if (shared_rotation_angle_ > DirectX::XM_2PI) {
     shared_rotation_angle_ -= DirectX::XM_2PI;
   }
 
-  if (bump_mapping_scene_) {
-    bump_mapping_scene_->SetRotationAngle(shared_rotation_angle_);
-  }
-
-  if (specular_mapping_scene_) {
-    specular_mapping_scene_->SetRotationAngle(shared_rotation_angle_);
-  }
-
-  if (reflection_scene_) {
-    reflection_scene_->SetRotationAngle(shared_rotation_angle_);
+  // Set rotation for all scenes
+  for (auto& scene : scenes_) {
+    scene.SetRotationAngle(shared_rotation_angle_);
   }
 
   UpdateCameraFromInput(delta_seconds, input);
@@ -290,8 +270,9 @@ bool Graphics::Render() {
   }
 
   // Render reflection maps if needed
-  if (reflection_scene_) {
-    if (!reflection_scene_->RenderReflectionMap(projection_matrix)) {
+  SceneReflectionContext refl_ctx{projection_matrix};
+  for (auto& scene : scenes_) {
+    if (!scene.RenderReflection(refl_ctx)) {
       return false;
     }
   }
@@ -470,41 +451,49 @@ bool Graphics::InitializeRenderObjects(int screenWidth, int screenHeight, HWND h
 }
 
 bool Graphics::InitializeScenes(HWND hwnd) {
-  // Initialize bump mapping scene
-  bump_mapping_scene_ = std::make_shared<BumpMappingScene>(
-      d3d12_device_, shader_loader_, light_manager_, camera_);
-  if (!bump_mapping_scene_) {
+  // Prepare scene initialization context
+  SceneInitializeContext scene_ctx{};
+  scene_ctx.device = d3d12_device_;
+  scene_ctx.shader_loader = shader_loader_;
+  scene_ctx.light_manager = light_manager_;
+  scene_ctx.camera = camera_;
+  scene_ctx.hwnd = hwnd;
+
+  // Create and initialize bump mapping scene
+  auto bump_scene = std::make_shared<BumpMappingScene>();
+  if (!bump_scene) {
     return false;
   }
-  if (!bump_mapping_scene_->Initialize()) {
+  if (!bump_scene->Initialize(scene_ctx)) {
     MessageBox(hwnd, L"Could not initialize bump mapping scene.", L"Error",
                MB_OK);
     return false;
   }
+  scenes_.emplace_back(std::move(bump_scene));
 
-  // Initialize specular mapping scene
-  specular_mapping_scene_ = std::make_shared<SpecularMappingScene>(
-      d3d12_device_, shader_loader_, light_manager_, camera_);
-  if (!specular_mapping_scene_) {
+  // Create and initialize specular mapping scene
+  auto specular_scene = std::make_shared<SpecularMappingScene>();
+  if (!specular_scene) {
     return false;
   }
-  if (!specular_mapping_scene_->Initialize()) {
+  if (!specular_scene->Initialize(scene_ctx)) {
     MessageBox(hwnd, L"Could not initialize specular mapping scene.", L"Error",
                MB_OK);
     return false;
   }
+  scenes_.emplace_back(std::move(specular_scene));
 
-  // Initialize reflection scene
-  reflection_scene_ = std::make_shared<ReflectionScene>(
-      d3d12_device_, shader_loader_, camera_);
-  if (!reflection_scene_) {
+  // Create and initialize reflection scene
+  auto reflection_scene = std::make_shared<ReflectionScene>();
+  if (!reflection_scene) {
     return false;
   }
-  if (!reflection_scene_->Initialize()) {
+  if (!reflection_scene->Initialize(scene_ctx)) {
     MessageBox(hwnd, L"Could not initialize reflection scene.", L"Error",
                MB_OK);
     return false;
   }
+  scenes_.emplace_back(std::move(reflection_scene));
 
   return true;
 }
@@ -652,21 +641,10 @@ bool Graphics::RenderMainScenePass(const DirectX::XMMATRIX& view_matrix,
     return false;
   }
 
-  // Render modern scenes
-  if (reflection_scene_) {
-    if (!reflection_scene_->Render(view_matrix, projection_matrix)) {
-      return false;
-    }
-  }
-
-  if (specular_mapping_scene_) {
-    if (!specular_mapping_scene_->Render(view_matrix, projection_matrix, main_light.get())) {
-      return false;
-    }
-  }
-
-  if (bump_mapping_scene_) {
-    if (!bump_mapping_scene_->Render(view_matrix, projection_matrix, main_light.get())) {
+  // Render all scenes with unified interface
+  SceneRenderContext render_ctx{view_matrix, projection_matrix, main_light.get()};
+  for (auto& scene : scenes_) {
+    if (!scene.Render(render_ctx)) {
       return false;
     }
   }

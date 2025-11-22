@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <memory>
 
+#include "Scene.h"
 #include "SpecularMapModel.h"
 
 class Camera;
@@ -19,10 +20,7 @@ class ShaderLoader;
 
 class SpecularMappingScene {
 public:
-  SpecularMappingScene(std::shared_ptr<DirectX12Device> device,
-                       std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader,
-                       std::shared_ptr<Lighting::LightManager> light_manager,
-                       std::shared_ptr<Camera> camera);
+  SpecularMappingScene() = default;
 
   SpecularMappingScene(const SpecularMappingScene &rhs) = delete;
   
@@ -31,14 +29,14 @@ public:
 
   ~SpecularMappingScene() = default;
 
-  auto Initialize() -> bool;
+  // New unified interface (Scene-compatible)
+  auto Initialize(const SceneInitializeContext &ctx) -> bool;
 
   void Shutdown();
 
   void Update(float delta_seconds);
 
-  auto Render(const DirectX::XMMATRIX &view, const DirectX::XMMATRIX &projection,
-              const Lighting::SceneLight *scene_light) -> bool;
+  auto Render(const SceneRenderContext &ctx) -> bool;
 
   void SetRotationAngle(float radians);
 

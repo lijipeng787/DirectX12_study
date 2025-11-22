@@ -3,7 +3,9 @@
 #include <DirectXMath.h>
 #include <Windows.h>
 #include <memory>
+#include <vector>
 
+#include "Scene.h"
 #include "ShaderLoader.h"
 
 namespace Lighting {
@@ -25,9 +27,6 @@ class Model;
 class PBRModel;
 class Fps;
 class CPUUsageTracker;
-class BumpMappingScene;
-class SpecularMappingScene;
-class ReflectionScene;
 
 class Graphics {
 public:
@@ -106,11 +105,8 @@ private:
 
   std::shared_ptr<CPUUsageTracker> cpu_usage_tracker_ = nullptr;
 
-  std::shared_ptr<BumpMappingScene> bump_mapping_scene_ = nullptr;
-
-  std::shared_ptr<SpecularMappingScene> specular_mapping_scene_ = nullptr;
-
-  std::shared_ptr<ReflectionScene> reflection_scene_ = nullptr;
+  // Unified scene container using type erasure
+  std::vector<Scene> scenes_;
   
   float camera_move_speed_ = 5.0f;
 

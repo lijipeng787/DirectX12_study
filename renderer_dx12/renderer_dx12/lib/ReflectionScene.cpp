@@ -12,14 +12,6 @@
 using namespace DirectX;
 using namespace ResourceLoader;
 
-ReflectionScene::ReflectionScene(
-    std::shared_ptr<DirectX12Device> device,
-    std::shared_ptr<ShaderLoader> shader_loader,
-    std::shared_ptr<Camera> camera)
-    : device_(std::move(device)),
-      shader_loader_(std::move(shader_loader)),
-      camera_(std::move(camera)) {}
-
 auto ReflectionScene::EnsureShadersLoaded() -> bool {
   if (shaders_loaded_) {
     return true;
@@ -43,7 +35,11 @@ auto ReflectionScene::EnsureShadersLoaded() -> bool {
   return true;
 }
 
-auto ReflectionScene::Initialize() -> bool {
+auto ReflectionScene::Initialize(const SceneInitializeContext &ctx) -> bool {
+  device_ = ctx.device;
+  shader_loader_ = ctx.shader_loader;
+  camera_ = ctx.camera;
+
   if (!device_ || !shader_loader_ || !camera_) {
     return false;
   }
@@ -139,12 +135,11 @@ auto ReflectionScene::Update(float delta_seconds) -> void {
   }
 }
 
-auto ReflectionScene::RenderReflectionMap(const XMMATRIX &projection) -> bool {
-  return RenderReflectionTexture(projection);
+auto ReflectionScene::RenderReflection(const SceneReflectionContext &ctx) -> bool {
+  return RenderReflectionTexture(ctx.projection);
 }
 
-auto ReflectionScene::Render(const XMMATRIX &view,
-                             const XMMATRIX &projection) -> bool {
+auto ReflectionScene::Render(const SceneRenderContext &ctx) -> bool {
   if (!device_ || !cube_model_ || !floor_model_ || !cube_material_ ||
       !floor_material_) {
     return false;
@@ -154,8 +149,8 @@ auto ReflectionScene::Render(const XMMATRIX &view,
                          XMMatrixTranslation(cube_position_.x, cube_position_.y,
                                              cube_position_.z);
   const XMMATRIX world_t = XMMatrixTranspose(world);
-  const XMMATRIX view_t = XMMatrixTranspose(view);
-  const XMMATRIX projection_t = XMMatrixTranspose(projection);
+  const XMMATRIX view_t = XMMatrixTranspose(ctx.view);
+  const XMMATRIX projection_t = XMMatrixTranspose(ctx.projection);
 
   if (!cube_material_->UpdateMatrixConstant(world_t, view_t, projection_t)) {
     return false;

@@ -7,6 +7,7 @@
 #include "ReflectionModel.h"
 #include "ReflectionTextureMaterial.h"
 #include "RenderTexture.h"
+#include "Scene.h"
 
 class Camera;
 class DirectX12Device;
@@ -21,9 +22,7 @@ class ShaderLoader;
 
 class ReflectionScene {
 public:
-  ReflectionScene(std::shared_ptr<DirectX12Device> device,
-                  std::shared_ptr<ResourceLoader::ShaderLoader> shader_loader,
-                  std::shared_ptr<Camera> camera);
+  ReflectionScene() = default;
 
   ReflectionScene(const ReflectionScene &rhs) = delete;
 
@@ -31,15 +30,17 @@ public:
 
   ~ReflectionScene() = default;
 
-  auto Initialize() -> bool;
+  // New unified interface (Scene-compatible)
+  auto Initialize(const SceneInitializeContext &ctx) -> bool;
 
   auto Shutdown() -> void;
 
   auto Update(float delta_seconds) -> void;
 
-  auto RenderReflectionMap(const DirectX::XMMATRIX &projection) -> bool;
+  // Optional reflection pass interface
+  auto RenderReflection(const SceneReflectionContext &ctx) -> bool;
 
-  auto Render(const DirectX::XMMATRIX &view, const DirectX::XMMATRIX &projection) -> bool;
+  auto Render(const SceneRenderContext &ctx) -> bool;
 
   auto SetRotationAngle(float radians) -> void { rotation_radians_ = radians; }
 
